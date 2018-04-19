@@ -1,0 +1,24 @@
+<resources>
+    <string name="file_provider_authority">barsotti.alejandro.prototipotf.fileprovider</string>
+    <string name="app_name">PrototipoTF</string>
+    <string name="item_image_description">Image</string>
+    <string name="address_placeholder">Roque Sáenz Peña 557</string>
+    <string name="name_placeholder">Alejandro Barsotti</string>
+    <string name="date_placeholder">27/03/2018</string>
+    <string name="select_image_origin">Seleccionar origen de imagen:</string>
+    <string name="take_new_picture">Tomar una nueva fotografía</string>
+    <string name="select_image_from_device">Elegir una imagen del dispositivo</string>
+    <string name="separator_text">o</string>
+    <string name="image_preview_title">Previsualización de la imagen:</string>
+    <string name="image_preview_CD">Preview de la imagen</string>
+    <string name="pick_image_chooser_title">Seleccionar imagen</string>
+    <string name="separator_CD">Separator</string>
+    <string name="cancel_action">Cancelar</string>
+    <string name="confirm_action">Confirmar</string>
+
+    <string name="title_activity_image_viewer">ImageViewerActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="photo_file_name_date_format">yyyyMMddd-HHmmss</string>
+    <string name="photo_file_format">.jpg</string>
+</resources>

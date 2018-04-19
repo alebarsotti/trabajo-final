@@ -1,0 +1,10 @@
+- Connect the device via USB and make sure debugging is working.
+    > adb tcpip 5555
+- find the IP address with 
+    > adb shell netcfg 
+    (or adb shell ifconfig with 6.0 and higher)
+- Connect to the device
+    > adb connect <DEVICE_IP_ADDRESS>:5555
+- Disconnect USB and proceed with wireless debugging.
+- Disconnect the device (to switch back when done)
+    > adb -s <DEVICE_IP_ADDRESS>:5555 usb.
