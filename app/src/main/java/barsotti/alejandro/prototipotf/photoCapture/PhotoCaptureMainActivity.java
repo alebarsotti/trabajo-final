@@ -3,6 +3,8 @@ package barsotti.alejandro.prototipotf.photoCapture;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -11,6 +13,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -110,7 +113,12 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
 
     private void togglePreview(boolean show, Bitmap image) {
         if (show) {
-            mImagePreview.setImageBitmap(image);
+            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            int widthPixels = displayMetrics.widthPixels;
+            float scale = (float) widthPixels / image.getWidth();
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(image, widthPixels,
+                (int) (scale * image.getHeight()), false);
+            mImagePreview.setImageBitmap(scaledBitmap);
             mImagePreviewLayout.setVisibility(View.VISIBLE);
             mImageOriginOptionsLayout.setVisibility(View.GONE);
         }

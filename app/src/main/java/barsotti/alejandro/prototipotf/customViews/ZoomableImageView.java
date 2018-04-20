@@ -231,7 +231,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         int displayWidth = displayMetrics.widthPixels;
         int displayHeight = displayMetrics.heightPixels;
 
-        float scale = displayWidth / (float) bitmapWidth;
+//        float scale = displayWidth / (float) bitmapWidth;
 
 //        mViewWidth = displayWidth;
 //        mViewHeight = Math.round(displayWidth * bitmapAspectRatio);
