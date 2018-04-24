@@ -5,7 +5,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
+
+import org.opencv.android.OpenCVLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +18,17 @@ import barsotti.alejandro.prototipotf.mainActivityList.DataListAdapter;
 import barsotti.alejandro.prototipotf.photoCapture.PhotoCaptureMainActivity;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "PrototipoTF";
     RecyclerView mDataListRecyclerView;
     RecyclerView.LayoutManager mLayoutManager;
+
+    static {
+        if (OpenCVLoader.initDebug()) {
+            Log.i(TAG, "OpenCV se inicializó con éxito");
+        } else {
+            Log.i(TAG, "OpenCV no pudo inicializarse");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

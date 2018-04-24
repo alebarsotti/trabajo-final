@@ -15,7 +15,6 @@
     <string name="separator_CD">Separator</string>
     <string name="cancel_action">Cancelar</string>
     <string name="confirm_action">Confirmar</string>
-
     <string name="title_activity_image_viewer">ImageViewerActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
