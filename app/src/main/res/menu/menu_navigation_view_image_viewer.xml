@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/menu_seccion_1"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Imagen Original"/>
+        <item
+            android:id="@+id/menu_seccion_2"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados - Default (80-100)"/>
+        <item
+            android:id="@+id/menu_seccion_3"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (60-70)"/>
+        <item
+            android:id="@+id/menu_seccion_4"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (60-80)"/>
+        <item
+            android:id="@+id/menu_seccion_5"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (60-90)"/>
+        <item
+            android:id="@+id/menu_seccion_6"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (60-100)"/>
+        <item
+            android:id="@+id/menu_seccion_7"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (70-80)"/>
+        <item
+            android:id="@+id/menu_seccion_8"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (70-90)"/>
+        <item
+            android:id="@+id/menu_seccion_9"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (70-100)"/>
+        <item
+            android:id="@+id/menu_seccion_10"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (80-90)"/>
+        <item
+            android:id="@+id/menu_seccion_11"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (80-100)"/>
+        <item
+            android:id="@+id/menu_seccion_12"
+            android:icon="@drawable/ic_menu_item"
+            android:title="Bordes Detectados (90-100)"/>
+    </group>
+
+    <!--<group android:checkableBehavior="single">-->
+        <!--<item-->
+            <!--android:id="@+id/menu_seccion_1"-->
+            <!--android:icon="@drawable/ic_menu_item"-->
+            <!--android:title="Seccion 1"/>-->
+        <!--<item-->
+            <!--android:id="@+id/menu_seccion_2"-->
+            <!--android:icon="@drawable/ic_menu_item"-->
+            <!--android:title="Seccion 2"/>-->
+        <!--<item-->
+            <!--android:id="@+id/menu_seccion_3"-->
+            <!--android:icon="@drawable/ic_menu_item"-->
+            <!--android:title="Seccion 3"/>-->
+    <!--</group>-->
+
+    <!--<item-->
+        <!--android:id="@+id/navigation_subheader"-->
+        <!--android:title="Otras opciones">-->
+        <!--<menu>-->
+            <!--<item-->
+                <!--android:id="@+id/menu_opcion_1"-->
+                <!--android:icon="@drawable/ic_menu_item"-->
+                <!--android:title="Opcion 1"/>-->
+            <!--<item-->
+                <!--android:id="@+id/menu_opcion_2"-->
+                <!--android:icon="@drawable/ic_menu_item"-->
+                <!--android:title="Opcion 2"/>-->
+        <!--</menu>-->
+    <!--</item>-->
+</menu>

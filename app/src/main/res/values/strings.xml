@@ -20,4 +20,5 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="photo_file_name_date_format">yyyyMMddd-HHmmss</string>
     <string name="photo_file_format">.jpg</string>
+    <string name="stark_logo_CD">Stark Logo</string>
 </resources>

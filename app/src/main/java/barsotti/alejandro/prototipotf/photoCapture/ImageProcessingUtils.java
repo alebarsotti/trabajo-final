@@ -7,10 +7,14 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 public class ImageProcessingUtils {
-    private static final int OPENCV_MIN_EDGE_THRESHOLD = 70;
-    private static final int OPENCV_MAX_EDGE_THRESHOLD = 90;
+    private static final int OPEN_CV_MIN_EDGE_THRESHOLD = 80;
+    private static final int OPEN_CV_MAX_EDGE_THRESHOLD = 100;
 
-    private static Bitmap detectEdges(Bitmap bitmap) {
+    public static Bitmap detectEdges(Bitmap bitmap) {
+        return detectEdges(bitmap, OPEN_CV_MIN_EDGE_THRESHOLD, OPEN_CV_MAX_EDGE_THRESHOLD);
+    }
+
+    public static Bitmap detectEdges(Bitmap bitmap, int minThreshold, int maxThreshold) {
         // Crear una matriz con la información de la imagen.
         Mat rgba = new Mat();
         Utils.bitmapToMat(bitmap, rgba);
@@ -18,7 +22,7 @@ public class ImageProcessingUtils {
         // Utilizar OpenCV para detectar bordes y almacenar la información en una nueva matriz.
         Mat edges = new Mat(rgba.size(), CvType.CV_8UC1);
         Imgproc.cvtColor(rgba, edges, Imgproc.COLOR_RGB2GRAY, 4);
-        Imgproc.Canny(edges, edges, OPENCV_MIN_EDGE_THRESHOLD, OPENCV_MAX_EDGE_THRESHOLD);
+        Imgproc.Canny(edges, edges, minThreshold, maxThreshold);
 
         // Utilizar la información de detección de bordes provista por OpenCV para generar un nuevo bitmap.
         Bitmap resultBitmap = Bitmap.createBitmap(edges.cols(), edges.rows(), Bitmap.Config.ARGB_8888);

@@ -15,18 +15,20 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     private float mMaxScaleFactor;
     private float mMinScaleFactor;
-    private Bitmap mBitmap;
+//    private Bitmap mBitmap;
+    private int mBitmapWidth;
+    private int mBitmapHeight;
     private Matrix mDefaultMatrix;
     private Matrix mCurrentMatrix;
     private ScaleGestureDetector mScaleGestureDetector;
     private GestureDetector mGestureDetector;
 
-    private enum STATE {
-        ZOOM,
-        PAN,
-        NONE
-    }
-    private STATE mCurrentState = STATE.NONE;
+//    private enum STATE {
+//        ZOOM,
+//        PAN,
+//        NONE
+//    }
+//    private STATE mCurrentState = STATE.NONE;
 
     //region Constructors
     public ZoomableImageView(Context context, AttributeSet attrs) {
@@ -52,7 +54,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 mCurrentMatrix = new Matrix(mDefaultMatrix);
             }
             else {
-                float scale = (mMaxScaleFactor + mMinScaleFactor) / 3;
+                float scale = mMinScaleFactor + (mMaxScaleFactor + mMinScaleFactor) / 3;
                 int px = getWidth() / 2;
                 int py = getHeight() / 2;
                 mCurrentMatrix.postScale(scale, scale, px, py);
@@ -73,8 +75,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             float translateX = matrixValues[Matrix.MTRANS_X];
             float translateY = matrixValues[Matrix.MTRANS_Y];
 
-            float bitmapWidth = mBitmap.getWidth() * matrixValues[Matrix.MSCALE_X];
-            float bitmapHeight = mBitmap.getHeight() * matrixValues[Matrix.MSCALE_Y];
+            float bitmapWidth = mBitmapWidth * matrixValues[Matrix.MSCALE_X];
+            float bitmapHeight = mBitmapHeight * matrixValues[Matrix.MSCALE_Y];
 
             // Controlar desplazamiento en X.
             float dX = viewWidth - bitmapWidth;
@@ -145,10 +147,13 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     //region Setters
     public void setBitmap(Bitmap bitmap) {
-        mBitmap = bitmap;
-        int bitmapWidth = mBitmap.getWidth();
-        int bitmapHeight = mBitmap.getHeight();
-        this.setImageBitmap(mBitmap);
+//        mBitmap = bitmap;
+//        int bitmapWidth = mBitmap.getWidth();
+//        int bitmapHeight = mBitmap.getHeight();
+//        this.setImageBitmap(mBitmap);
+        mBitmapWidth = bitmap.getWidth();
+        mBitmapHeight = bitmap.getHeight();
+        this.setImageBitmap(bitmap);
 
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         int displayWidth = displayMetrics.widthPixels;
@@ -156,7 +161,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         mCurrentMatrix = new Matrix();
         RectF dest = new RectF(0, 0, displayWidth, displayHeight);
-        RectF src = new RectF(0, 0, bitmapWidth, bitmapHeight);
+        RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
         mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
         mDefaultMatrix = new Matrix(mCurrentMatrix);
 
