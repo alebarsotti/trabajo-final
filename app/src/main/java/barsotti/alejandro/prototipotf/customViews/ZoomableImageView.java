@@ -1,7 +1,6 @@
 package barsotti.alejandro.prototipotf.customViews;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.util.AttributeSet;
@@ -10,25 +9,19 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
+import org.opencv.core.Mat;
+
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
     private static final int MAX_ZOOM_SCALE = 15;
 
     private float mMaxScaleFactor;
     private float mMinScaleFactor;
-//    private Bitmap mBitmap;
     private int mBitmapWidth;
     private int mBitmapHeight;
     private Matrix mDefaultMatrix;
     private Matrix mCurrentMatrix;
     private ScaleGestureDetector mScaleGestureDetector;
     private GestureDetector mGestureDetector;
-
-//    private enum STATE {
-//        ZOOM,
-//        PAN,
-//        NONE
-//    }
-//    private STATE mCurrentState = STATE.NONE;
 
     //region Constructors
     public ZoomableImageView(Context context, AttributeSet attrs) {
@@ -63,12 +56,16 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             return true;
         }
 
+
+
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (Math.abs(distanceX) < 10 && Math.abs(distanceY) < 10) {
+                return false;
+            }
+
             distanceX = -distanceX;
             distanceY = -distanceY;
-            int viewWidth = getWidth();
-            int viewHeight = getHeight();
 
             float[] matrixValues = new float[9];
             mCurrentMatrix.getValues(matrixValues);
@@ -79,7 +76,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             float bitmapHeight = mBitmapHeight * matrixValues[Matrix.MSCALE_Y];
 
             // Controlar desplazamiento en X.
-            float dX = viewWidth - bitmapWidth;
+            float dX = getWidth() - bitmapWidth;
             float minTranslateX = dX < 0 ? dX : 0;
             float maxTranslateX = dX < 0 ? 0 : dX;
             float newTranslateX = translateX + distanceX;
@@ -92,7 +89,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             }
 
             // Controlar desplazamiento en Y.
-            float dY = viewHeight - bitmapHeight;
+            float dY = getHeight() - bitmapHeight;
             float minTranslateY = dY < 0 ? dY : 0;
             float maxTranslateY = dY < 0 ? 0 : dY;
             float newTranslateY = translateY + distanceY;
@@ -115,6 +112,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             float scaleFactor = detector.getScaleFactor();
+            if (scaleFactor < 0.1) {
+                return false;
+            }
+
             float focusX = detector.getFocusX();
             float focusY = detector.getFocusY();
 
@@ -146,18 +147,22 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     }
 
     //region Setters
-    public void setBitmap(Bitmap bitmap) {
+    public void setScale(int width, int height) {
 //        mBitmap = bitmap;
 //        int bitmapWidth = mBitmap.getWidth();
-//        int bitmapHeight = mBitmap.getHeight();
+//        int bitmapHeight = mBitmap.viewHeight;
 //        this.setImageBitmap(mBitmap);
-        mBitmapWidth = bitmap.getWidth();
-        mBitmapHeight = bitmap.getHeight();
-        this.setImageBitmap(bitmap);
+//        mBitmapWidth = bitmap.getWidth();
+//        mBitmapHeight = bitmap.viewHeight;
+//        this.setImageBitmap(bitmap);
+        mBitmapWidth = width;
+        mBitmapHeight = height;
 
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         int displayWidth = displayMetrics.widthPixels;
         int displayHeight = displayMetrics.heightPixels;
+//        int displayWidth = getWidth();
+//        int displayHeight = getHeight();
 
         mCurrentMatrix = new Matrix();
         RectF dest = new RectF(0, 0, displayWidth, displayHeight);

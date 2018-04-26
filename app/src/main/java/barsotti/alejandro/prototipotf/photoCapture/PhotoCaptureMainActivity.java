@@ -17,6 +17,8 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -35,7 +37,6 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     public static final int REQUEST_IMAGE_CAPTURE = 1;
     public static final int REQUEST_IMAGE_PICK = 2;
 
-    Bitmap mBitmap;
     ImageView mImagePreview;
     ConstraintLayout mImageOriginOptionsLayout;
     ConstraintLayout mImagePreviewLayout;
@@ -54,7 +55,7 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         mImageOriginOptionsLayout = findViewById(R.id.image_origin_options_layout);
         mImagePreviewLayout = findViewById(R.id.image_preview_layout);
 
-        togglePreview();
+        hidePreview();
     }
 
     public void takePicture(View view) {
@@ -67,8 +68,8 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             if (photoFile != null) {
-                Uri fileUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority),
-                    photoFile);
+                Uri fileUri = FileProvider.getUriForFile(this,
+                    getString(R.string.file_provider_authority), photoFile);
                 mImageUri = fileUri;
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
@@ -78,11 +79,11 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
 
     public void pickPicture(View view) {
         Intent intent = new Intent();
-        // Only show image files.
+        // Solo mostrar archivos de imágenes.
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         if (intent.resolveActivity(getPackageManager()) != null) {
-            // Show the chooser (if there are multiple options available).
+            // Mostrar el selector (si hay múltiples opciones disponibles).
             startActivityForResult(Intent.createChooser(intent, getString(R.string.pick_image_chooser_title)), REQUEST_IMAGE_PICK);
         }
     }
@@ -90,51 +91,30 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bitmap image = null;
-            try {
-                image = MediaStore.Images.Media.getBitmap(getContentResolver(), mImageUri);
-                togglePreview(true, image);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            showPreview();
         }
         else if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK) {
-            Uri uri = data.getData();
-
-            try {
-                mImageUri = uri;
-                Bitmap image = MediaStore.Images.Media.getBitmap(getContentResolver(), mImageUri);
-                mBitmap = image;
-                togglePreview(true, image);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            mImageUri = data.getData();
+            showPreview();
         }
     }
 
-    private void togglePreview() {
-        togglePreview(false, null);
+    private void hidePreview() {
+        mImagePreviewLayout.setVisibility(View.GONE);
+        mImageOriginOptionsLayout.setVisibility(View.VISIBLE);
     }
 
-    private void togglePreview(boolean show, Bitmap image) {
-        if (show) {
-            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-            int widthPixels = displayMetrics.widthPixels;
-            float scale = (float) widthPixels / image.getWidth();
-            Bitmap scaledBitmap = Bitmap.createScaledBitmap(image, widthPixels,
-                (int) (scale * image.getHeight()), false);
-            mImagePreview.setImageBitmap(scaledBitmap);
-            mImagePreviewLayout.setVisibility(View.VISIBLE);
-            mImageOriginOptionsLayout.setVisibility(View.GONE);
-        }
-        else {
-            mImagePreviewLayout.setVisibility(View.GONE);
-            mImageOriginOptionsLayout.setVisibility(View.VISIBLE);
-        }
+    private void showPreview() {
+        // Cargar preview de la imagen seleccionada.
+        Glide.with(this)
+            .load(mImageUri)
+            .into(mImagePreview);
+        mImagePreviewLayout.setVisibility(View.VISIBLE);
+        mImageOriginOptionsLayout.setVisibility(View.GONE);
     }
 
     public void cancelPictureSelection(View view) {
-        togglePreview();
+        hidePreview();
     }
 
     public void confirmPictureSelection(View view) {
@@ -144,15 +124,16 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     }
 
     private File createImageFile() throws IOException {
-        // Create a unique name for the photo file.
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat(getString(R.string.photo_file_name_date_format));
+        // Crear un nombre único para el archivo de imagen.
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat =
+            new SimpleDateFormat(getString(R.string.photo_file_name_date_format));
         Date dateTime = Calendar.getInstance().getTime();
         String photoFileName = getText(R.string.app_name) + dateFormat.format(dateTime);
 
-        // Get the output directory for the photo.
+        // Obtener el directorio de salida para la imagen.
         File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 
-        // Create and return the image file.
+        // Crear y devolver el archivo de imagen.
         return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
     }
 }
