@@ -81,12 +81,9 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         Intent intent = new Intent();
         // Solo mostrar archivos de imágenes.
         intent.setType("image/*");
-//        intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
         if (intent.resolveActivity(getPackageManager()) != null) {
-            // Mostrar el selector (si hay múltiples opciones disponibles).
-//            startActivityForResult(Intent.createChooser(intent, getString(R.string.pick_image_chooser_title)), REQUEST_IMAGE_PICK);
             startActivityForResult(intent, REQUEST_IMAGE_PICK);
         }
     }
@@ -103,33 +100,32 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         }
     }
 
-    private void createEdgesOnlyBitmap() {
+    private Uri createEdgesOnlyBitmap() {
         // Generar nombre de la imagen resultante.
         int dotIndex = mImageFilename.lastIndexOf('.');
         String edgesOnlyFilename =
             mImageFilename.substring(0, dotIndex) + EDGES_ONLY_SUFFIX + mImageFilename.substring(dotIndex);
 
         // Obtener el directorio de salida para la imagen.
-//        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_DCIM);
-//        File outputDirectory = Environment.getExternalStorageDirectory();
+        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        // File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_DCIM);
 
-//        String edgesBitmapPath = outputDirectory.toString() + edgesOnlyFilename;
-//        assert outputDirectory != null;
-//        File edgesBitmap = new File(String.format("%s%s%s", outputDirectory.toString(), File.separator, edgesOnlyFilename));
+        // Crear archivo.
         File edgesBitmap = new File(outputDirectory, edgesOnlyFilename);
-//        if (edgesBitmap.exists()) {
-//            int a = 1;
-////            edgesBitmap.delete();
-////            edgesBitmap = new File(outputDirectory, edges)
-//        }
-        try {
 
+        try {
+            // Crear output stream.
             FileOutputStream fileOutputStream = new FileOutputStream(edgesBitmap);
+
+            // Obtener imagen original.
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mImageUri);
+
+            // Generar imagen solo-bordes.
             bitmap = ImageProcessingUtils.detectEdges(bitmap);
+
+            // Guardar nueva imagen.
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-//            fileOutputStream.flush();
+            fileOutputStream.flush();
             fileOutputStream.close();
 
             // Agregar a MediaStore.
@@ -137,13 +133,13 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
             String imagePath = edgesBitmap.getAbsolutePath();
             String name = edgesBitmap.getName();
             String description = "Edges Only Image";
-//            String savedURL = MediaStore.Images.Media.insertImage(cr, imagePath, name, description);
             MediaStore.Images.Media.insertImage(cr, imagePath, name, description);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-
+        // Devolver Uri de la imagen solo-bordes.
+        return Uri.fromFile(edgesBitmap);
     }
 
     private String getFilenameFromUri() {
@@ -178,8 +174,13 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     }
 
     public void confirmPictureSelection(View view) {
+        // TODO: Crear imagen solo-bordes asíncronamente.
+        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
+
+        // Crear intent y adjuntar ambas Uris (imagen original e imagen solo-bordes).
         Intent intent = new Intent(this, ImageViewerActivity.class);
         intent.putExtra(ImageViewerActivity.BITMAP_URI_EXTRA, mImageUri);
+        intent.putExtra(ImageViewerActivity.BITMAP_EDGES_URI_EXTRA, edgesOnlyBitmapUri);
         startActivity(intent);
     }
 
@@ -195,9 +196,5 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
 
         // Crear y devolver el archivo de imagen.
         return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
-    }
-
-    public void createEdgesOnlyBitmap(View view) {
-        createEdgesOnlyBitmap();
     }
 }

@@ -41,8 +41,9 @@ public class ImageViewerActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
     private ZoomableImageView mZoomableImageView;
-    private Bitmap mBitmap;
+//    private Bitmap mBitmap;
     private Uri mBitmapUri;
+    private Uri mBitmapEdgesUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +75,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         Intent intent = getIntent();
 //        Uri bitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
         mBitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
+        mBitmapEdgesUri = intent.getParcelableExtra(BITMAP_EDGES_URI_EXTRA);
 
         setBitmap();
         mNavigationView.getMenu().findItem(R.id.imagen_original).setChecked(true);
@@ -84,23 +86,30 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void setBitmap(final boolean edgesOnly) {
-        try {
-//            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), bitmapUri);
-            mBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mBitmapUri);
+        mZoomableImageView.setImageURI(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
+        mZoomableImageView.setScale(1, 1);
 
-//            mZoomableImageView.setImageURI(mBitmapUri);
+//        try {
+////            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), bitmapUri);
+//            mBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mBitmapUri);
+//
+////            mZoomableImageView.setImageURI(mBitmapUri);
+//
+//            if (edgesOnly) {
+//                mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(mBitmap));
+//            }
+//            else {
+//                mZoomableImageView.setImageBitmap(mBitmap);
+//            }
+//            mZoomableImageView.setScale(mBitmap.getWidth(), mBitmap.getHeight());
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
-            if (edgesOnly) {
-                mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(mBitmap));
-            }
-            else {
-                mZoomableImageView.setImageBitmap(mBitmap);
-            }
-            mZoomableImageView.setScale(mBitmap.getWidth(), mBitmap.getHeight());
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+
 //        Glide.with(this)
 //            .asBitmap()
 //            .load(mBitmapUri)

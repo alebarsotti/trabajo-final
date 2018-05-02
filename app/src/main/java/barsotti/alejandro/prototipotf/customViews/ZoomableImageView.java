@@ -3,19 +3,22 @@ package barsotti.alejandro.prototipotf.customViews;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-
-import org.opencv.core.Mat;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Interpolator;
+import android.widget.Toast;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
     private static final int MAX_ZOOM_SCALE = 15;
 
     private float mMaxScaleFactor;
     private float mMinScaleFactor;
+    private float mDefaultScaleFactor;
     private int mBitmapWidth;
     private int mBitmapHeight;
     private Matrix mDefaultMatrix;
@@ -52,9 +55,16 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     //region Setters
     public void setScale(int bitmapWidth, int bitmapHeight) {
+
+        Drawable drawable = this.getDrawable();
+        int intrinsicWidth = drawable.getIntrinsicWidth();
+        int intrinsicHeight = drawable.getIntrinsicHeight();
+
         // Establecer variables de tamaño de la imagen.
-        mBitmapWidth = bitmapWidth;
-        mBitmapHeight = bitmapHeight;
+//        mBitmapWidth = bitmapWidth;
+//        mBitmapHeight = bitmapHeight;
+        mBitmapWidth = intrinsicWidth;
+        mBitmapHeight = intrinsicHeight;
 
         // Establecer variables de tamaño de la pantalla.
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
@@ -67,6 +77,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
         mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
         mDefaultMatrix = new Matrix(mCurrentMatrix);
+
+        float[] matrixValues = new float[9];
+        mDefaultMatrix.getValues(matrixValues);
+        mDefaultScaleFactor = matrixValues[Matrix.MSCALE_X];
 
         // Establecer los valores para el factor de escala mínimo y máximo.
         setZoomValues();
@@ -103,10 +117,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 mCurrentMatrix = new Matrix(mDefaultMatrix);
             }
             else {
-                float scale = mMinScaleFactor + (mMaxScaleFactor + mMinScaleFactor) / 3;
-                int px = getWidth() / 2;
-                int py = getHeight() / 2;
-                mCurrentMatrix.postScale(scale, scale, px, py);
+                float scale = mMinScaleFactor + (mMaxScaleFactor - mMinScaleFactor) / 4;
+                int px = Math.round(mBitmapWidth * scale / 2);
+                int py = Math.round(mBitmapHeight * scale / 2);
+                mCurrentMatrix.setScale(scale, scale, px, py);
             }
 
             return true;
@@ -163,6 +177,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     }
 
     private class ZoomableImageViewScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             float scaleFactor = detector.getScaleFactor();
@@ -177,19 +192,75 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             mCurrentMatrix.getValues(matrixValues);
             float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
 
-            // Forzar que el factor de escala se mantenga dentro de los límites establecidos.
-            if (currentScaleFactor * scaleFactor < mMinScaleFactor) {
-                scaleFactor = mMinScaleFactor / currentScaleFactor;
-            }
-            else if (currentScaleFactor * scaleFactor > mMaxScaleFactor) {
-                scaleFactor = mMaxScaleFactor / currentScaleFactor;
-            }
+//            // Forzar que el factor de escala se mantenga dentro de los límites establecidos.
+//            if (currentScaleFactor * scaleFactor < mMinScaleFactor) {
+//                scaleFactor = mMinScaleFactor / currentScaleFactor;
+//            }
+//            else if (currentScaleFactor * scaleFactor > mMaxScaleFactor) {
+//                scaleFactor = mMaxScaleFactor / currentScaleFactor;
+//            }
 
             // Escalar matriz.
             mCurrentMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
 
             return true;
         }
-    }
 
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+            // TODO: Verificar que no se vean zonas negras fuera de la imagen. En tal caso, volver a centrarla.
+
+            Toast.makeText(getContext(), "Fin del scaling", Toast.LENGTH_SHORT).show();
+
+
+//            // Prueba: Volver imagen a tamaño original.
+//            float focusX = detector.getFocusX();
+//            float focusY = detector.getFocusY();
+//
+//            final float finalX = 0;//getWidth() / 2;
+//            final float finalY = getHeight() / 2;
+//
+//            final float targetScale = mDefaultScaleFactor;
+//
+//            float[] matrixValues = new float[9];
+//            mCurrentMatrix.getValues(matrixValues);
+//            final float currentScale = matrixValues[Matrix.MSCALE_X];
+//
+//            final float transX = matrixValues[Matrix.MTRANS_X];
+//            final float transY = matrixValues[Matrix.MTRANS_Y];
+//
+//            final Interpolator interpolator = new AccelerateDecelerateInterpolator();
+//            final long startTime = System.currentTimeMillis();
+//            final long duration = 500;
+//            ZoomableImageView.this.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    float t = (float) (System.currentTimeMillis() - startTime) / duration;
+//                    t = t > 1.0f ? 1.0f : t;
+//                    float interpolatedRatio = interpolator.getInterpolation(t);
+//                    float tempScale = currentScale + interpolatedRatio * (targetScale - currentScale);
+//                    float tempX = interpolatedRatio * (finalX - transX);
+//                    float tempY = interpolatedRatio * (finalY - transY);
+//
+////                    mCurrentMatrix.setScale(tempScale, tempScale, tempX, tempY);
+//                    mCurrentMatrix.reset();
+//                    mCurrentMatrix.setScale(tempScale, tempScale);
+//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+//
+////
+////                    matrix.reset();
+////                    // translate initialPoint to 0,0 before applying zoom
+////                    matrix.postTranslate(-doubleTapImagePoint[0], -doubleTapImagePoint[1]);
+////                    // zoom
+////                    matrix.postScale(tempScale, tempScale);
+////                    // translate back to equivalent point
+////                    matrix.postTranslate(tempX, tempY);
+////                    imageView.setImageMatrix(matrix);
+//                    if (t < 1f) {
+//                        ZoomableImageView.this.post(this);
+//                    }
+//                }
+//            });
+        }
+    }
 }
