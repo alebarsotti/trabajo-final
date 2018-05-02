@@ -22,6 +22,10 @@ import com.bumptech.glide.request.target.SizeReadyCallback;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+
+import java.io.File;
 import java.io.IOException;
 
 import barsotti.alejandro.prototipotf.R;
@@ -29,10 +33,15 @@ import barsotti.alejandro.prototipotf.customViews.ZoomableImageView;
 
 public class ImageViewerActivity extends AppCompatActivity {
     public static final String BITMAP_URI_EXTRA = "bitmapUri";
+    public static final String BITMAP_EDGES_URI_EXTRA = "bitmapEdgesUri";
+    public static final String BITMAP_WIDTH = "bitmapWidth";
+    public static final String BITMAP_HEIGHT = "bitmapHeight";
+
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
     private ZoomableImageView mZoomableImageView;
+    private Bitmap mBitmap;
     private Uri mBitmapUri;
 
     @Override
@@ -75,35 +84,44 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void setBitmap(final boolean edgesOnly) {
-//        try {
-            Glide.with(this)
-                .asBitmap()
-                .load(mBitmapUri)
-                .into(new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        int width = resource.getWidth();
-                        int height = resource.getHeight();
-                        if (edgesOnly) {
-//                            mZoomableImageView.setScale(ImageProcessingUtils.detectEdges(resource));
-                            mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(resource));
-//                            mZoomableImageView.setImageBitmap(resource);
-                        }
-                        else {
-                            mZoomableImageView.setImageBitmap(resource);
-                        }
-                        mZoomableImageView.setScale(width, height);
-                    }
-                });
-//            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mBitmapUri);
-//            if (edgesOnly) {
-//                bitmap = ImageProcessingUtils.detectEdges(bitmap);
-//            }
-//            mZoomableImageView.setScale(bitmap);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+//            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), bitmapUri);
+            mBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mBitmapUri);
 
+//            mZoomableImageView.setImageURI(mBitmapUri);
+
+            if (edgesOnly) {
+                mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(mBitmap));
+            }
+            else {
+                mZoomableImageView.setImageBitmap(mBitmap);
+            }
+            mZoomableImageView.setScale(mBitmap.getWidth(), mBitmap.getHeight());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        Glide.with(this)
+//            .asBitmap()
+//            .load(mBitmapUri)
+//            .into(new SimpleTarget<Bitmap>() {
+//                @Override
+//                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+//                    mBitmap = resource.copy(resource.getConfig(), false);
+//                    resource.recycle();
+//                    int width = mBitmap.getWidth();
+//                    int height = mBitmap.getHeight();
+//                    if (edgesOnly) {
+//                        Mat rgba = new Mat();
+//                        Utils.bitmapToMat(mBitmap, rgba);
+//                        mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(rgba));
+//                    }
+//                    else {
+//                        mZoomableImageView.setImageBitmap(mBitmap);
+//                    }
+//                    mZoomableImageView.setScale(width, height);
+//                }
+//            });
     }
 
     @Override

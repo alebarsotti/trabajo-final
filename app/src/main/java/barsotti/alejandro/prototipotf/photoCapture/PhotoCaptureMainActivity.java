@@ -1,30 +1,27 @@
 package barsotti.alejandro.prototipotf.photoCapture;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
-import org.opencv.android.Utils;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
-
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -36,11 +33,14 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
 
     public static final int REQUEST_IMAGE_CAPTURE = 1;
     public static final int REQUEST_IMAGE_PICK = 2;
+    private static final String EDGES_ONLY_SUFFIX = "_edges";
 
     ImageView mImagePreview;
     ConstraintLayout mImageOriginOptionsLayout;
     ConstraintLayout mImagePreviewLayout;
     Uri mImageUri;
+    Uri mImageEdgesUri;
+    String mImageFilename;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,10 +81,13 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         Intent intent = new Intent();
         // Solo mostrar archivos de imágenes.
         intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
+//        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
         if (intent.resolveActivity(getPackageManager()) != null) {
             // Mostrar el selector (si hay múltiples opciones disponibles).
-            startActivityForResult(Intent.createChooser(intent, getString(R.string.pick_image_chooser_title)), REQUEST_IMAGE_PICK);
+//            startActivityForResult(Intent.createChooser(intent, getString(R.string.pick_image_chooser_title)), REQUEST_IMAGE_PICK);
+            startActivityForResult(intent, REQUEST_IMAGE_PICK);
         }
     }
 
@@ -95,8 +98,65 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         }
         else if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK) {
             mImageUri = data.getData();
+            mImageFilename = getFilenameFromUri();
             showPreview();
         }
+    }
+
+    private void createEdgesOnlyBitmap() {
+        // Generar nombre de la imagen resultante.
+        int dotIndex = mImageFilename.lastIndexOf('.');
+        String edgesOnlyFilename =
+            mImageFilename.substring(0, dotIndex) + EDGES_ONLY_SUFFIX + mImageFilename.substring(dotIndex);
+
+        // Obtener el directorio de salida para la imagen.
+//        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_DCIM);
+//        File outputDirectory = Environment.getExternalStorageDirectory();
+
+//        String edgesBitmapPath = outputDirectory.toString() + edgesOnlyFilename;
+//        assert outputDirectory != null;
+//        File edgesBitmap = new File(String.format("%s%s%s", outputDirectory.toString(), File.separator, edgesOnlyFilename));
+        File edgesBitmap = new File(outputDirectory, edgesOnlyFilename);
+//        if (edgesBitmap.exists()) {
+//            int a = 1;
+////            edgesBitmap.delete();
+////            edgesBitmap = new File(outputDirectory, edges)
+//        }
+        try {
+
+            FileOutputStream fileOutputStream = new FileOutputStream(edgesBitmap);
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mImageUri);
+            bitmap = ImageProcessingUtils.detectEdges(bitmap);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+//            fileOutputStream.flush();
+            fileOutputStream.close();
+
+            // Agregar a MediaStore.
+            ContentResolver cr = getContentResolver();
+            String imagePath = edgesBitmap.getAbsolutePath();
+            String name = edgesBitmap.getName();
+            String description = "Edges Only Image";
+//            String savedURL = MediaStore.Images.Media.insertImage(cr, imagePath, name, description);
+            MediaStore.Images.Media.insertImage(cr, imagePath, name, description);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    private String getFilenameFromUri() {
+        ContentResolver contentResolver = getContentResolver();
+        Cursor returnCursor =
+            contentResolver.query(mImageUri, null, null, null, null);
+        assert returnCursor != null;
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+        String name = returnCursor.getString(nameIndex);
+        returnCursor.close();
+
+        return name;
     }
 
     private void hidePreview() {
@@ -135,5 +195,9 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
 
         // Crear y devolver el archivo de imagen.
         return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
+    }
+
+    public void createEdgesOnlyBitmap(View view) {
+        createEdgesOnlyBitmap();
     }
 }

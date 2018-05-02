@@ -40,6 +40,62 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     }
     //endregion
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // Informar del evento a los detectores de gestos y escala.
+        mScaleGestureDetector.onTouchEvent(event);
+        mGestureDetector.onTouchEvent(event);
+        this.setImageMatrix(mCurrentMatrix);
+
+        return true;
+    }
+
+    //region Setters
+    public void setScale(int bitmapWidth, int bitmapHeight) {
+        // Establecer variables de tamaño de la imagen.
+        mBitmapWidth = bitmapWidth;
+        mBitmapHeight = bitmapHeight;
+
+        // Establecer variables de tamaño de la pantalla.
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int displayWidth = displayMetrics.widthPixels;
+        int displayHeight = displayMetrics.heightPixels;
+
+        // Escalar y centrar matriz de la view que contiene la imagen.
+        mCurrentMatrix = new Matrix();
+        RectF dest = new RectF(0, 0, displayWidth, displayHeight);
+        RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
+        mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
+        mDefaultMatrix = new Matrix(mCurrentMatrix);
+
+        // Establecer los valores para el factor de escala mínimo y máximo.
+        setZoomValues();
+
+        this.setImageMatrix(mCurrentMatrix);
+    }
+
+    private void setZoomValues() {
+        float[] matrixValues = new float[9];
+        mDefaultMatrix.getValues(matrixValues);
+
+        // El factor de escala mínimo será el que se setea por defecto al escalar la imagen a la vista.
+        mMinScaleFactor = matrixValues[Matrix.MSCALE_X];
+
+        // El factor de escala máximo será el resultado de multiplicar el factor de escala mínimo por el
+        // factor de escala de zoom máximo configurado.
+        mMaxScaleFactor = mMinScaleFactor * MAX_ZOOM_SCALE;
+    }
+
+    private void initializeMembers() {
+        // Establecer tipo de escala de la vista a Matriz.
+        this.setScaleType(ScaleType.MATRIX);
+
+        // Inicializar detectores de gestos y escala.
+        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ZoomableImageViewScaleListener());
+        mGestureDetector = new GestureDetector(getContext(), new ZoomableImageViewGestureListener());
+    }
+    //endregion
+
     private class ZoomableImageViewGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
@@ -55,8 +111,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
             return true;
         }
-
-
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -112,86 +166,30 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             float scaleFactor = detector.getScaleFactor();
+
+            // Desestimar movimiento si el factor de escala es demasiado pequeño.
             if (scaleFactor < 0.1) {
                 return false;
             }
 
-            float focusX = detector.getFocusX();
-            float focusY = detector.getFocusY();
-
+            // Obtener factor de escala actual.
             float[] matrixValues = new float[9];
             mCurrentMatrix.getValues(matrixValues);
             float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
 
+            // Forzar que el factor de escala se mantenga dentro de los límites establecidos.
             if (currentScaleFactor * scaleFactor < mMinScaleFactor) {
-                mCurrentMatrix = new Matrix(mDefaultMatrix);
+                scaleFactor = mMinScaleFactor / currentScaleFactor;
             }
-            else {
-                if (currentScaleFactor * scaleFactor > mMaxScaleFactor) {
-                    scaleFactor = mMaxScaleFactor / currentScaleFactor;
-                }
-                mCurrentMatrix.postScale(scaleFactor, scaleFactor, focusX, focusY);
+            else if (currentScaleFactor * scaleFactor > mMaxScaleFactor) {
+                scaleFactor = mMaxScaleFactor / currentScaleFactor;
             }
+
+            // Escalar matriz.
+            mCurrentMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
 
             return true;
         }
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        mScaleGestureDetector.onTouchEvent(event);
-        mGestureDetector.onTouchEvent(event);
-        this.setImageMatrix(mCurrentMatrix);
-
-        return true;
-    }
-
-    //region Setters
-    public void setScale(int width, int height) {
-//        mBitmap = bitmap;
-//        int bitmapWidth = mBitmap.getWidth();
-//        int bitmapHeight = mBitmap.viewHeight;
-//        this.setImageBitmap(mBitmap);
-//        mBitmapWidth = bitmap.getWidth();
-//        mBitmapHeight = bitmap.viewHeight;
-//        this.setImageBitmap(bitmap);
-        mBitmapWidth = width;
-        mBitmapHeight = height;
-
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int displayWidth = displayMetrics.widthPixels;
-        int displayHeight = displayMetrics.heightPixels;
-//        int displayWidth = getWidth();
-//        int displayHeight = getHeight();
-
-        mCurrentMatrix = new Matrix();
-        RectF dest = new RectF(0, 0, displayWidth, displayHeight);
-        RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
-        mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
-        mDefaultMatrix = new Matrix(mCurrentMatrix);
-
-        // Set the values for the Min and Max scale factor.
-        setZoomValues();
-
-        this.setImageMatrix(mCurrentMatrix);
-    }
-
-    private void setZoomValues() {
-        float[] matrixValues = new float[9];
-        mDefaultMatrix.getValues(matrixValues);
-
-        // El factor de escala mínimo será el que se setea por defecto al escalar la imagen a la vista.
-        mMinScaleFactor = matrixValues[Matrix.MSCALE_X];
-
-        // El factor de escala máximo será el resultado de multiplicar el factor de escala mínimo por el
-        // factor de escala de zoom máximo configurado.
-        mMaxScaleFactor = mMinScaleFactor * MAX_ZOOM_SCALE;
-    }
-
-
-    private void initializeMembers() {
-        this.setScaleType(ScaleType.MATRIX);
-        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ZoomableImageViewScaleListener());
-        mGestureDetector = new GestureDetector(getContext(), new ZoomableImageViewGestureListener());
-    }
 }
