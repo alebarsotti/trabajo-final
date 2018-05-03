@@ -10,7 +10,9 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
 import android.view.animation.Interpolator;
+import android.view.animation.Transformation;
 import android.widget.Toast;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
@@ -18,7 +20,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     private float mMaxScaleFactor;
     private float mMinScaleFactor;
-    private float mDefaultScaleFactor;
     private int mBitmapWidth;
     private int mBitmapHeight;
     private Matrix mDefaultMatrix;
@@ -77,10 +78,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
         mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
         mDefaultMatrix = new Matrix(mCurrentMatrix);
-
-        float[] matrixValues = new float[9];
-        mDefaultMatrix.getValues(matrixValues);
-        mDefaultScaleFactor = matrixValues[Matrix.MSCALE_X];
 
         // Establecer los valores para el factor de escala mínimo y máximo.
         setZoomValues();
@@ -190,7 +187,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             // Obtener factor de escala actual.
             float[] matrixValues = new float[9];
             mCurrentMatrix.getValues(matrixValues);
-            float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
+//            float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
 
 //            // Forzar que el factor de escala se mantenga dentro de los límites establecidos.
 //            if (currentScaleFactor * scaleFactor < mMinScaleFactor) {
@@ -210,57 +207,83 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         public void onScaleEnd(ScaleGestureDetector detector) {
             // TODO: Verificar que no se vean zonas negras fuera de la imagen. En tal caso, volver a centrarla.
 
-            Toast.makeText(getContext(), "Fin del scaling", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getContext(), "Fin del scaling", Toast.LENGTH_SHORT).show();
 
+            // Prueba: Volver imagen a tamaño original.
+            final float finalTransX, finalTransY, finalScaleFactor;
+            final Interpolator interpolator = new AccelerateDecelerateInterpolator();
+            final long startTime = System.currentTimeMillis();
+            final long animationDuration = 500;
 
-//            // Prueba: Volver imagen a tamaño original.
-//            float focusX = detector.getFocusX();
-//            float focusY = detector.getFocusY();
+            // Valores actuales de la matriz (valores iniciales de la animación).
+            float[] initialMatrixValues = new float[9];
+            mCurrentMatrix.getValues(initialMatrixValues);
+            final float initialScaleFactor = initialMatrixValues[Matrix.MSCALE_X];
+            final float initialTransX = initialMatrixValues[Matrix.MTRANS_X];
+            final float initialTransY = initialMatrixValues[Matrix.MTRANS_Y];
+
+            // Valores por defecto de la matriz (valores finales de la animación de agrandar).
+            float[] defaultMatrixValues = new float[9];
+            mDefaultMatrix.getValues(defaultMatrixValues);
+            finalScaleFactor = mMinScaleFactor;
+            finalTransX = defaultMatrixValues[Matrix.MTRANS_X];
+            finalTransY = defaultMatrixValues[Matrix.MTRANS_Y];
+
+            if (initialScaleFactor > mMinScaleFactor) {
+                return;
+            }
+
+            // Animar.
+            ZoomableImageView.this.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Calcular T: progreso (%) de la animación.
+                    float t = (float) (System.currentTimeMillis() - startTime) / animationDuration;
+                    t = t > 1.0f ? 1.0f : t;
+
+                    // Calcular punto actual de la animación.
+                    float currentPointInAnimation = interpolator.getInterpolation(t);
+
+                    float animationScaleFactor = initialScaleFactor +
+                        (finalScaleFactor - initialScaleFactor) * currentPointInAnimation;
+
+                    float animationTransX = initialTransX +
+                        (finalTransX - initialTransX) * currentPointInAnimation;
+
+                    float animationTransY = initialTransY +
+                        (finalTransY - initialTransY) * currentPointInAnimation;
+
+                    mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
+                    mCurrentMatrix.postTranslate(animationTransX, animationTransY);
+                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+
 //
-//            final float finalX = 0;//getWidth() / 2;
-//            final float finalY = getHeight() / 2;
-//
-//            final float targetScale = mDefaultScaleFactor;
-//
-//            float[] matrixValues = new float[9];
-//            mCurrentMatrix.getValues(matrixValues);
-//            final float currentScale = matrixValues[Matrix.MSCALE_X];
-//
-//            final float transX = matrixValues[Matrix.MTRANS_X];
-//            final float transY = matrixValues[Matrix.MTRANS_Y];
-//
-//            final Interpolator interpolator = new AccelerateDecelerateInterpolator();
-//            final long startTime = System.currentTimeMillis();
-//            final long duration = 500;
-//            ZoomableImageView.this.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    float t = (float) (System.currentTimeMillis() - startTime) / duration;
-//                    t = t > 1.0f ? 1.0f : t;
-//                    float interpolatedRatio = interpolator.getInterpolation(t);
-//                    float tempScale = currentScale + interpolatedRatio * (targetScale - currentScale);
-//                    float tempX = interpolatedRatio * (finalX - transX);
-//                    float tempY = interpolatedRatio * (finalY - transY);
-//
-////                    mCurrentMatrix.setScale(tempScale, tempScale, tempX, tempY);
-//                    mCurrentMatrix.reset();
-//                    mCurrentMatrix.setScale(tempScale, tempScale);
-//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
-//
-////
-////                    matrix.reset();
-////                    // translate initialPoint to 0,0 before applying zoom
-////                    matrix.postTranslate(-doubleTapImagePoint[0], -doubleTapImagePoint[1]);
-////                    // zoom
-////                    matrix.postScale(tempScale, tempScale);
-////                    // translate back to equivalent point
-////                    matrix.postTranslate(tempX, tempY);
-////                    imageView.setImageMatrix(matrix);
-//                    if (t < 1f) {
-//                        ZoomableImageView.this.post(this);
-//                    }
-//                }
-//            });
+//                    matrix.reset();
+//                    // translate initialPoint to 0,0 before applying zoom
+//                    matrix.postTranslate(-doubleTapImagePoint[0], -doubleTapImagePoint[1]);
+//                    // zoom
+//                    matrix.postScale(tempScale, tempScale);
+//                    // translate back to equivalent point
+//                    matrix.postTranslate(tempX, tempY);
+//                    imageView.setImageMatrix(matrix);
+                    if (t < 1.0f) {
+                        ZoomableImageView.this.post(this);
+                    }
+                }
+            });
+        }
+    }
+
+    private class ZoomAnimation extends Animation {
+        public ZoomAnimation(long duration) {
+            setInterpolator(new AccelerateDecelerateInterpolator());
+            setDuration(duration);
+        }
+
+        @Override
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+            t.getMatrix()
+
         }
     }
 }
