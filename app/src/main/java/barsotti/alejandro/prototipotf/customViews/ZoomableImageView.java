@@ -1,11 +1,15 @@
 package barsotti.alejandro.prototipotf.customViews;
 
+import android.animation.AnimatorSet;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -233,57 +237,105 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 return;
             }
 
-            // Animar.
-            ZoomableImageView.this.post(new Runnable() {
+//            // Animar - Versión ineficiente
+//            ZoomableImageView.this.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    // Calcular T: progreso (%) de la animación.
+//                    float t = (float) (System.currentTimeMillis() - startTime) / animationDuration;
+//                    t = t > 1.0f ? 1.0f : t;
+//
+//                    // Calcular punto actual de la animación.
+//                    float currentPointInAnimation = interpolator.getInterpolation(t);
+//
+//                    float animationScaleFactor = initialScaleFactor +
+//                        (finalScaleFactor - initialScaleFactor) * currentPointInAnimation;
+//
+//                    float animationTransX = initialTransX +
+//                        (finalTransX - initialTransX) * currentPointInAnimation;
+//
+//                    float animationTransY = initialTransY +
+//                        (finalTransY - initialTransY) * currentPointInAnimation;
+//
+//                    mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
+//                    mCurrentMatrix.postTranslate(animationTransX, animationTransY);
+//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+//
+//                    if (t < 1.0f) {
+//                        ZoomableImageView.this.post(this);
+//                    }
+//                }
+//            });
+
+//            // Animar - ValueAnimator
+            mCurrentMatrix.reset();
+            AnimatorSet animatorSet = new AnimatorSet();
+            ValueAnimator scaleFactorValueAnimation =
+                ValueAnimator.ofFloat(initialScaleFactor, finalScaleFactor);
+//            ValueAnimator transXValueAnimator = ValueAnimator.ofFloat(initialTransX, finalTransX);
+//            ValueAnimator transYValueAnimator = ValueAnimator.ofFloat(initialTransY, finalTransY);
+            scaleFactorValueAnimation.setInterpolator(interpolator);
+//            transXValueAnimator.setInterpolator(interpolator);
+//            transYValueAnimator.setInterpolator(interpolator);
+            scaleFactorValueAnimation.setDuration(animationDuration);
+//            transXValueAnimator.setDuration(animationDuration);
+//            transYValueAnimator.setDuration(animationDuration);
+            scaleFactorValueAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
-                public void run() {
-                    // Calcular T: progreso (%) de la animación.
-                    float t = (float) (System.currentTimeMillis() - startTime) / animationDuration;
-                    t = t > 1.0f ? 1.0f : t;
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+//                    float[] matrixValues = new float[9];
+//                    mCurrentMatrix.getValues(matrixValues);
+//                    float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
+//
+//                    float newScale = (float) valueAnimator.getAnimatedValue();
+//                    mCurrentMatrix
+//                        .postScale(newScale / currentScaleFactor, newScale / currentScaleFactor);
+//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
 
-                    // Calcular punto actual de la animación.
-                    float currentPointInAnimation = interpolator.getInterpolation(t);
-
+                    float animatedFraction = valueAnimator.getAnimatedFraction();
                     float animationScaleFactor = initialScaleFactor +
-                        (finalScaleFactor - initialScaleFactor) * currentPointInAnimation;
+                        (finalScaleFactor - initialScaleFactor) * animatedFraction;
 
                     float animationTransX = initialTransX +
-                        (finalTransX - initialTransX) * currentPointInAnimation;
+                        (finalTransX - initialTransX) * animatedFraction;
 
                     float animationTransY = initialTransY +
-                        (finalTransY - initialTransY) * currentPointInAnimation;
-
+                        (finalTransY - initialTransY) * animatedFraction;
                     mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
                     mCurrentMatrix.postTranslate(animationTransX, animationTransY);
                     ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
-
-//
-//                    matrix.reset();
-//                    // translate initialPoint to 0,0 before applying zoom
-//                    matrix.postTranslate(-doubleTapImagePoint[0], -doubleTapImagePoint[1]);
-//                    // zoom
-//                    matrix.postScale(tempScale, tempScale);
-//                    // translate back to equivalent point
-//                    matrix.postTranslate(tempX, tempY);
-//                    imageView.setImageMatrix(matrix);
-                    if (t < 1.0f) {
-                        ZoomableImageView.this.post(this);
-                    }
                 }
             });
+//            transXValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//                @Override
+//                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+//                    float[] matrixValues = new float[9];
+//                    mCurrentMatrix.getValues(matrixValues);
+//                    float currentX = matrixValues[Matrix.MTRANS_X];
+//
+//                    float newTransX = (float) valueAnimator.getAnimatedValue();
+//                    mCurrentMatrix.postTranslate(newTransX - currentX, 0);
+//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+//                }
+//            });
+//            transYValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//                @Override
+//                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+//                    float[] matrixValues = new float[9];
+//                    mCurrentMatrix.getValues(matrixValues);
+//                    float currentY = matrixValues[Matrix.MTRANS_Y];
+//
+//                    float newTransY = (float) valueAnimator.getAnimatedValue();
+//                    mCurrentMatrix.postTranslate(0, newTransY - currentY);
+//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+//                }
+//            });
+//            animatorSet.playTogether(scaleFactorValueAnimation, transXValueAnimator, transYValueAnimator);
+//            animatorSet.start();
+            scaleFactorValueAnimation.start();
+
         }
     }
 
-    private class ZoomAnimation extends Animation {
-        public ZoomAnimation(long duration) {
-            setInterpolator(new AccelerateDecelerateInterpolator());
-            setDuration(duration);
-        }
 
-        @Override
-        protected void applyTransformation(float interpolatedTime, Transformation t) {
-            t.getMatrix()
-
-        }
-    }
 }
