@@ -1,7 +1,5 @@
 package barsotti.alejandro.prototipotf.customViews;
 
-import android.animation.AnimatorSet;
-import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Matrix;
@@ -9,15 +7,11 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
 import android.view.animation.Interpolator;
-import android.view.animation.Transformation;
-import android.widget.Toast;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
     private static final int MAX_ZOOM_SCALE = 15;
@@ -60,14 +54,14 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     //region Setters
     public void setScale(int bitmapWidth, int bitmapHeight) {
+        Matrix matrix = this.getMatrix();
+
 
         Drawable drawable = this.getDrawable();
         int intrinsicWidth = drawable.getIntrinsicWidth();
         int intrinsicHeight = drawable.getIntrinsicHeight();
 
         // Establecer variables de tamaño de la imagen.
-//        mBitmapWidth = bitmapWidth;
-//        mBitmapHeight = bitmapHeight;
         mBitmapWidth = intrinsicWidth;
         mBitmapHeight = intrinsicHeight;
 
@@ -77,11 +71,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         int displayHeight = displayMetrics.heightPixels;
 
         // Escalar y centrar matriz de la view que contiene la imagen.
-        mCurrentMatrix = new Matrix();
         RectF dest = new RectF(0, 0, displayWidth, displayHeight);
         RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
         mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
-        mDefaultMatrix = new Matrix(mCurrentMatrix);
+        mDefaultMatrix.set(mCurrentMatrix);
 
         // Establecer los valores para el factor de escala mínimo y máximo.
         setZoomValues();
@@ -104,6 +97,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private void initializeMembers() {
         // Establecer tipo de escala de la vista a Matriz.
         this.setScaleType(ScaleType.MATRIX);
+        mDefaultMatrix = new Matrix();
+        mCurrentMatrix = new Matrix();
 
         // Inicializar detectores de gestos y escala.
         mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ZoomableImageViewScaleListener());
@@ -115,7 +110,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             if (!mCurrentMatrix.equals(mDefaultMatrix)) {
-                mCurrentMatrix = new Matrix(mDefaultMatrix);
+                mCurrentMatrix.set(mDefaultMatrix);
             }
             else {
                 float scale = mMinScaleFactor + (mMaxScaleFactor - mMinScaleFactor) / 4;
@@ -183,14 +178,14 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         public boolean onScale(ScaleGestureDetector detector) {
             float scaleFactor = detector.getScaleFactor();
 
-            // Desestimar movimiento si el factor de escala es demasiado pequeño.
-            if (scaleFactor < 0.1) {
-                return false;
-            }
+//            // Desestimar movimiento si el factor de escala es demasiado pequeño.
+//            if (scaleFactor < 0.1) {
+//                return false;
+//            }
 
             // Obtener factor de escala actual.
-            float[] matrixValues = new float[9];
-            mCurrentMatrix.getValues(matrixValues);
+//            float[] matrixValues = new float[9];
+//            mCurrentMatrix.getValues(matrixValues);
 //            float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
 
 //            // Forzar que el factor de escala se mantenga dentro de los límites establecidos.
@@ -216,8 +211,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             // Prueba: Volver imagen a tamaño original.
             final float finalTransX, finalTransY, finalScaleFactor;
             final Interpolator interpolator = new AccelerateDecelerateInterpolator();
-            final long startTime = System.currentTimeMillis();
-            final long animationDuration = 500;
+            final long animationDuration = 250;
 
             // Valores actuales de la matriz (valores iniciales de la animación).
             float[] initialMatrixValues = new float[9];
@@ -237,64 +231,19 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 return;
             }
 
-//            // Animar - Versión ineficiente
-//            ZoomableImageView.this.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    // Calcular T: progreso (%) de la animación.
-//                    float t = (float) (System.currentTimeMillis() - startTime) / animationDuration;
-//                    t = t > 1.0f ? 1.0f : t;
-//
-//                    // Calcular punto actual de la animación.
-//                    float currentPointInAnimation = interpolator.getInterpolation(t);
-//
-//                    float animationScaleFactor = initialScaleFactor +
-//                        (finalScaleFactor - initialScaleFactor) * currentPointInAnimation;
-//
-//                    float animationTransX = initialTransX +
-//                        (finalTransX - initialTransX) * currentPointInAnimation;
-//
-//                    float animationTransY = initialTransY +
-//                        (finalTransY - initialTransY) * currentPointInAnimation;
-//
-//                    mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
-//                    mCurrentMatrix.postTranslate(animationTransX, animationTransY);
-//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
-//
-//                    if (t < 1.0f) {
-//                        ZoomableImageView.this.post(this);
-//                    }
-//                }
-//            });
-
 //            // Animar - ValueAnimator
             mCurrentMatrix.reset();
-            AnimatorSet animatorSet = new AnimatorSet();
-            ValueAnimator scaleFactorValueAnimation =
-                ValueAnimator.ofFloat(initialScaleFactor, finalScaleFactor);
-//            ValueAnimator transXValueAnimator = ValueAnimator.ofFloat(initialTransX, finalTransX);
-//            ValueAnimator transYValueAnimator = ValueAnimator.ofFloat(initialTransY, finalTransY);
-            scaleFactorValueAnimation.setInterpolator(interpolator);
-//            transXValueAnimator.setInterpolator(interpolator);
-//            transYValueAnimator.setInterpolator(interpolator);
-            scaleFactorValueAnimation.setDuration(animationDuration);
-//            transXValueAnimator.setDuration(animationDuration);
-//            transYValueAnimator.setDuration(animationDuration);
-            scaleFactorValueAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+            valueAnimator.setInterpolator(interpolator);
+            valueAnimator.setDuration(animationDuration);
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
-//                    float[] matrixValues = new float[9];
-//                    mCurrentMatrix.getValues(matrixValues);
-//                    float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
-//
-//                    float newScale = (float) valueAnimator.getAnimatedValue();
-//                    mCurrentMatrix
-//                        .postScale(newScale / currentScaleFactor, newScale / currentScaleFactor);
-//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
 
                     float animatedFraction = valueAnimator.getAnimatedFraction();
                     float animationScaleFactor = initialScaleFactor +
                         (finalScaleFactor - initialScaleFactor) * animatedFraction;
+
 
                     float animationTransX = initialTransX +
                         (finalTransX - initialTransX) * animatedFraction;
@@ -303,39 +252,50 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                         (finalTransY - initialTransY) * animatedFraction;
                     mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
                     mCurrentMatrix.postTranslate(animationTransX, animationTransY);
+
                     ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
                 }
             });
-//            transXValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//                @Override
-//                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-//                    float[] matrixValues = new float[9];
-//                    mCurrentMatrix.getValues(matrixValues);
-//                    float currentX = matrixValues[Matrix.MTRANS_X];
-//
-//                    float newTransX = (float) valueAnimator.getAnimatedValue();
-//                    mCurrentMatrix.postTranslate(newTransX - currentX, 0);
-//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
-//                }
-//            });
-//            transYValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//                @Override
-//                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-//                    float[] matrixValues = new float[9];
-//                    mCurrentMatrix.getValues(matrixValues);
-//                    float currentY = matrixValues[Matrix.MTRANS_Y];
-//
-//                    float newTransY = (float) valueAnimator.getAnimatedValue();
-//                    mCurrentMatrix.postTranslate(0, newTransY - currentY);
-//                    ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
-//                }
-//            });
-//            animatorSet.playTogether(scaleFactorValueAnimation, transXValueAnimator, transYValueAnimator);
-//            animatorSet.start();
-            scaleFactorValueAnimation.start();
+
+            valueAnimator.start();
 
         }
     }
 
-
+//    public class ZoomAnimatorUpdateListener implements ValueAnimator.AnimatorUpdateListener {
+//        private float mFinalScale;
+//        private float mFinalTransX;
+//        private float mFinalTransY;
+//
+//        public ZoomAnimatorUpdateListener(float finalScale, float finalTransX, float finalTransY) {
+//            this.mFinalScale = finalScale;
+//            this.mFinalTransX = finalTransX;
+//            this.mFinalTransY = finalTransY;
+//        }
+//
+//        @Override
+//        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+//            float animatedFraction = valueAnimator.getAnimatedFraction();
+//
+//            float[] matrixValues = new float[9];
+//            mCurrentMatrix.getValues(matrixValues);
+//            float currentScale = matrixValues[Matrix.MSCALE_X];
+//            mFinalScale - currentScale *
+//
+//            float deltaScale = (mInitialScale + mDeltaScale * animatedFraction) / mInitialScale;
+//
+//
+////            float animationScaleFactor = initialScaleFactor +
+////                (finalScaleFactor - initialScaleFactor) * animatedFraction;
+////
+////            float animationTransX = initialTransX +
+////                (finalTransX - initialTransX) * animatedFraction;
+////
+////            float animationTransY = initialTransY +
+////                (finalTransY - initialTransY) * animatedFraction;
+////            mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
+////            mCurrentMatrix.postTranslate(animationTransX, animationTransY);
+//            ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+//        }
+//    }
 }
