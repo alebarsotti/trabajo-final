@@ -2,6 +2,7 @@ package barsotti.alejandro.prototipotf.photoCapture;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -87,7 +88,9 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private void setBitmap(final boolean edgesOnly) {
         mZoomableImageView.setImageURI(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
-        mZoomableImageView.setScale(1, 1);
+        Point screenSize = new Point();
+        getWindowManager().getDefaultDisplay().getRealSize(screenSize);
+        mZoomableImageView.setScale(screenSize.x, screenSize.y);
 
 //        try {
 ////            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), bitmapUri);
