@@ -4,18 +4,13 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Matrix;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Interpolator;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
     private static final int MAX_ZOOM_SCALE = 15;
@@ -48,13 +43,21 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     }
     //endregion
 
+
+    @Override
+    public boolean performClick() {
+        return super.performClick();
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        this.performClick();
+
         // Informar del evento a los detectores de gestos y escala.
         mScaleGestureDetector.onTouchEvent(event);
         mGestureDetector.onTouchEvent(event);
 
-        // Verificar necesidad de animación al finalizar un scroll.
+        // Verificar necesidad de desplazamiento al finalizar un scroll.
         if (event.getAction() == MotionEvent.ACTION_UP && mIsScrolling) {
             mIsScrolling = false;
             handleScrollEnded();
@@ -68,12 +71,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     private void handleScrollEnded() {
         // Verificar que no se vean zonas negras fuera de la imagen. En tal caso, ajustar el desplazamiento.
-        float[] matrixValues = new float[9];
+        final float[] matrixValues = new float[9];
         mCurrentMatrix.getValues(matrixValues);
 
         // Desplazamiento actual.
-        float transX = matrixValues[Matrix.MTRANS_X];
-        float transY = matrixValues[Matrix.MTRANS_Y];
+        final float transX = matrixValues[Matrix.MTRANS_X];
+        final float transY = matrixValues[Matrix.MTRANS_Y];
 
         // Dimensiones actuales de la imagen.
         float bitmapWidth = mBitmapWidth * matrixValues[Matrix.MSCALE_X];
@@ -99,30 +102,56 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             float limitX = transX > maxTransX ? maxTransX : minTransX;
             deltaTransX = limitX - transX;
         }
+        // Si el ancho de la imagen es menor al ancho de la pantalla, centrar horizontalmente.
+        if (viewWidth > bitmapWidth) {
+            deltaTransX = (viewWidth - bitmapWidth) / 2 - transX;
+        }
 
         // Si el desplazamiento no se encuentra dentro de los límites permitidos. Calcular delta.
         if (transY > maxTransY || transY < minTransY) {
             float limitY = transY > maxTransY ? maxTransY : minTransY;
             deltaTransY = limitY - transY;
         }
+        // Si la altura de la imagen es menor a la altura de la pantalla, centrar verticalmente.
+        if (viewHeight > bitmapHeight) {
+            deltaTransY = (viewHeight - bitmapHeight) / 2 - transY;
+        }
 
-        mCurrentMatrix.postTranslate(deltaTransX, deltaTransY);
+        // Si no es necesario desplazar la matriz, no realizar ninguna acción.
+        if (deltaTransX == 0 && deltaTransY == 0) {
+            return;
+        }
+
+        // Desplazar la matriz.
+//        mCurrentMatrix.postTranslate(deltaTransX, deltaTransY);
+        // TODO: Animar.
+        ValueAnimator transValueAnimator = ValueAnimator.ofFloat(0, 1);
+        transValueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        transValueAnimator.setDuration(ANIMATION_DURATION);
+        final float finalDeltaTransX = deltaTransX;
+        final float finalDeltaTransY = deltaTransY;
+        final float currentScale = matrixValues[Matrix.MSCALE_X];
+        transValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                float animatedFraction = valueAnimator.getAnimatedFraction();
+                float animatedTransX = transX + (finalDeltaTransX * animatedFraction);
+                float animatedTransY = transY + (finalDeltaTransY * animatedFraction);
+                mCurrentMatrix.setScale(currentScale, currentScale);
+                mCurrentMatrix.postTranslate(animatedTransX, animatedTransY);
+
+                ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+            }
+        });
+        transValueAnimator.start();
     }
 
     //region Setters
     public void setScale(int displayWidth, int displayHeight) {
-        Drawable drawable = this.getDrawable();
-        int intrinsicWidth = drawable.getIntrinsicWidth();
-        int intrinsicHeight = drawable.getIntrinsicHeight();
-
         // Establecer variables de tamaño de la imagen.
-        mBitmapWidth = intrinsicWidth;
-        mBitmapHeight = intrinsicHeight;
-
-//        // Establecer variables de tamaño de la pantalla.
-//        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-//        int displayWidth = displayMetrics.widthPixels;
-//        int displayHeight = displayMetrics.heightPixels;
+        Drawable drawable = this.getDrawable();
+        mBitmapWidth = drawable.getIntrinsicWidth();
+        mBitmapHeight = drawable.getIntrinsicHeight();
 
         // Escalar y centrar matriz de la view que contiene la imagen.
         RectF dest = new RectF(0, 0, displayWidth, displayHeight);
@@ -168,9 +197,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 mCurrentMatrix.set(mDefaultMatrix);
             }
             else {
-                float scale = mMinScaleFactor + (mMaxScaleFactor - mMinScaleFactor) / 4;
-                int px = Math.round(mBitmapWidth * scale / 2);
-                int py = Math.round(mBitmapHeight * scale / 2);
+                // TODO: Animar.
+                float scale = mMinScaleFactor * MAX_ZOOM_SCALE / 4;
+                float px = mBitmapWidth * scale;
+                float py = mBitmapHeight * scale;
                 mCurrentMatrix.setScale(scale, scale, px, py);
             }
 
@@ -179,51 +209,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-//            if (Math.abs(distanceX) < 10 && Math.abs(distanceY) < 10) {
-////                return false;
-////            }
-////
+            // Establecer estado de scroll.
             mIsScrolling = true;
-            distanceX = -distanceX;
-            distanceY = -distanceY;
-////
-////            float[] matrixValues = new float[9];
-////            mCurrentMatrix.getValues(matrixValues);
-////            float translateX = matrixValues[Matrix.MTRANS_X];
-////            float translateY = matrixValues[Matrix.MTRANS_Y];
-////
-////            float bitmapWidth = mBitmapWidth * matrixValues[Matrix.MSCALE_X];
-////            float bitmapHeight = mBitmapHeight * matrixValues[Matrix.MSCALE_Y];
-////
-////            // Controlar desplazamiento en X.
-////            float dX = getWidth() - bitmapWidth;
-////            float minTranslateX = dX < 0 ? dX : 0;
-////            float maxTranslateX = dX < 0 ? 0 : dX;
-////            float newTranslateX = translateX + distanceX;
-////
-////            if (newTranslateX > maxTranslateX) {
-////                distanceX = maxTranslateX - translateX;
-////            }
-////            else if (newTranslateX < minTranslateX) {
-////                distanceX = minTranslateX - translateX;
-////            }
-////
-////            // Controlar desplazamiento en Y.
-////            float dY = getHeight() - bitmapHeight;
-////            float minTranslateY = dY < 0 ? dY : 0;
-////            float maxTranslateY = dY < 0 ? 0 : dY;
-////            float newTranslateY = translateY + distanceY;
-////
-////            if (newTranslateY > maxTranslateY) {
-////                distanceY = maxTranslateY - translateY;
-////            }
-////            else if (newTranslateY < minTranslateY) {
-////                distanceY = minTranslateY - translateY;
-////            }
-////
-            // Desplazar matriz.
-            mCurrentMatrix.postTranslate(distanceX, distanceY);
-////
+
+            // Desplazar matriz. Las distancias se invierten para que sean correctas.
+            mCurrentMatrix.postTranslate(-distanceX, -distanceY);
+
             return true;
         }
     }
@@ -253,6 +244,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
 
+            // FIXME: Si se hace zoom- y se scrollea al mismo tiempo, la imagen queda chica.
             // Verificar que el factor de escala final se encuentre dentro del rango permitido.
             float[] initialMatrixValues = new float[9];
             mCurrentMatrix.getValues(initialMatrixValues);

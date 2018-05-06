@@ -74,7 +74,6 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         mZoomableImageView = findViewById(R.id.zoomable_image_view);
         Intent intent = getIntent();
-//        Uri bitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
         mBitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
         mBitmapEdgesUri = intent.getParcelableExtra(BITMAP_EDGES_URI_EXTRA);
 
@@ -91,49 +90,6 @@ public class ImageViewerActivity extends AppCompatActivity {
         Point screenSize = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(screenSize);
         mZoomableImageView.setScale(screenSize.x, screenSize.y);
-
-//        try {
-////            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), bitmapUri);
-//            mBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mBitmapUri);
-//
-////            mZoomableImageView.setImageURI(mBitmapUri);
-//
-//            if (edgesOnly) {
-//                mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(mBitmap));
-//            }
-//            else {
-//                mZoomableImageView.setImageBitmap(mBitmap);
-//            }
-//            mZoomableImageView.setScale(mBitmap.getWidth(), mBitmap.getHeight());
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-
-
-
-//        Glide.with(this)
-//            .asBitmap()
-//            .load(mBitmapUri)
-//            .into(new SimpleTarget<Bitmap>() {
-//                @Override
-//                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-//                    mBitmap = resource.copy(resource.getConfig(), false);
-//                    resource.recycle();
-//                    int width = mBitmap.getWidth();
-//                    int height = mBitmap.getHeight();
-//                    if (edgesOnly) {
-//                        Mat rgba = new Mat();
-//                        Utils.bitmapToMat(mBitmap, rgba);
-//                        mZoomableImageView.setImageBitmap(ImageProcessingUtils.detectEdges(rgba));
-//                    }
-//                    else {
-//                        mZoomableImageView.setImageBitmap(mBitmap);
-//                    }
-//                    mZoomableImageView.setScale(width, height);
-//                }
-//            });
     }
 
     @Override
