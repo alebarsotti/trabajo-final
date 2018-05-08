@@ -1,9 +1,6 @@
 package barsotti.alejandro.prototipotf.photoCapture;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
-
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -14,7 +11,6 @@ public class ImageProcessingUtils {
     private static final int OPEN_CV_MAX_EDGE_THRESHOLD = 100;
 
     public static Bitmap detectEdges(Bitmap bitmap) {
-//    public static Bitmap detectEdges(Mat rgba) {
         // Crear una matriz con la información de la imagen.
         Mat rgba = new Mat();
         Utils.bitmapToMat(bitmap, rgba);

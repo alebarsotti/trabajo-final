@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
@@ -15,17 +16,18 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.Semaphore;
 
 import barsotti.alejandro.prototipotf.R;
 
@@ -41,6 +43,7 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     Uri mImageUri;
     Uri mImageEdgesUri;
     String mImageFilename;
+//    FrameLayout mProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +57,7 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         mImagePreview = findViewById(R.id.image_preview);
         mImageOriginOptionsLayout = findViewById(R.id.image_origin_options_layout);
         mImagePreviewLayout = findViewById(R.id.image_preview_layout);
+//        mProgressBar = findViewById(R.id.progress_bar);
 
         hidePreview();
     }
@@ -175,7 +179,10 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
 
     public void confirmPictureSelection(View view) {
         // TODO: Crear imagen solo-bordes asíncronamente.
+//        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
+//        new CreateEdgesOnlyBitmapTask().execute()
         Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
+
 
         // Crear intent y adjuntar ambas Uris (imagen original e imagen solo-bordes).
         Intent intent = new Intent(this, ImageViewerActivity.class);
@@ -197,4 +204,22 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         // Crear y devolver el archivo de imagen.
         return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
     }
+//
+//    private static class CreateEdgesOnlyBitmapTask extends AsyncTask<Void, Void, Uri> {
+//        @Override
+//        protected void onPreExecute() {
+//            mProgressBar.setVisibility(View.VISIBLE);
+//        }
+//
+//
+//        @Override
+//        protected void onPostExecute(Uri uri) {
+//            mProgressBar.setVisibility(View.GONE);
+//        }
+//
+//        @Override
+//        protected Uri doInBackground(Void... voids) {
+//
+//        }
+//    }
 }

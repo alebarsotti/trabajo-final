@@ -1,132 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="barsotti.alejandro.prototipotf.photoCapture.PhotoCaptureMainActivity"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/image_origin_options_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <android.support.constraint.ConstraintLayout
-            android:id="@+id/image_origin_options_layout"
+        <TextView
+            android:id="@+id/title"
+            style="@style/TextTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/select_image_origin"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <Button
+            android:id="@+id/take_picture_button"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="64dp"
+            android:drawableStart="@drawable/ic_camera_black"
+            android:text="@string/take_new_picture"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:onClick="takePicture"
+            app:layout_constraintTop_toBottomOf="@+id/title"/>
+
+        <include
+            android:id="@+id/separator"
+            layout="@layout/separator"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/take_picture_button"/>
+
+        <Button
+            android:id="@+id/select_from_device_button"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:drawableStart="@drawable/ic_image_black"
+            android:text="@string/select_image_from_device"
+            android:onClick="pickPicture"
+            app:layout_constraintEnd_toEndOf="@+id/separator"
+            app:layout_constraintStart_toStartOf="@+id/separator"
+            app:layout_constraintTop_toBottomOf="@+id/separator"/>
+
+    </android.support.constraint.ConstraintLayout>
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/image_preview_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/image_preview_title"
+            style="@style/TextTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/image_preview_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <ImageView
+            android:id="@+id/image_preview"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="0dp"
+            android:scaleType="centerInside"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/cancel_action"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/image_preview_title"
+            android:contentDescription="@string/image_preview_CD"
+            tools:layout_height="150dp"
+            tools:layout_width="150dp"/>
 
-            <TextView
-                android:id="@+id/title"
-                style="@style/TextTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text="@string/select_image_origin"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+        <Button
+            android:id="@+id/cancel_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:onClick="cancelPictureSelection"
+            android:text="@string/cancel_action"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/confirm_action"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_chainStyle="spread"
+            app:layout_constraintStart_toStartOf="parent"
+            />
 
-            <Button
-                android:id="@+id/take_picture_button"
-                android:layout_width="250dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="64dp"
-                android:drawableStart="@drawable/ic_camera_black"
-                android:text="@string/take_new_picture"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                android:onClick="takePicture"
-                app:layout_constraintTop_toBottomOf="@+id/title"/>
+        <Button
+            android:id="@+id/confirm_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:onClick="confirmPictureSelection"
+            android:text="@string/confirm_action"
+            app:layout_constraintBottom_toBottomOf="@+id/cancel_action"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/cancel_action"
+            app:layout_constraintTop_toTopOf="@+id/cancel_action"/>
 
-            <include
-                android:id="@+id/separator"
-                layout="@layout/separator"
-                android:layout_width="300dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/take_picture_button"/>
-
-            <Button
-                android:id="@+id/select_from_device_button"
-                android:layout_width="250dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:drawableStart="@drawable/ic_image_black"
-                android:text="@string/select_image_from_device"
-                android:onClick="pickPicture"
-                app:layout_constraintEnd_toEndOf="@+id/separator"
-                app:layout_constraintStart_toStartOf="@+id/separator"
-                app:layout_constraintTop_toBottomOf="@+id/separator"/>
-
-        </android.support.constraint.ConstraintLayout>
-
-        <android.support.constraint.ConstraintLayout
-            android:id="@+id/image_preview_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/image_preview_title"
-                style="@style/TextTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text="@string/image_preview_title"
-                app:layout_constraintBottom_toTopOf="@+id/image_preview"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_chainStyle="spread_inside"/>
-
-            <ImageView
-                android:id="@+id/image_preview"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:contentDescription="@string/image_preview_CD"
-                app:layout_constraintBottom_toTopOf="@+id/cancel_action"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/image_preview_title"
-                tools:layout_height="150dp"
-                tools:layout_width="150dp"/>
-
-            <Button
-                android:id="@+id/cancel_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:onClick="cancelPictureSelection"
-                android:text="@string/cancel_action"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/confirm_action"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintHorizontal_chainStyle="spread"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/image_preview"/>
-
-            <Button
-                android:id="@+id/confirm_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:onClick="confirmPictureSelection"
-                android:text="@string/confirm_action"
-                app:layout_constraintBottom_toBottomOf="@+id/cancel_action"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/cancel_action"
-                app:layout_constraintTop_toTopOf="@+id/cancel_action"/>
-        </android.support.constraint.ConstraintLayout>
-    </LinearLayout>
-
-</ScrollView>
+        <!--<FrameLayout-->
+            <!--android:id="@+id/progress_bar"-->
+            <!--android:background="#c8eeeeee"-->
+            <!--android:visibility="gone"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/image_preview_layout"-->
+            <!--app:layout_constraintBottom_toBottomOf="@+id/image_preview_layout"-->
+            <!--app:layout_constraintStart_toStartOf="@+id/image_preview_layout"-->
+            <!--app:layout_constraintEnd_toEndOf="@+id/image_preview_layout"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="0dp">-->
+            <!--<ProgressBar-->
+                <!--style="@style/AppTheme"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:indeterminate="true"-->
+                <!--android:layout_gravity="center"/>-->
+        <!--</FrameLayout>-->
+    </android.support.constraint.ConstraintLayout>
+</LinearLayout>
