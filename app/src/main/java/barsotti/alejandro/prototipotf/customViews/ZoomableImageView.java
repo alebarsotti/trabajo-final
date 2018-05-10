@@ -198,13 +198,15 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             if (!mCurrentMatrix.equals(mDefaultMatrix)) {
-//                mCurrentMatrix.set(mDefaultMatrix);
+                // La imagen debe volver a su estado original (mDefaultMatrix).
+                // Obtener valores finales (default) de la animación.
                 float[] defaultMatrixValues = new float[9];
                 mDefaultMatrix.getValues(defaultMatrixValues);
-                float defaultScaleFactor = defaultMatrixValues[Matrix.MSCALE_X];
-                float defaultTransX = defaultMatrixValues[Matrix.MTRANS_X];
-                float defaultTransY = defaultMatrixValues[Matrix.MTRANS_Y];
+                float finalScaleFactor = defaultMatrixValues[Matrix.MSCALE_X];
+                float finalTransX = defaultMatrixValues[Matrix.MTRANS_X];
+                float finalTransY = defaultMatrixValues[Matrix.MTRANS_Y];
 
+                // Obtener valores iniciales (actuales) de la animación.
                 float[] currentMatrixValues = new float[9];
                 mCurrentMatrix.getValues(currentMatrixValues);
                 float currentScaleFactor = currentMatrixValues[Matrix.MSCALE_X];
@@ -217,7 +219,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
                 valueAnimator.setDuration(ANIMATION_DURATION);
                 valueAnimator.addUpdateListener(new ZoomAnimatorUpdateListener(currentScaleFactor,
-                    currentTransX, currentTransY, defaultScaleFactor, defaultTransX, defaultTransY));
+                    currentTransX, currentTransY, finalScaleFactor, finalTransX, finalTransY));
                 valueAnimator.addListener(new ZoomAnimatorListener());
                 valueAnimator.start();
             }

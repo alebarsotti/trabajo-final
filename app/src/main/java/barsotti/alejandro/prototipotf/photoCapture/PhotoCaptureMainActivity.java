@@ -1,5 +1,7 @@
 package barsotti.alejandro.prototipotf.photoCapture;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -16,18 +18,26 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.FrameLayout;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.ResourceLoader;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.concurrent.Semaphore;
 
 import barsotti.alejandro.prototipotf.R;
 
@@ -43,7 +53,8 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     Uri mImageUri;
     Uri mImageEdgesUri;
     String mImageFilename;
-//    FrameLayout mProgressBar;
+    ConstraintLayout mProgressBarLayout;
+    TextView mProgressText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +68,8 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         mImagePreview = findViewById(R.id.image_preview);
         mImageOriginOptionsLayout = findViewById(R.id.image_origin_options_layout);
         mImagePreviewLayout = findViewById(R.id.image_preview_layout);
-//        mProgressBar = findViewById(R.id.progress_bar);
+        mProgressBarLayout = findViewById(R.id.progress_bar_layout);
+        mProgressText = findViewById(R.id.progress_text);
 
         hidePreview();
     }
@@ -181,14 +193,18 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         // TODO: Crear imagen solo-bordes asíncronamente.
 //        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
 //        new CreateEdgesOnlyBitmapTask().execute()
-        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
+//
+//        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
+//
+//
+//        // Crear intent y adjuntar ambas Uris (imagen original e imagen solo-bordes).
+//        Intent intent = new Intent(this, ImageViewerActivity.class);
+//        intent.putExtra(ImageViewerActivity.BITMAP_URI_EXTRA, mImageUri);
+//        intent.putExtra(ImageViewerActivity.BITMAP_EDGES_URI_EXTRA, edgesOnlyBitmapUri);
+//        startActivity(intent);
 
-
-        // Crear intent y adjuntar ambas Uris (imagen original e imagen solo-bordes).
-        Intent intent = new Intent(this, ImageViewerActivity.class);
-        intent.putExtra(ImageViewerActivity.BITMAP_URI_EXTRA, mImageUri);
-        intent.putExtra(ImageViewerActivity.BITMAP_EDGES_URI_EXTRA, edgesOnlyBitmapUri);
-        startActivity(intent);
+        CreateEdgesOnlyBitmapTask createEdgesOnlyBitmapTask = new CreateEdgesOnlyBitmapTask(this);
+        createEdgesOnlyBitmapTask.execute();
     }
 
     private File createImageFile() throws IOException {
@@ -204,22 +220,82 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         // Crear y devolver el archivo de imagen.
         return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
     }
-//
-//    private static class CreateEdgesOnlyBitmapTask extends AsyncTask<Void, Void, Uri> {
-//        @Override
-//        protected void onPreExecute() {
-//            mProgressBar.setVisibility(View.VISIBLE);
-//        }
-//
-//
-//        @Override
-//        protected void onPostExecute(Uri uri) {
-//            mProgressBar.setVisibility(View.GONE);
-//        }
-//
-//        @Override
-//        protected Uri doInBackground(Void... voids) {
-//
-//        }
-//    }
+
+    private static class CreateEdgesOnlyBitmapTask extends AsyncTask<Void, String, Uri> {
+
+        private WeakReference<PhotoCaptureMainActivity> mActivity;
+
+        CreateEdgesOnlyBitmapTask(PhotoCaptureMainActivity activity) {
+            this.mActivity = new WeakReference<>(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            PhotoCaptureMainActivity activity = mActivity.get();
+            activity.findViewById(R.id.cancel_action).setEnabled(false);
+            activity.findViewById(R.id.confirm_action).setEnabled(false);
+            activity.mProgressBarLayout.setVisibility(View.VISIBLE);
+            activity.mProgressText.setText("Ejecutando...");
+            Toast.makeText(this.mActivity.get(), "Iniciando ejecución",
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            PhotoCaptureMainActivity activity = mActivity.get();
+            activity.mProgressBarLayout.setVisibility(View.GONE);
+            activity.findViewById(R.id.cancel_action).setEnabled(true);
+            activity.findViewById(R.id.confirm_action).setEnabled(true);
+            Toast.makeText(this.mActivity.get(), "Ejecución finalizada: " + uri,
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected Uri doInBackground(Void... voids) {
+            try {
+                publishProgress("Ejecutando parte 1...");
+                Thread.sleep(5000);
+                publishProgress("Ejecutando parte 2...");
+                Thread.sleep(5000);
+                publishProgress("Ejecutando parte 3...");
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            return Uri.parse("www.google.com.ar");
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            String progressText = values[0];
+            PhotoCaptureMainActivity activity = mActivity.get();
+            AnimationSet animationSet = new AnimationSet(true);
+            animationSet.setInterpolator(new AccelerateDecelerateInterpolator());
+            TranslateAnimation translateAnimation = new TranslateAnimation(
+                    Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, 0,
+                    Animation.RELATIVE_TO_PARENT, -0.1f, Animation.RELATIVE_TO_PARENT, 0);
+            translateAnimation.setDuration(3000);
+//            translateAnimation.setRepeatMode(Animation.REVERSE);
+//            translateAnimation.setRepeatCount(1);
+//            translateAnimation.setFillAfter(true);
+            animationSet.addAnimation(translateAnimation);
+
+            AlphaAnimation alphaAnimation = new AlphaAnimation(0, 1);
+            alphaAnimation.setDuration(3000);
+//            alphaAnimation.setRepeatMode(Animation.REVERSE);
+//            alphaAnimation.setRepeatCount(1);
+            animationSet.addAnimation(alphaAnimation);
+//            AlphaAnimation alphaAnimation2 = new AlphaAnimation(1, 0);
+//            alphaAnimation2.setDuration(500);
+//            alphaAnimation2.setStartOffset(3000);
+//            alphaAnimation2.setFillAfter(false);
+//            animationSet.addAnimation(alphaAnimation2);
+            animationSet.setFillAfter(true);
+
+            activity.mProgressText.startAnimation(animationSet);
+            activity.mProgressText.setText(progressText);
+
+        }
+    }
 }

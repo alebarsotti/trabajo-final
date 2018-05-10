@@ -24,4 +24,9 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
+    <style name="ProgressBarLarge" parent="AppTheme">
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">64dp</item>
+    </style>
+
 </resources>
