@@ -11,6 +11,9 @@ public class ImageProcessingUtils {
     private static final int OPEN_CV_MAX_EDGE_THRESHOLD = 100;
 
     public static Bitmap detectEdges(Bitmap bitmap) {
+//        TODO: Probar
+//        Mat rgba = Imgcodecs.imread(file.getAbsolutePath());
+
         // Crear una matriz con la información de la imagen.
         Mat rgba = new Mat();
         Utils.bitmapToMat(bitmap, rgba);

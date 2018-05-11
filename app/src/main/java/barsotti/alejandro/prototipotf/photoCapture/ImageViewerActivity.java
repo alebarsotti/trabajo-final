@@ -13,6 +13,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -22,6 +23,7 @@ import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.SizeReadyCallback;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.target.ViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
 import org.opencv.android.Utils;
@@ -87,10 +89,20 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void setBitmap(final boolean edgesOnly) {
-        mZoomableImageView.setImageURI(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
-        Point screenSize = new Point();
-        getWindowManager().getDefaultDisplay().getRealSize(screenSize);
-        mZoomableImageView.setScale(screenSize.x, screenSize.y);
+//        mZoomableImageView.setImageURI(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
+        Glide.with(this)
+            .load(edgesOnly ? mBitmapEdgesUri : mBitmapUri)
+            .into(new ViewTarget<ZoomableImageView, Drawable>(mZoomableImageView) {
+
+                @Override
+                public void onResourceReady(@NonNull Drawable resource,
+                                            @Nullable Transition<? super Drawable> transition) {
+                    mZoomableImageView.setImageDrawable(resource);
+                    Point screenSize = new Point();
+                    getWindowManager().getDefaultDisplay().getRealSize(screenSize);
+                    mZoomableImageView.setScale(screenSize.x, screenSize.y);
+                }
+            });
     }
 
     @Override
