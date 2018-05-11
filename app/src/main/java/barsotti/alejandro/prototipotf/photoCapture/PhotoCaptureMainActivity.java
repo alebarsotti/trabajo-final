@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.ResourceLoader;
+import com.bumptech.glide.request.transition.ViewPropertyAnimationFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -107,6 +108,7 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            mImageFilename = getFilenameFromUri();
             showPreview();
         }
         else if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK) {
@@ -114,48 +116,6 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
             mImageFilename = getFilenameFromUri();
             showPreview();
         }
-    }
-
-    private Uri createEdgesOnlyBitmap() {
-        // Generar nombre de la imagen resultante.
-        int dotIndex = mImageFilename.lastIndexOf('.');
-        String edgesOnlyFilename =
-            mImageFilename.substring(0, dotIndex) + EDGES_ONLY_SUFFIX + mImageFilename.substring(dotIndex);
-
-        // Obtener el directorio de salida para la imagen.
-        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        // File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_DCIM);
-
-        // Crear archivo.
-        File edgesBitmap = new File(outputDirectory, edgesOnlyFilename);
-
-        try {
-            // Crear output stream.
-            FileOutputStream fileOutputStream = new FileOutputStream(edgesBitmap);
-
-            // Obtener imagen original.
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mImageUri);
-
-            // Generar imagen solo-bordes.
-            bitmap = ImageProcessingUtils.detectEdges(bitmap);
-
-            // Guardar nueva imagen.
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-            fileOutputStream.flush();
-            fileOutputStream.close();
-
-            // Agregar a MediaStore.
-            ContentResolver cr = getContentResolver();
-            String imagePath = edgesBitmap.getAbsolutePath();
-            String name = edgesBitmap.getName();
-            String description = "Edges Only Image";
-            MediaStore.Images.Media.insertImage(cr, imagePath, name, description);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Devolver Uri de la imagen solo-bordes.
-        return Uri.fromFile(edgesBitmap);
     }
 
     private String getFilenameFromUri() {
@@ -221,9 +181,10 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
     }
 
-    private static class CreateEdgesOnlyBitmapTask extends AsyncTask<Void, String, Uri> {
+    private static class CreateEdgesOnlyBitmapTask extends AsyncTask<Void, Void, Uri> {
 
         private WeakReference<PhotoCaptureMainActivity> mActivity;
+        private final long ANIMATION_DURATION = 1500;
 
         CreateEdgesOnlyBitmapTask(PhotoCaptureMainActivity activity) {
             this.mActivity = new WeakReference<>(activity);
@@ -235,9 +196,23 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
             activity.findViewById(R.id.cancel_action).setEnabled(false);
             activity.findViewById(R.id.confirm_action).setEnabled(false);
             activity.mProgressBarLayout.setVisibility(View.VISIBLE);
-            activity.mProgressText.setText("Ejecutando...");
-            Toast.makeText(this.mActivity.get(), "Iniciando ejecución",
-                    Toast.LENGTH_SHORT).show();
+            activity.mProgressText.setText(R.string.detect_edges_progress_text);
+
+            // Animación del texto.
+            TranslateAnimation translateAnimation = new TranslateAnimation(
+                Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0,
+                Animation.RELATIVE_TO_SELF, -0.5f, Animation.RELATIVE_TO_SELF, 0);
+            translateAnimation.setDuration(ANIMATION_DURATION);
+
+            AlphaAnimation alphaAnimation = new AlphaAnimation(0, 1);
+            alphaAnimation.setDuration(ANIMATION_DURATION);
+
+            AnimationSet animationSet = new AnimationSet(true);
+            animationSet.setInterpolator(new AccelerateDecelerateInterpolator());
+            animationSet.addAnimation(translateAnimation);
+            animationSet.addAnimation(alphaAnimation);
+
+            activity.mProgressText.startAnimation(animationSet);
         }
 
         @Override
@@ -246,56 +221,59 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
             activity.mProgressBarLayout.setVisibility(View.GONE);
             activity.findViewById(R.id.cancel_action).setEnabled(true);
             activity.findViewById(R.id.confirm_action).setEnabled(true);
-            Toast.makeText(this.mActivity.get(), "Ejecución finalizada: " + uri,
-                    Toast.LENGTH_SHORT).show();
+
+            // Crear intent y adjuntar ambas Uris (imagen original e imagen solo-bordes).
+            Intent intent = new Intent(activity, ImageViewerActivity.class);
+            intent.putExtra(ImageViewerActivity.BITMAP_URI_EXTRA, activity.mImageUri);
+            intent.putExtra(ImageViewerActivity.BITMAP_EDGES_URI_EXTRA, uri);
+            activity.startActivity(intent);
         }
 
         @Override
         protected Uri doInBackground(Void... voids) {
+            PhotoCaptureMainActivity activity = mActivity.get();
+            // Generar nombre de la imagen resultante.
+            int dotIndex = activity.mImageFilename.lastIndexOf('.');
+            String edgesOnlyFilename = activity.mImageFilename.substring(0, dotIndex) + EDGES_ONLY_SUFFIX +
+                activity.mImageFilename.substring(dotIndex);
+
+            // Obtener el directorio de salida para la imagen.
+            File outputDirectory = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+            // Crear archivo.
+            File edgesBitmap = new File(outputDirectory, edgesOnlyFilename);
+
             try {
-                publishProgress("Ejecutando parte 1...");
-                Thread.sleep(5000);
-                publishProgress("Ejecutando parte 2...");
-                Thread.sleep(5000);
-                publishProgress("Ejecutando parte 3...");
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
+                // Crear output stream.
+                FileOutputStream fileOutputStream = new FileOutputStream(edgesBitmap);
+
+                // Obtener imagen original.
+                ContentResolver contentResolver = activity.getContentResolver();
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(contentResolver, activity.mImageUri);
+
+                // Generar imagen solo-bordes.
+                bitmap = ImageProcessingUtils.detectEdges(bitmap);
+
+                // Guardar nueva imagen.
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                fileOutputStream.flush();
+                fileOutputStream.close();
+
+                // Agregar a MediaStore.
+                String imagePath = edgesBitmap.getAbsolutePath();
+                String imageName = edgesBitmap.getName();
+                String imageDescription = "Edges Only Image";
+                MediaStore.Images.Media.insertImage(contentResolver, imagePath, imageName, imageDescription);
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            return Uri.parse("www.google.com.ar");
+            // Devolver Uri de la imagen solo-bordes.
+            return Uri.fromFile(edgesBitmap);
         }
 
         @Override
-        protected void onProgressUpdate(String... values) {
-            String progressText = values[0];
-            PhotoCaptureMainActivity activity = mActivity.get();
-            AnimationSet animationSet = new AnimationSet(true);
-            animationSet.setInterpolator(new AccelerateDecelerateInterpolator());
-            TranslateAnimation translateAnimation = new TranslateAnimation(
-                    Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, 0,
-                    Animation.RELATIVE_TO_PARENT, -0.1f, Animation.RELATIVE_TO_PARENT, 0);
-            translateAnimation.setDuration(3000);
-//            translateAnimation.setRepeatMode(Animation.REVERSE);
-//            translateAnimation.setRepeatCount(1);
-//            translateAnimation.setFillAfter(true);
-            animationSet.addAnimation(translateAnimation);
-
-            AlphaAnimation alphaAnimation = new AlphaAnimation(0, 1);
-            alphaAnimation.setDuration(3000);
-//            alphaAnimation.setRepeatMode(Animation.REVERSE);
-//            alphaAnimation.setRepeatCount(1);
-            animationSet.addAnimation(alphaAnimation);
-//            AlphaAnimation alphaAnimation2 = new AlphaAnimation(1, 0);
-//            alphaAnimation2.setDuration(500);
-//            alphaAnimation2.setStartOffset(3000);
-//            alphaAnimation2.setFillAfter(false);
-//            animationSet.addAnimation(alphaAnimation2);
-            animationSet.setFillAfter(true);
-
-            activity.mProgressText.startAnimation(animationSet);
-            activity.mProgressText.setText(progressText);
-
+        protected void onProgressUpdate(Void... values) {
         }
     }
 }

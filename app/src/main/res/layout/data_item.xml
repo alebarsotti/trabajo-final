@@ -5,7 +5,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
-    android:layout_marginBottom="16dp"
+    android:paddingTop="4dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
     android:layout_height="75dp"
     android:layout_width="match_parent">
 
@@ -24,6 +26,7 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:contentDescription="@string/item_image_description"
+                    android:scaleType="fitXY"
                     android:src="@drawable/ic_account_circle_black"
                     app:layout_constraintBottom_toBottomOf="@+id/tv_address"
                     app:layout_constraintStart_toStartOf="parent"

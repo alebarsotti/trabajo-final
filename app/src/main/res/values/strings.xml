@@ -22,4 +22,5 @@
     <string name="photo_file_format">.jpg</string>
     <string name="stark_logo_CD">Stark Logo</string>
     <string name="progress_text_placeholder">Ejecutando</string>
+    <string name="detect_edges_progress_text">Detectando bordes...</string>
 </resources>
