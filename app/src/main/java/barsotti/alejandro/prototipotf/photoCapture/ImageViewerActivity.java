@@ -89,7 +89,13 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void setBitmap(final boolean edgesOnly) {
+        // Método malo pero sin perder calidad.
 //        mZoomableImageView.setImageURI(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
+//        Point screenSize = new Point();
+//        getWindowManager().getDefaultDisplay().getRealSize(screenSize);
+//        mZoomableImageView.setScale(screenSize.x, screenSize.y);
+
+        // Método mejor pero perdiendo calidad.
         Glide.with(this)
             .load(edgesOnly ? mBitmapEdgesUri : mBitmapUri)
             .into(new ViewTarget<ZoomableImageView, Drawable>(mZoomableImageView) {

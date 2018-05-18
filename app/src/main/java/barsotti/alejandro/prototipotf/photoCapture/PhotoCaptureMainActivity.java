@@ -1,22 +1,15 @@
 package barsotti.alejandro.prototipotf.photoCapture;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
+import android.os.Bundle;
 import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AlphaAnimation;
@@ -24,23 +17,19 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.ResourceLoader;
-import com.bumptech.glide.request.transition.ViewPropertyAnimationFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 import barsotti.alejandro.prototipotf.R;
+import barsotti.alejandro.prototipotf.Utils.ContentProvidersUtils;
 
 public class PhotoCaptureMainActivity extends AppCompatActivity {
 
@@ -52,10 +41,11 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     ConstraintLayout mImageOriginOptionsLayout;
     ConstraintLayout mImagePreviewLayout;
     Uri mImageUri;
-    Uri mImageEdgesUri;
     String mImageFilename;
+    String mImageFilepath;
     ConstraintLayout mProgressBarLayout;
     TextView mProgressText;
+    LinearLayout mMainLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,13 +54,14 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-
         setContentView(R.layout.activity_photo_capture_main);
+
         mImagePreview = findViewById(R.id.image_preview);
         mImageOriginOptionsLayout = findViewById(R.id.image_origin_options_layout);
         mImagePreviewLayout = findViewById(R.id.image_preview_layout);
         mProgressBarLayout = findViewById(R.id.progress_bar_layout);
         mProgressText = findViewById(R.id.progress_text);
+        mMainLayout = findViewById(R.id.photo_capture_main_layout);
 
         hidePreview();
     }
@@ -78,13 +69,9 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     public void takePicture(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE_SECURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            File photoFile = ContentProvidersUtils.createImageFile(this);
             if (photoFile != null) {
+                mImageFilepath = photoFile.getAbsolutePath();
                 Uri fileUri = FileProvider.getUriForFile(this,
                     getString(R.string.file_provider_authority), photoFile);
                 mImageUri = fileUri;
@@ -108,32 +95,20 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            mImageFilename = getFilenameFromUri();
+            mImageFilename = ContentProvidersUtils.getFilenameFromUri(this, mImageUri);
             showPreview();
-        }
-        else if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK) {
+        } else if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK) {
             mImageUri = data.getData();
-            mImageFilename = getFilenameFromUri();
+            mImageFilename = ContentProvidersUtils.getFilenameFromUri(this, mImageUri);
+            mImageFilepath = ContentProvidersUtils.getPathFromUri(this, mImageUri);
             showPreview();
         }
-    }
-
-    private String getFilenameFromUri() {
-        ContentResolver contentResolver = getContentResolver();
-        Cursor returnCursor =
-            contentResolver.query(mImageUri, null, null, null, null);
-        assert returnCursor != null;
-        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        returnCursor.moveToFirst();
-        String name = returnCursor.getString(nameIndex);
-        returnCursor.close();
-
-        return name;
     }
 
     private void hidePreview() {
         mImagePreviewLayout.setVisibility(View.GONE);
         mImageOriginOptionsLayout.setVisibility(View.VISIBLE);
+        mImagePreview.setImageURI(null);
     }
 
     private void showPreview() {
@@ -150,41 +125,14 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
     }
 
     public void confirmPictureSelection(View view) {
-        // TODO: Crear imagen solo-bordes asíncronamente.
-//        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
-//        new CreateEdgesOnlyBitmapTask().execute()
-//
-//        Uri edgesOnlyBitmapUri = createEdgesOnlyBitmap();
-//
-//
-//        // Crear intent y adjuntar ambas Uris (imagen original e imagen solo-bordes).
-//        Intent intent = new Intent(this, ImageViewerActivity.class);
-//        intent.putExtra(ImageViewerActivity.BITMAP_URI_EXTRA, mImageUri);
-//        intent.putExtra(ImageViewerActivity.BITMAP_EDGES_URI_EXTRA, edgesOnlyBitmapUri);
-//        startActivity(intent);
-
         CreateEdgesOnlyBitmapTask createEdgesOnlyBitmapTask = new CreateEdgesOnlyBitmapTask(this);
         createEdgesOnlyBitmapTask.execute();
     }
 
-    private File createImageFile() throws IOException {
-        // Crear un nombre único para el archivo de imagen.
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat =
-            new SimpleDateFormat(getString(R.string.photo_file_name_date_format));
-        Date dateTime = Calendar.getInstance().getTime();
-        String photoFileName = getText(R.string.app_name) + dateFormat.format(dateTime);
-
-        // Obtener el directorio de salida para la imagen.
-        File outputDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-
-        // Crear y devolver el archivo de imagen.
-        return File.createTempFile(photoFileName, getString(R.string.photo_file_format), outputDirectory);
-    }
-
     private static class CreateEdgesOnlyBitmapTask extends AsyncTask<Void, Void, Uri> {
 
+        private static final long ANIMATION_DURATION = 1500;
         private WeakReference<PhotoCaptureMainActivity> mActivity;
-        private final long ANIMATION_DURATION = 1500;
 
         CreateEdgesOnlyBitmapTask(PhotoCaptureMainActivity activity) {
             this.mActivity = new WeakReference<>(activity);
@@ -227,53 +175,23 @@ public class PhotoCaptureMainActivity extends AppCompatActivity {
             intent.putExtra(ImageViewerActivity.BITMAP_URI_EXTRA, activity.mImageUri);
             intent.putExtra(ImageViewerActivity.BITMAP_EDGES_URI_EXTRA, uri);
             activity.startActivity(intent);
+            mActivity.clear();
         }
 
         @Override
         protected Uri doInBackground(Void... voids) {
             PhotoCaptureMainActivity activity = mActivity.get();
-            // Generar nombre de la imagen resultante.
+
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat =
+                new SimpleDateFormat(activity.getString(R.string.photo_file_name_date_format));
+            Date dateTime = Calendar.getInstance().getTime();
+            String currentDateTime = dateFormat.format(dateTime);
+
             int dotIndex = activity.mImageFilename.lastIndexOf('.');
-            String edgesOnlyFilename = activity.mImageFilename.substring(0, dotIndex) + EDGES_ONLY_SUFFIX +
-                activity.mImageFilename.substring(dotIndex);
+            String edgesOnlyFilename = activity.mImageFilename.substring(0, dotIndex) + currentDateTime +
+                EDGES_ONLY_SUFFIX + activity.mImageFilename.substring(dotIndex);
 
-            // Obtener el directorio de salida para la imagen.
-            File outputDirectory = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-
-            // Crear archivo.
-            File edgesBitmap = new File(outputDirectory, edgesOnlyFilename);
-
-            try {
-                // Crear output stream.
-                FileOutputStream fileOutputStream = new FileOutputStream(edgesBitmap);
-
-                // Obtener imagen original.
-                ContentResolver contentResolver = activity.getContentResolver();
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(contentResolver, activity.mImageUri);
-
-                // Generar imagen solo-bordes.
-                bitmap = ImageProcessingUtils.detectEdges(bitmap);
-
-                // Guardar nueva imagen.
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-                fileOutputStream.flush();
-                fileOutputStream.close();
-
-                // Agregar a MediaStore.
-                String imagePath = edgesBitmap.getAbsolutePath();
-                String imageName = edgesBitmap.getName();
-                String imageDescription = "Edges Only Image";
-                MediaStore.Images.Media.insertImage(contentResolver, imagePath, imageName, imageDescription);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Devolver Uri de la imagen solo-bordes.
-            return Uri.fromFile(edgesBitmap);
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
+            return ImageProcessingUtils.detectEdges(activity.mImageFilepath, edgesOnlyFilename, activity);
         }
     }
 }
