@@ -2,12 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/imagen_original"
+            android:id="@+id/original_image"
             android:icon="@drawable/ic_menu_item"
             android:title="Imagen Original"/>
         <item
-            android:id="@+id/bordes_detectados"
+            android:id="@+id/detected_edges"
             android:icon="@drawable/ic_menu_item"
             android:title="Bordes Detectados"/>
     </group>
+    <item
+        android:id="@+id/draw"
+        android:icon="@drawable/ic_menu_item"
+        android:title="Dibujar"/>
 </menu>

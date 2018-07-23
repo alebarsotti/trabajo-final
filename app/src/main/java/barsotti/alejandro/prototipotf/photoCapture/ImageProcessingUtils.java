@@ -14,14 +14,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 public class ImageProcessingUtils {
-//    private static final int OPEN_CV_EDGE_THRESHOLD1 = 30;
-    private static final int OPEN_CV_EDGE_THRESHOLD1 = 60;
-    // La recomendación es que el threshold2 sea el triple del threshold1.
-//    private static final int OPEN_CV_EDGE_THRESHOLD2 = OPEN_CV_EDGE_THRESHOLD1 * 3;
-    private static final int OPEN_CV_EDGE_THRESHOLD2 = 80;
+    private static final int OPEN_CV_EDGE_THRESHOLD1 = 80;
+    private static final int OPEN_CV_EDGE_THRESHOLD2 = 160;
     private static final Size OPEN_CV_BLUR_KERNEL_SIZE = new Size(3, 3);
     private static final int OPEN_CV_CANNY_APERTURE_SIZE = 3;
-    private static final boolean OPEN_CV_CANNY_USE_L2_GRADIENT = true;
+    private static final boolean OPEN_CV_CANNY_USE_L2_GRADIENT = false;
 
     public static Uri detectEdges(String originalBitmapPath, String filename, Context context) {
         // Generar matrix a partir del path de la imagen.
@@ -35,10 +32,18 @@ public class ImageProcessingUtils {
         Mat blurredGrayScaleMat = new Mat();
         Imgproc.blur(grayScaleMat, blurredGrayScaleMat, OPEN_CV_BLUR_KERNEL_SIZE);
 
+        Mat thresholdBlurredGrayScaleMat = new Mat();
+//        Imgproc.threshold(blurredGrayScaleMat, thresholdBlurredGrayScaleMat, 127, 256,
+//            Imgproc.THRESH_BINARY);
+        Imgproc.adaptiveThreshold(blurredGrayScaleMat, thresholdBlurredGrayScaleMat, 255,
+            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, 2);
+
         // Detectar bordes en la matriz.
         Mat edgesOnlyMat = new Mat();
-        Imgproc.Canny(blurredGrayScaleMat, edgesOnlyMat, OPEN_CV_EDGE_THRESHOLD1, OPEN_CV_EDGE_THRESHOLD2,
-            OPEN_CV_CANNY_APERTURE_SIZE, OPEN_CV_CANNY_USE_L2_GRADIENT);
+//        Imgproc.Canny(blurredGrayScaleMat, edgesOnlyMat, OPEN_CV_EDGE_THRESHOLD1, OPEN_CV_EDGE_THRESHOLD2,
+//            OPEN_CV_CANNY_APERTURE_SIZE, OPEN_CV_CANNY_USE_L2_GRADIENT);
+        Imgproc.Canny(thresholdBlurredGrayScaleMat, edgesOnlyMat, OPEN_CV_EDGE_THRESHOLD1,
+            OPEN_CV_EDGE_THRESHOLD2, OPEN_CV_CANNY_APERTURE_SIZE, OPEN_CV_CANNY_USE_L2_GRADIENT);
 
         // Crear archivo.
         File edgesBitmap = new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), filename);

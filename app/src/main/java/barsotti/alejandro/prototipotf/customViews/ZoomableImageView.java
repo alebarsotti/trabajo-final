@@ -3,10 +3,21 @@ package barsotti.alejandro.prototipotf.customViews;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -14,19 +25,64 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
-public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
-    private static final int MAX_ZOOM_SCALE = 15;
-    private static final int ANIMATION_DURATION = 250;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.WeakReference;
 
-    private boolean mIsScrolling;
+import barsotti.alejandro.prototipotf.interfaces.IZoomableImageView;
+import barsotti.alejandro.prototipotf.photoCapture.ImageViewerActivity;
+
+public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
+    implements IZoomableImageView {
+    private static final int MAX_ZOOM_SCALE = 30;
+    private static final int ANIMATION_DURATION = 250;
+    //FIXME
+    private static final float TOUCH_TOLERANCE = 10;
+
     private float mMaxScaleFactor;
     private float mMinScaleFactor;
-    private int mBitmapWidth;
-    private int mBitmapHeight;
+    private Integer mBitmapWidth;
+    private Integer mBitmapHeight;
     private Matrix mDefaultMatrix;
     private Matrix mCurrentMatrix;
     private ScaleGestureDetector mScaleGestureDetector;
     private GestureDetector mGestureDetector;
+    private States mState = States.None;
+
+    private PointF mStart;
+    private PointF mDrawingStart;
+    private PointF mEnd;
+    private PointF mDrawingEnd;
+
+    //FIXME: Prueba RegionDecoder
+    private Uri mImageUri;
+    private Bitmap mImageRegion;
+    private Integer mDisplayWidth;
+    private Integer mDisplayHeight;
+    private Paint mAlphaPaint;
+    private ImageViewerActivity.AsyncImageRegionDecoder mAsyncImageRegionDecoder;
+
+    // FIXME
+    private Path mPath;
+    private Path mRealPath;
+    private float mX;
+    private float mY;
+
+    private Paint mPaint;
+
+    // FIXME: Prueba RegionDecoder
+    @Override
+    public void setRegionBitmap(Bitmap bitmap) {
+        mImageRegion = bitmap;
+        invalidate();
+    }
+
+    public enum States {
+        None,
+        Scrolling,
+        Drawing
+    }
 
     //region Constructors
     public ZoomableImageView(Context context, AttributeSet attrs) {
@@ -45,6 +101,89 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     }
     //endregion
 
+    public void setState(States state) {
+        mState = state;
+    }
+
+
+
+
+
+
+
+
+
+    private void updateImageMatrix() {
+        if (mCurrentMatrix.equals(mDefaultMatrix)) {
+            mImageRegion = null;
+        } else {
+            // FIXME: Prueba RegionDecoder
+            if (mAsyncImageRegionDecoder != null) {
+                mAsyncImageRegionDecoder.cancel(true);
+            }
+            mImageRegion = null;
+            mAsyncImageRegionDecoder = new ImageViewerActivity.AsyncImageRegionDecoder(
+                getContext().getContentResolver(), mImageUri, mBitmapWidth, mCurrentMatrix, this,
+                new Point(mDisplayWidth, mDisplayHeight));
+            mAsyncImageRegionDecoder.execute();
+
+
+
+//            try {
+//                InputStream input = super.getContext().getContentResolver().openInputStream(mImageUri);
+//                BitmapRegionDecoder bitmapRegionDecoder = BitmapRegionDecoder.newInstance(input, false);
+//                int originalWidth = bitmapRegionDecoder.getWidth();
+//                float originalSampling = originalWidth / (float) mBitmapWidth;
+//
+//                float[] matrixValues = new float[9];
+//                mCurrentMatrix.getValues(matrixValues);
+//                float offsetX = matrixValues[Matrix.MTRANS_X];
+//                float offsetY = matrixValues[Matrix.MTRANS_Y];
+//                float currentScale = matrixValues[Matrix.MSCALE_X];
+//////                currentScale = 1/currentScale;
+////                currentScale = 1;
+////                originalSampling = 1;//originalSampling;
+//
+//                int regionWidth = (int) (mDisplayWidth / currentScale * originalSampling);
+//                int regionHeight = (int) (mDisplayHeight / currentScale * originalSampling);
+//                int regionStartX = (int) (-offsetX / currentScale * originalSampling);
+//                int regionStartY = (int) (-offsetY / currentScale * originalSampling);
+//
+//                Rect region = new Rect(regionStartX, regionStartY,
+//                    regionStartX + regionWidth, regionStartY + regionHeight);
+//
+//                mImageRegion = bitmapRegionDecoder.decodeRegion(region, null);
+//                mImageRegion = Bitmap.createScaledBitmap(mImageRegion, mDisplayWidth, mDisplayHeight, false);
+//                if (input != null) {
+//                    input.close();
+//                }
+//                invalidate();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+        }
+
+
+        if (mStart != null && mEnd != null) {
+//            float[] matrixValues = new float[9];
+//            mCurrentMatrix.getValues(matrixValues);
+//            float offsetX = matrixValues[Matrix.MTRANS_X];
+//            float offsetY = matrixValues[Matrix.MTRANS_Y];
+//            float scale = matrixValues[Matrix.MSCALE_X];
+//
+//
+//            mDrawingStart.set(mStart.x * scale + offsetX, mStart.y * scale + offsetY);
+//            mDrawingEnd.set(mEnd.x * scale + offsetX, mEnd.y * scale + offsetY);
+            invalidate();
+        }
+
+        if (mRealPath != null) {
+            mRealPath.transform(mCurrentMatrix, mPath);
+        }
+
+        this.setImageMatrix(mCurrentMatrix);
+    }
+
     @Override
     public boolean performClick() {
         return super.performClick();
@@ -54,19 +193,131 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     public boolean onTouchEvent(MotionEvent event) {
         this.performClick();
 
-        // Informar del evento a los detectores de gestos y escala.
-        mScaleGestureDetector.onTouchEvent(event);
-        mGestureDetector.onTouchEvent(event);
+        // Verificar si se está en modo de dibujo o no.
+        if (!mState.equals(States.Drawing)) {
+            // Informar del evento a los detectores de gestos y escala.
+            mScaleGestureDetector.onTouchEvent(event);
+            mGestureDetector.onTouchEvent(event);
 
-        // Verificar necesidad de desplazamiento al finalizar un scroll.
-        if (event.getAction() == MotionEvent.ACTION_UP && mIsScrolling) {
-            mIsScrolling = false;
-            handleScrollEnded();
+            // Verificar necesidad de desplazamiento al finalizar un scroll.
+            if (event.getAction() == MotionEvent.ACTION_UP && mState.equals(States.Scrolling)) {
+                mState = States.None;
+                handleScrollEnded();
+            }
+
+            updateImageMatrix();
+        }
+        else {
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
+                case MotionEvent.ACTION_DOWN: {
+                    //FIXME: Prueba Path
+                    if (mPath == null) {
+                        mPath = new Path();
+//                        mPath.setFillType(Path.FillType.);
+                    }
+                    mPath.reset();
+                    float x = event.getX();
+                    float y = event.getY();
+                    mPath.moveTo(x, y);
+                    mX = x;
+                    mY = y;
+
+//
+//                    float[] matrixValues = new float[9];
+//                    mCurrentMatrix.getValues(matrixValues);
+//                    float offsetX = matrixValues[Matrix.MTRANS_X];
+//                    float offsetY = matrixValues[Matrix.MTRANS_Y];
+//                    float scale = matrixValues[Matrix.MSCALE_X];
+//                    float bitmapX = (event.getX() - offsetX) / scale;
+//                    float bitmapY = (event.getY() - offsetY) / scale;
+//
+//                    if (mStart == null) {
+//                        mStart = new PointF(bitmapX, bitmapY);
+//                    }
+//                    else {
+//                        mStart.set(bitmapX, bitmapY);
+//                    }
+//
+//                    mDrawingStart = new PointF(event.getX(), event.getY());
+//
+//                    mEnd = null;
+
+                    break;
+                }
+                case MotionEvent.ACTION_MOVE: {
+                    //FIXME
+                    float x = event.getX();
+                    float y = event.getY();
+                    float dx = Math.abs(x - mX);
+                    float dy = Math.abs(y - mY);
+                    if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+                        mPath.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
+                        mX = x;
+                        mY = y;
+
+//                        circlePath.reset();
+//                        circlePath.addCircle(mX, mY, 30, Path.Direction.CW);
+                    }
+
+
+//                    float[] matrixValues = new float[9];
+//                    mCurrentMatrix.getValues(matrixValues);
+//                    float offsetX = matrixValues[Matrix.MTRANS_X];
+//                    float offsetY = matrixValues[Matrix.MTRANS_Y];
+//                    float scale = matrixValues[Matrix.MSCALE_X];
+//                    float bitmapX = (event.getX() - offsetX) / scale;
+//                    float bitmapY = (event.getY() - offsetY) / scale;
+//
+//                    if (mEnd == null) {
+//                        mEnd = new PointF(bitmapX, bitmapY);
+//                    }
+//                    else {
+//                        mEnd.set(bitmapX, bitmapY);
+//                    }
+//                    mDrawingEnd = new PointF(event.getX(), event.getY());
+                    break;
+                }
+                case MotionEvent.ACTION_UP: {
+                    //FIXME
+                    mPath.lineTo(mX, mY);
+//                    circlePath.reset();
+//                    // commit the path to our offscreen
+//                    mCanvas.drawPath(mPath,  mPaint);
+//                    // kill this so we don't double draw
+//                    mPath.reset();
+
+                    mRealPath = new Path(mPath);
+                    Matrix inverse = new Matrix();
+                    mCurrentMatrix.invert(inverse);
+                    mRealPath.transform(inverse);
+
+                    setState(States.None);
+                    break;
+                }
+            }
+            invalidate();
         }
 
-        this.setImageMatrix(mCurrentMatrix);
-
         return true;
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        //FIXME: Prueba RegionDecoder
+        if (mImageRegion != null) {
+            canvas.drawBitmap(mImageRegion, 0, 0, mAlphaPaint);
+        }
+
+        if (mDrawingStart != null && mDrawingEnd != null) {
+            canvas.drawLine(mDrawingStart.x, mDrawingStart.y, mDrawingEnd.x, mDrawingEnd.y, mPaint);
+        }
+
+        //FIXME
+        if (mPath != null) {
+            canvas.drawPath(mPath, mPaint);
+        }
     }
 
     private void handleScrollEnded() {
@@ -144,14 +395,27 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 mCurrentMatrix.setScale(currentScale, currentScale);
                 mCurrentMatrix.postTranslate(animatedTransX, animatedTransY);
 
-                ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+                ZoomableImageView.this.updateImageMatrix();
             }
         });
         transValueAnimator.start();
     }
 
     //region Setters
+    //FIXME: Prueba RegionDecoder
+    public void setImageUri(Uri uri) {
+        mImageUri = uri;
+    }
+
     public void setScale(int displayWidth, int displayHeight) {
+        if (mBitmapWidth != null) {
+            return;
+        }
+
+        //FIXME: Prueba RegionDecoder
+        mDisplayWidth = displayWidth;
+        mDisplayHeight = displayHeight;
+
         // Establecer variables de tamaño de la imagen.
         Drawable drawable = this.getDrawable();
         mBitmapWidth = drawable.getIntrinsicWidth();
@@ -166,7 +430,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         // Establecer los valores para el factor de escala mínimo y máximo.
         setZoomValues();
 
-        this.setImageMatrix(mCurrentMatrix);
+        this.updateImageMatrix();
     }
 
     private void setZoomValues() {
@@ -186,17 +450,27 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         this.setScaleType(ScaleType.MATRIX);
         mDefaultMatrix = new Matrix();
         mCurrentMatrix = new Matrix();
-        mIsScrolling = false;
 
         // Inicializar detectores de gestos y escala.
         mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ZoomableImageViewScaleListener());
         mGestureDetector = new GestureDetector(getContext(), new ZoomableImageViewGestureListener());
+
+        // Inicializar objeto Paint para los dibujos sobre la imagen.
+        mPaint = new Paint();
+        mPaint.setColor(Color.RED);
+        mPaint.setStrokeWidth(3f);
+        mPaint.setAntiAlias(true);
+        mPaint.setStyle(Paint.Style.STROKE);
+
+        // FIXME: Prueba RegionDecoder.
+        mAlphaPaint = new Paint();
+        mAlphaPaint.setAlpha(255);
     }
     //endregion
 
     private class ZoomableImageViewGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
-        public boolean onDoubleTap(MotionEvent e) {
+        public boolean onDoubleTap(final MotionEvent e) {
             if (!mCurrentMatrix.equals(mDefaultMatrix)) {
                 // La imagen debe volver a su estado original (mDefaultMatrix).
                 // Obtener valores finales (default) de la animación.
@@ -224,7 +498,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 valueAnimator.start();
             }
             else {
-                float scale = mMinScaleFactor * MAX_ZOOM_SCALE / 4;
+                float scale = mMinScaleFactor * MAX_ZOOM_SCALE / 6;
                 final float currentScale = mMinScaleFactor;
                 final float deltaScale = scale - currentScale;
 
@@ -233,7 +507,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 valueAnimator.setDuration(ANIMATION_DURATION);
                 valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     private float mLastScaleFactor = currentScale;
-                    private final PointF pivot = new PointF(getWidth() / 2, getHeight() / 2);
+                    private final PointF pivot = new PointF(e.getX(),// getWidth() / 2,
+                        e.getY());// getHeight() / 2);
 
                     @Override
                     public void onAnimationUpdate(ValueAnimator valueAnimator) {
@@ -243,7 +518,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                         mLastScaleFactor = mLastScaleFactor * deltaScaleFactor;
 
                         mCurrentMatrix.postScale(deltaScaleFactor, deltaScaleFactor, pivot.x, pivot.y);
-                        ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+                        ZoomableImageView.this.updateImageMatrix();
                     }
                 });
                 valueAnimator.start();
@@ -255,7 +530,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             // Establecer estado de scroll.
-            mIsScrolling = true;
+            mState = States.Scrolling;
 
             // Desplazar matriz. Las distancias se invierten para que sean correctas.
             mCurrentMatrix.postTranslate(-distanceX, -distanceY);
@@ -353,7 +628,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             mCurrentMatrix.setScale(animationScaleFactor, animationScaleFactor);
             mCurrentMatrix.postTranslate(animationTransX, animationTransY);
 
-            ZoomableImageView.this.setImageMatrix(mCurrentMatrix);
+            ZoomableImageView.this.updateImageMatrix();
         }
     }
 

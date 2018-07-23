@@ -10,6 +10,7 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <!-- android:hardwareAccelerated="false" para que deje usar imágenes grandes -->
     <application
         android:allowBackup="true"
         android:largeHeap="true"
