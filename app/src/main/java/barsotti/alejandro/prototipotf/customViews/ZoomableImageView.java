@@ -29,14 +29,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
+import barsotti.alejandro.prototipotf.Utils.ImageTile;
+import barsotti.alejandro.prototipotf.Utils.ImageTileLruCache;
 import barsotti.alejandro.prototipotf.interfaces.IZoomableImageView;
-import barsotti.alejandro.prototipotf.photoCapture.ImageViewerActivity;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
     implements IZoomableImageView {
     private static final int MAX_ZOOM_SCALE = 30;
     private static final int ANIMATION_DURATION = 250;
+    private static final int TILE_WIDTH = 128;
     //FIXME
     private static final float TOUCH_TOLERANCE = 10;
 
@@ -61,7 +65,14 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private Integer mDisplayWidth;
     private Integer mDisplayHeight;
     private Paint mAlphaPaint;
-    private ImageViewerActivity.AsyncImageRegionDecoder mAsyncImageRegionDecoder;
+    private AsyncImageRegionDecoder mAsyncImageRegionDecoder;
+    private RectF mDrawRectF = new RectF();
+    private float mOriginalZoom;
+    private List<ImageTile> mTiles = new ArrayList<>();
+    private List<ImageTile> mTilesDraw;
+    private ImageTileLruCache mImageTileCache;
+    private Integer mOriginalImageWidth;
+    private Integer mOriginalImageHeight;
 
     // FIXME
     private Path mPath;
@@ -75,6 +86,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     @Override
     public void setRegionBitmap(Bitmap bitmap) {
         mImageRegion = bitmap;
+        invalidate();
+    }
+
+    @Override
+    public void setRegionRect(RectF rectF) {
+        mDrawRectF.set(rectF);
         invalidate();
     }
 
@@ -122,63 +139,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 mAsyncImageRegionDecoder.cancel(true);
             }
             mImageRegion = null;
-            mAsyncImageRegionDecoder = new ImageViewerActivity.AsyncImageRegionDecoder(
-                getContext().getContentResolver(), mImageUri, mBitmapWidth, mCurrentMatrix, this,
-                new Point(mDisplayWidth, mDisplayHeight));
+            mAsyncImageRegionDecoder = new AsyncImageRegionDecoder(this);
             mAsyncImageRegionDecoder.execute();
 
 
-
-//            try {
-//                InputStream input = super.getContext().getContentResolver().openInputStream(mImageUri);
-//                BitmapRegionDecoder bitmapRegionDecoder = BitmapRegionDecoder.newInstance(input, false);
-//                int originalWidth = bitmapRegionDecoder.getWidth();
-//                float originalSampling = originalWidth / (float) mBitmapWidth;
-//
-//                float[] matrixValues = new float[9];
-//                mCurrentMatrix.getValues(matrixValues);
-//                float offsetX = matrixValues[Matrix.MTRANS_X];
-//                float offsetY = matrixValues[Matrix.MTRANS_Y];
-//                float currentScale = matrixValues[Matrix.MSCALE_X];
-//////                currentScale = 1/currentScale;
-////                currentScale = 1;
-////                originalSampling = 1;//originalSampling;
-//
-//                int regionWidth = (int) (mDisplayWidth / currentScale * originalSampling);
-//                int regionHeight = (int) (mDisplayHeight / currentScale * originalSampling);
-//                int regionStartX = (int) (-offsetX / currentScale * originalSampling);
-//                int regionStartY = (int) (-offsetY / currentScale * originalSampling);
-//
-//                Rect region = new Rect(regionStartX, regionStartY,
-//                    regionStartX + regionWidth, regionStartY + regionHeight);
-//
-//                mImageRegion = bitmapRegionDecoder.decodeRegion(region, null);
-//                mImageRegion = Bitmap.createScaledBitmap(mImageRegion, mDisplayWidth, mDisplayHeight, false);
-//                if (input != null) {
-//                    input.close();
-//                }
-//                invalidate();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-        }
-
-
-        if (mStart != null && mEnd != null) {
-//            float[] matrixValues = new float[9];
-//            mCurrentMatrix.getValues(matrixValues);
-//            float offsetX = matrixValues[Matrix.MTRANS_X];
-//            float offsetY = matrixValues[Matrix.MTRANS_Y];
-//            float scale = matrixValues[Matrix.MSCALE_X];
-//
-//
-//            mDrawingStart.set(mStart.x * scale + offsetX, mStart.y * scale + offsetY);
-//            mDrawingEnd.set(mEnd.x * scale + offsetX, mEnd.y * scale + offsetY);
-            invalidate();
-        }
-
-        if (mRealPath != null) {
-            mRealPath.transform(mCurrentMatrix, mPath);
         }
 
         this.setImageMatrix(mCurrentMatrix);
@@ -306,18 +270,42 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         super.onDraw(canvas);
 
         //FIXME: Prueba RegionDecoder
-        if (mImageRegion != null) {
-            canvas.drawBitmap(mImageRegion, 0, 0, mAlphaPaint);
+//        if (mImageRegion != null && mDrawRectF != null) {
+//            RectF rectangle = new RectF(mDrawRectF);
+//            mCurrentMatrix.mapRect(rectangle);
+//            canvas.drawBitmap(mImageRegion, null, rectangle, mPaint);
+//        }
+//        if (mTilesDraw == null || mTilesDraw.isEmpty()) {
+//            mTilesDraw = new ArrayList<>(mTiles);
+//        }
+        mTilesDraw = new ArrayList<>(mTiles);
+        for (ImageTile imageTile: mTilesDraw) {
+            mCurrentMatrix.mapRect(mDrawRectF, imageTile.mTileRect);
+            canvas.drawRect(mDrawRectF, mPaint);
         }
 
-        if (mDrawingStart != null && mDrawingEnd != null) {
-            canvas.drawLine(mDrawingStart.x, mDrawingStart.y, mDrawingEnd.x, mDrawingEnd.y, mPaint);
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//        if (mDrawingStart != null && mDrawingEnd != null) {
+//            canvas.drawLine(mDrawingStart.x, mDrawingStart.y, mDrawingEnd.x, mDrawingEnd.y, mPaint);
+//        }
 
         //FIXME
-        if (mPath != null) {
-            canvas.drawPath(mPath, mPaint);
-        }
+//        if (mPath != null) {
+//            canvas.drawPath(mPath, mPaint);
+//        }
     }
 
     private void handleScrollEnded() {
@@ -405,6 +393,23 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     //FIXME: Prueba RegionDecoder
     public void setImageUri(Uri uri) {
         mImageUri = uri;
+        // Establecer valor a las variables de dimensiones originales de la imagen.
+        try {
+            InputStream inputStream = getContext().getContentResolver().openInputStream(mImageUri);
+            BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+            onlyBoundsOptions.inJustDecodeBounds = true;
+            onlyBoundsOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;
+            BitmapFactory.decodeStream(inputStream, null, onlyBoundsOptions);
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            mOriginalImageHeight = onlyBoundsOptions.outHeight;
+            mOriginalImageWidth = onlyBoundsOptions.outWidth;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void setScale(int displayWidth, int displayHeight) {
@@ -415,6 +420,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         //FIXME: Prueba RegionDecoder
         mDisplayWidth = displayWidth;
         mDisplayHeight = displayHeight;
+
+        mImageTileCache = new ImageTileLruCache(4 * mDisplayHeight * mDisplayWidth * 3/2);
 
         // Establecer variables de tamaño de la imagen.
         Drawable drawable = this.getDrawable();
@@ -432,6 +439,174 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         this.updateImageMatrix();
     }
+
+
+
+
+
+    public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Void> {
+        // TODO: Verificar que esta task no rompe si se destruye la vista.
+
+        private WeakReference<ZoomableImageView> zoomableImageViewWeakReference;
+
+        AsyncImageRegionDecoder(ZoomableImageView zoomableImageViewWeakReference) {
+            this.zoomableImageViewWeakReference = new WeakReference<>(zoomableImageViewWeakReference);
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            ZoomableImageView zoomableImageView = zoomableImageViewWeakReference.get();
+            if (zoomableImageView != null) {
+                zoomableImageView.invalidate();
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+
+
+                ZoomableImageView zoomableImageView = zoomableImageViewWeakReference.get();
+
+                zoomableImageView.mTiles.clear();
+
+                InputStream input = zoomableImageView.getContext().getContentResolver()
+                    .openInputStream(zoomableImageView.mImageUri);
+                BitmapRegionDecoder bitmapRegionDecoder = BitmapRegionDecoder
+                    .newInstance(input, false);
+
+                if (zoomableImageView.mOriginalZoom == 0f) {
+                    int originalWidth = bitmapRegionDecoder.getWidth();
+                    zoomableImageView.mOriginalZoom = originalWidth / (float) zoomableImageView.mBitmapWidth;
+                }
+
+                Matrix matrix = new Matrix();
+                matrix.setScale(1/zoomableImageView.mOriginalZoom, 1/zoomableImageView.mOriginalZoom);
+
+                final BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                options.inPreferQualityOverSpeed = true;
+
+                float[] matrixValues = new float[9];
+                zoomableImageView.mCurrentMatrix.getValues(matrixValues);
+                float offsetX = matrixValues[Matrix.MTRANS_X];
+                float offsetY = matrixValues[Matrix.MTRANS_Y];
+                float currentScale = matrixValues[Matrix.MSCALE_X];
+
+                float regionStartX = -offsetX / currentScale * zoomableImageView.mOriginalZoom;
+                float regionStartY = -offsetY / currentScale * zoomableImageView.mOriginalZoom;
+
+                ///////////////////////
+                // Determinar tiles necesarias:
+                int firstTileIndexX = (int) regionStartX / TILE_WIDTH;
+                int firstTileIndexY = (int) regionStartY / TILE_WIDTH;
+                int regionWidth = (int) (zoomableImageView.mDisplayWidth / currentScale * zoomableImageView.mOriginalZoom);
+                int regionHeight = (int) (zoomableImageView.mDisplayHeight / currentScale * zoomableImageView.mOriginalZoom);
+
+                int lastTileIndexX = (int) (regionStartX + regionWidth) / TILE_WIDTH;
+                int lastTileIndexY = (int) (regionStartY + regionHeight) / TILE_WIDTH;
+
+                for(int i = firstTileIndexX; i <= lastTileIndexX; i++) {
+                    for(int j = firstTileIndexY; j <= lastTileIndexY; j++) {
+                        RectF region = new RectF(i * TILE_WIDTH, j * TILE_WIDTH,
+                            i * TILE_WIDTH + TILE_WIDTH, j * TILE_WIDTH + TILE_WIDTH);
+                        matrix.mapRect(region);
+                        ImageTile imageTile = new ImageTile(region, i * TILE_WIDTH,
+                            j * TILE_WIDTH);
+                        zoomableImageView.mTiles.add(imageTile);
+                        publishProgress();
+                    }
+                }
+
+
+
+
+//                Rect region = new Rect((int)regionStartX, (int)regionStartY,
+//                    (int) regionStartX + TILE_WIDTH, (int) regionStartY + TILE_WIDTH);
+//
+////                Bitmap imageRegion = bitmapRegionDecoder.decodeRegion(region, options);
+//
+//                RectF rectF = new RectF(region);
+//                matrix.mapRect(rectF);
+//
+//                ImageTile imageTile = new ImageTile(rectF, regionStartX, regionStartY);
+//                if (zoomableImageView.mTiles.isEmpty()) {
+//                    zoomableImageView.mTiles.add(imageTile);
+//                }
+
+
+                if (input != null) {
+                    input.close();
+                }
+
+
+
+//
+//                Rect region = new Rect(regionStartX, regionStartY,
+//                    regionStartX + TILE_WIDTH, regionStartY + TILE_WIDTH);
+//
+//                Bitmap imageRegion = bitmapRegionDecoder.decodeRegion(region, options);
+////                imageRegion = Bitmap.createScaledBitmap(imageRegion, mScreenSize.x, mScreenSize.y,
+////                    false);
+//
+//
+//                RectF rectF = new RectF(region);
+//                matrix.mapRect(rectF);
+////                mRegion.set(rectF);
+//
+//                ImageTile imageTile = new ImageTile(rectF, regionStartX, regionStartY);
+//                if (zoomableImageView.mTiles.isEmpty()) {
+//                    zoomableImageView.mTiles.add(imageTile);
+//                }
+//
+//
+//                if (input != null) {
+//                    input.close();
+//                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     private void setZoomValues() {
         float[] matrixValues = new float[9];
@@ -458,13 +633,14 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         // Inicializar objeto Paint para los dibujos sobre la imagen.
         mPaint = new Paint();
         mPaint.setColor(Color.RED);
-        mPaint.setStrokeWidth(3f);
-        mPaint.setAntiAlias(true);
+        mPaint.setStrokeWidth(1f);
+        mPaint.setAlpha(180);
+//        mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.STROKE);
 
         // FIXME: Prueba RegionDecoder.
         mAlphaPaint = new Paint();
-        mAlphaPaint.setAlpha(255);
+        mAlphaPaint.setAlpha(180);
     }
     //endregion
 

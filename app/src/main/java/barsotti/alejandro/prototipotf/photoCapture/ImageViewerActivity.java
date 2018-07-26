@@ -3,10 +3,12 @@ package barsotti.alejandro.prototipotf.photoCapture;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -16,6 +18,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.MenuItem;
 
@@ -24,6 +27,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -159,71 +163,88 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
 
-    public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Bitmap> {
-
-        private ContentResolver mContentResolver;
-        private Uri mImageUri;
-        private int mBitmapWidth;
-        private Matrix mCurrentMatrix;
-        private IZoomableImageView mListener;
-        private Point mScreenSize;
-
-        public AsyncImageRegionDecoder(ContentResolver mContentResolver, Uri mImageUri, int mBitmapWidth,
-                                Matrix mCurrentMatrix, IZoomableImageView mListener, Point mScreenSize) {
-            this.mContentResolver = mContentResolver;
-            this.mImageUri = mImageUri;
-            this.mBitmapWidth = mBitmapWidth;
-            this.mCurrentMatrix = mCurrentMatrix;
-            this.mListener = mListener;
-            this.mScreenSize = mScreenSize;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (bitmap != null && !isCancelled() && mListener != null) {
-                mListener.setRegionBitmap(bitmap);
-            }
-        }
-
-        @Override
-        protected Bitmap doInBackground(Void... voids) {
-            try {
-                InputStream input = mContentResolver.openInputStream(mImageUri);
-                BitmapRegionDecoder bitmapRegionDecoder = BitmapRegionDecoder.newInstance(input, false);
-                int originalWidth = bitmapRegionDecoder.getWidth();
-                float originalSampling = originalWidth / (float) mBitmapWidth;
-
-                float[] matrixValues = new float[9];
-                mCurrentMatrix.getValues(matrixValues);
-                float offsetX = matrixValues[Matrix.MTRANS_X];
-                float offsetY = matrixValues[Matrix.MTRANS_Y];
-                float currentScale = matrixValues[Matrix.MSCALE_X];
-
-                int regionWidth = (int) (mScreenSize.x / currentScale * originalSampling);
-                int regionHeight = (int) (mScreenSize.y / currentScale * originalSampling);
-                int regionStartX = (int) (-offsetX / currentScale * originalSampling);
-                int regionStartY = (int) (-offsetY / currentScale * originalSampling);
-
-                Rect region = new Rect(regionStartX, regionStartY,
-                    regionStartX + regionWidth, regionStartY + regionHeight);
-
-                if (region.height() > 4096 || region.width() > 4096) {
-                    return null;
-                }
-
-                Bitmap imageRegion = bitmapRegionDecoder.decodeRegion(region, null);
-                imageRegion = Bitmap.createScaledBitmap(imageRegion, mScreenSize.x, mScreenSize.y,
-                    false);
-                if (input != null) {
-                    input.close();
-                }
-
-                return imageRegion;
-            } catch (IOException e) {
-                e.printStackTrace();
-
-                return null;
-            }
-        }
-    }
+//    public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Bitmap> {
+//
+//        private ContentResolver mContentResolver;
+//        private Uri mImageUri;
+//        private int mBitmapWidth;
+//        private Matrix mCurrentMatrix;
+//        private IZoomableImageView mListener;
+//        private Point mScreenSize;
+//        private RectF mRegion = new RectF();
+//
+//        public AsyncImageRegionDecoder(ContentResolver mContentResolver, Uri mImageUri, int mBitmapWidth,
+//                                Matrix mCurrentMatrix, IZoomableImageView mListener, Point mScreenSize) {
+//            this.mContentResolver = mContentResolver;
+//            this.mImageUri = mImageUri;
+//            this.mBitmapWidth = mBitmapWidth;
+//            this.mCurrentMatrix = mCurrentMatrix;
+//            this.mListener = mListener;
+//            this.mScreenSize = mScreenSize;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Bitmap bitmap) {
+//            if (bitmap != null && !isCancelled() && mListener != null) {
+//                mListener.setRegionBitmap(bitmap);
+//                mListener.setRegionRect(mRegion);
+//            }
+//        }
+//
+//        @Override
+//        protected Bitmap doInBackground(Void... voids) {
+//            try {
+//                InputStream input = mContentResolver.openInputStream(mImageUri);
+//                BitmapRegionDecoder bitmapRegionDecoder = BitmapRegionDecoder.newInstance(input, false);
+//                int originalWidth = bitmapRegionDecoder.getWidth();
+//                float originalSampling = originalWidth / (float) mBitmapWidth;
+//
+//                float[] matrixValues = new float[9];
+//                mCurrentMatrix.getValues(matrixValues);
+//                float offsetX = matrixValues[Matrix.MTRANS_X];
+//                float offsetY = matrixValues[Matrix.MTRANS_Y];
+//                float currentScale = matrixValues[Matrix.MSCALE_X];
+//
+////                int regionWidth = (int) (mScreenSize.x / currentScale * originalSampling);
+////                int regionHeight = (int) (mScreenSize.y / currentScale * originalSampling);
+//                int regionWidth = 128;
+//                int regionHeight = 128;
+//                int regionStartX = (int) (-offsetX / currentScale * originalSampling);
+//                int regionStartY = (int) (-offsetY / currentScale * originalSampling);
+//
+//                Rect region = new Rect(regionStartX, regionStartY,
+//                    regionStartX + regionWidth, regionStartY + regionHeight);
+//
+//                if (region.height() > 4096 || region.width() > 4096) {
+//                    return null;
+//                }
+//
+//                final BitmapFactory.Options options = new BitmapFactory.Options();
+//                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+//                options.inPreferQualityOverSpeed = true;
+//
+//                Bitmap imageRegion = bitmapRegionDecoder.decodeRegion(region, options);
+////                imageRegion = Bitmap.createScaledBitmap(imageRegion, mScreenSize.x, mScreenSize.y,
+////                    false);
+//
+//
+//                Matrix matrix = new Matrix();
+//                matrix.setScale(1/originalSampling, 1/originalSampling);
+//                RectF rectF = new RectF(region);
+//                matrix.mapRect(rectF);
+//                mRegion.set(rectF);
+//
+//
+//                if (input != null) {
+//                    input.close();
+//                }
+//
+//                return imageRegion;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//
+//                return null;
+//            }
+//        }
+//    }
 }
