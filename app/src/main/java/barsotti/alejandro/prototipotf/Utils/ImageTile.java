@@ -6,19 +6,20 @@ import android.graphics.RectF;
 public class ImageTile {
     public final RectF mTileRect;
 
-    public final int mHorizontalPos;
+//    public final int mHorizontalPos;
+//
+//    public final int mVerticalPos;
 
-    public final int mVerticalPos;
-
-    public ImageTile(RectF tileRect, int horizontalPos, int verticalPos) {
+//    public ImageTile(RectF tileRect, int horizontalPos, int verticalPos) {
+    public ImageTile(RectF tileRect) {
         mTileRect = new RectF();
         mTileRect.set(tileRect);
-        mHorizontalPos = horizontalPos;
-        mVerticalPos = verticalPos;
+//        mHorizontalPos = horizontalPos;
+//        mVerticalPos = verticalPos;
     }
 
-    private String getKey() {
-        return mHorizontalPos + "@" + mVerticalPos;
+    public String getKey() {
+        return mTileRect.left + "@" + mTileRect.top;
     }
 
     @Override
@@ -26,11 +27,8 @@ public class ImageTile {
         return getKey().hashCode();
     }
 
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) {
-//            return true;
-//        }
-//        return false;
-//    }
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof ImageTile && ((ImageTile) obj).getKey().equals(this.getKey());
+    }
 }
