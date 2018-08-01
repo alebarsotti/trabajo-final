@@ -5,6 +5,7 @@ import android.graphics.RectF;
 
 public class ImageTile {
     public final RectF mTileRect;
+    public final String mKey;
 
 //    public final int mHorizontalPos;
 //
@@ -14,6 +15,7 @@ public class ImageTile {
     public ImageTile(RectF tileRect) {
         mTileRect = new RectF();
         mTileRect.set(tileRect);
+        mKey = tileRect.left + "@" + tileRect.top;
 //        mHorizontalPos = horizontalPos;
 //        mVerticalPos = verticalPos;
     }

@@ -141,6 +141,9 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
 
     private void updateImageMatrix(boolean computeVisibleTiles) {
+        mDrawMatrix.setScale(mOriginalZoom, mOriginalZoom);
+        mDrawMatrix.postConcat(mCurrentMatrix);
+
         if (mCurrentMatrix.equals(mDefaultMatrix)) {
             mImageRegion = null;
         } //else {
@@ -176,8 +179,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private void ComputeVisibleTiles() {
         long startComputeIndexes = System.currentTimeMillis();
 
-        Matrix matrix = new Matrix();
-        matrix.setScale(mOriginalZoom, mOriginalZoom);
+//        Matrix matrix = new Matrix();
+//        matrix.setScale(mOriginalZoom, mOriginalZoom);
 
         float[] matrixValues = new float[9];
         mCurrentMatrix.getValues(matrixValues);
@@ -358,23 +361,40 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-//        long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
+        canvas.save();
+
+//        Matrix canvasMatrix = new Matrix();
+////        mOriginalMatrix.invert(canvasMatrix);
+////        canvasMatrix.set(mOriginalMatrix);
+//        canvasMatrix.setScale(mOriginalZoom, mOriginalZoom);
+//        canvasMatrix.postConcat(mCurrentMatrix);
+
+        canvas.setMatrix(mDrawMatrix);
+
+        long loopStartTime = System.currentTimeMillis();
         for (ImageTile imageTile: mTilesDraw) {
             // Rectángulo
-            mOriginalMatrix.mapRect(mDrawRectF, imageTile.mTileRect);
-            mCurrentMatrix.mapRect(mDrawRectF);
+//            mOriginalMatrix.mapRect(mDrawRectF, imageTile.mTileRect);
+//            mCurrentMatrix.mapRect(mDrawRectF);
 //                mDrawMatrix.mapRect(mDrawRectF, imageTile.mTileRect);
 
             // Bitmap
-            mDrawBitmap = mImageTileCache.get(imageTile.getKey());
+            mDrawBitmap = mImageTileCache.get(imageTile.mKey);
 //                Bitmap bitmap = mImageTileCache.get(imageTile.getKey());
             if (mDrawBitmap != null) {
-                canvas.drawBitmap(mDrawBitmap, null, mDrawRectF, null);
+//                canvas.drawBitmap(mDrawBitmap, null, mDrawRectF, null);
+                canvas.drawBitmap(mDrawBitmap, null, imageTile.mTileRect, null);
             }
-            canvas.drawRect(mDrawRectF, mPaint);
+//            canvas.drawRect(mDrawRectF, mPaint);
+
+            // FIXME: Prueba
+//            canvas.drawRect(imageTile.mTileRect, mPaint);
         }
-//        long stopTime = System.currentTimeMillis();
+        long loopStopTime = System.currentTimeMillis();
+        canvas.restore();
+        long stopTime = System.currentTimeMillis();
 
 
 //        //        mTilesDraw = new ArrayList<>(mTiles);
@@ -399,7 +419,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 //        }
 
 //        long elapsedTime = stopTime - startTime;
-//        Log.d("ImageView", "Tiempo de Dibujo: " + elapsedTime);
+        Log.d("ImageView", "Tiempo de Dibujo: " + (stopTime - startTime) + "; Tiempo de Loop: " + (loopStopTime - loopStartTime));
 
 
 //        if (mDrawingStart != null && mDrawingEnd != null) {
@@ -527,6 +547,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         mOriginalZoom = (float) mBitmapWidth / mOriginalImageWidth;
         mOriginalMatrix = new Matrix();
         mOriginalMatrix.setScale(mOriginalZoom, mOriginalZoom);
+        mDrawMatrix.setScale(mOriginalZoom, mOriginalZoom);
     }
 
     public void setScale(int displayWidth, int displayHeight) {
