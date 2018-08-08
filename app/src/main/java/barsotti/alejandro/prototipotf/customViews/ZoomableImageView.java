@@ -8,9 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -19,7 +17,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -35,74 +32,73 @@ import java.util.Set;
 
 import barsotti.alejandro.prototipotf.Utils.ImageTile;
 import barsotti.alejandro.prototipotf.Utils.ImageTileLruCache;
-import barsotti.alejandro.prototipotf.interfaces.IZoomableImageView;
 
-public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
-    implements IZoomableImageView {
-    private static final int MAX_ZOOM_SCALE = 30;
+public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView {
+
+    // region Constantes
+
+    // Mínimo factor de escala permitido para la matriz de la View.
+    private static final int MIN_SCALE_FACTOR = 1;
+    // Máximo factor de escala permitido para la matriz de la View.
+    private static final int MAX_SCALE_FACTOR = 30;
+    // Duración de las animaciones (desplazamiento, zoom) en milisegundos.
     private static final int ANIMATION_DURATION = 250;
-    private static final int TILE_WIDTH = 256;
-    //FIXME
+    // Tolerancia de desplazamiento para el dibujo de un nuevo punto en un Path en el modo de dibujo.
     private static final float TOUCH_TOLERANCE = 10;
 
-    private float mMaxScaleFactor;
-    private float mMinScaleFactor;
+    // endregion
+
+    // region Variables
+
+    // Ancho de cada Tile en píxeles.
+    private int mTileSize = 256;
+    // Ancho y alto en píxeles de la imagen escalada por Glide inicialmente.
     private Integer mBitmapWidth;
     private Integer mBitmapHeight;
-    private Matrix mDefaultMatrix;
-    private Matrix mCurrentMatrix;
-    private ScaleGestureDetector mScaleGestureDetector;
-    private GestureDetector mGestureDetector;
+    // Matriz original que centra la imagen en la pantalla.
+    private Matrix mDefaultMatrix = new Matrix();
+    // Matriz actual de la View, que refleja desplazamientos y escalado.
+    private Matrix mCurrentMatrix = new Matrix();
+    // Detector de gestos de escalado.
+    private ScaleGestureDetector mScaleGestureDetector =
+        new ScaleGestureDetector(getContext(), new ZoomableImageViewScaleListener());
+    // Detector de gestos adicionales.
+    private GestureDetector mGestureDetector =
+        new GestureDetector(getContext(), new ZoomableImageViewGestureListener());
+    // Estado actual de la vista.
     private States mState = States.None;
-
-    private PointF mStart;
-    private PointF mDrawingStart;
-    private PointF mEnd;
-    private PointF mDrawingEnd;
-
-    //FIXME: Prueba RegionDecoder
-    private Uri mImageUri;
-    private Bitmap mImageRegion;
+    // Variable utilizada para obtener los valores actuales de una matriz.
+    private float[] mMatrixValues = new float[9];
+    // Ancho y alto en píxeles de la pantalla del dispositivo.
     private Integer mDisplayWidth;
     private Integer mDisplayHeight;
-    private Paint mAlphaPaint;
+    // Tarea asíncrona para cargar Tiles.
     private AsyncImageRegionDecoder mAsyncImageRegionDecoder;
-    private AsyncComputeVisibleTiles mAsyncComputeVisibleTiles;
-    private RectF mDrawRectF = new RectF();
+    // TODO: Ver si se usa finalmente.
+    // Tarea asíncrona para calcular Tiles visibles.
+//    private AsyncComputeVisibleTiles mAsyncComputeVisibleTiles;
+    // Factor de escala aplicado por Glide al cargar la imagen inicialmente.
     private float mOriginalZoom;
+    // Lista de Tiles a dibujar.
     private final Set<ImageTile> mTilesDraw = new HashSet<>();
+    // Caché que almacena Tiles decodificadas para optimizar su reutilización.
     private ImageTileLruCache mImageTileCache;
+    // Ancho y alto en píxeles de la imagen original.
     private Integer mOriginalImageWidth = 0;
     private Integer mOriginalImageHeight = 0;
-    private Matrix mOriginalMatrix;
-    private Matrix mDrawMatrix = new Matrix();
+    // Matriz utilizada para escalar el Canvas previo al dibujo de las Tiles.
+    private Matrix mCanvasMatrix = new Matrix();
+    // BitmapRegionDecoder utilizado para decodificar Tiles de la imagen original.
     private BitmapRegionDecoder mBitmapRegionDecoder;
+    // Opciones utilizadas para especificar cómo decodificar Tiles.
     private BitmapFactory.Options mBitmapOptions;
-    private Bitmap mDrawBitmap;
-    private Paint mTextPaint;
-    private boolean mInitializationFinished = false;
 
-    // FIXME
+    // TODO: Revisar variables de dibujo de trazo.
     private Path mPath;
-    private Path mRealPath;
     private float mX;
     private float mY;
 
-    private Paint mPaint;
-    private Matrix mLastMatrix;
-
-    // FIXME: Prueba RegionDecoder
-    @Override
-    public void setRegionBitmap(Bitmap bitmap) {
-        mImageRegion = bitmap;
-        invalidate();
-    }
-
-    @Override
-    public void setRegionRect(RectF rectF) {
-        mDrawRectF.set(rectF);
-        invalidate();
-    }
+    // endregion
 
     public enum States {
         None,
@@ -132,123 +128,75 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         mState = state;
     }
 
-
-
-
-
-
-
-
-
     private void updateImageMatrix(boolean computeVisibleTiles) {
-        mDrawMatrix.setScale(mOriginalZoom, mOriginalZoom);
-        mDrawMatrix.postConcat(mCurrentMatrix);
+        // Actualizar matriz utilizada en onDraw.
+        mCanvasMatrix.setScale(mOriginalZoom, mOriginalZoom);
+        mCanvasMatrix.postConcat(mCurrentMatrix);
 
-        if (mCurrentMatrix.equals(mDefaultMatrix)) {
-            mImageRegion = null;
-        } //else {
-            // FIXME: Prueba RegionDecoder
-//            if (mInitializationFinished && mState.equals(States.None)) {
-//                ComputeVisibleTiles();
-//            }
-            if (computeVisibleTiles) {
-                ComputeVisibleTiles();
-            }
+        // Calcular Tiles visibles según la nueva matriz.
+        if (computeVisibleTiles) {
+            ComputeVisibleTiles();
+        }
 
-//            if (mAsyncComputeVisibleTiles != null) {
-//                mAsyncComputeVisibleTiles.cancel(true);
-//            }
-//            mAsyncComputeVisibleTiles = new AsyncComputeVisibleTiles(this);
-//            mAsyncComputeVisibleTiles.execute();
-
-
-
-//            if (mAsyncImageRegionDecoder != null) {
-//                mAsyncImageRegionDecoder.cancel(true);
-//            }
-//            mImageRegion = null;
-//            mAsyncImageRegionDecoder = new AsyncImageRegionDecoder(this);
-//            mAsyncImageRegionDecoder.execute();
-
-
-//        }
-
+        // Actualizar matrix de la View.
         this.setImageMatrix(mCurrentMatrix);
     }
 
     private void ComputeVisibleTiles() {
-//        long startComputeIndexes = System.currentTimeMillis();
+        // Obtener valores de la matriz actual.
+        mCurrentMatrix.getValues(mMatrixValues);
+        float offsetX = mMatrixValues[Matrix.MTRANS_X];
+        float offsetY = mMatrixValues[Matrix.MTRANS_Y];
+        float currentScale = mMatrixValues[Matrix.MSCALE_X];
 
-//        Matrix matrix = new Matrix();
-//        matrix.setScale(mOriginalZoom, mOriginalZoom);
-
-        float[] matrixValues = new float[9];
-        mCurrentMatrix.getValues(matrixValues);
-
-        float offsetX = matrixValues[Matrix.MTRANS_X];
-        float offsetY = matrixValues[Matrix.MTRANS_Y];
-        float currentScale = matrixValues[Matrix.MSCALE_X];
-
+        // Calcular coordenadas que representan el inicio de la region visible en la imagen original.
         float regionStartX = Math.max(0, -offsetX / currentScale / mOriginalZoom);
         float regionStartY = Math.max(0, -offsetY / currentScale / mOriginalZoom);
 
-        int firstTileIndexX = (int) regionStartX / TILE_WIDTH;
-        int firstTileIndexY = (int) regionStartY / TILE_WIDTH;
+        // Calcular dimensiones de la región visible actualmente.
         int regionWidth = (int) (mDisplayWidth / currentScale / mOriginalZoom);
         int regionHeight = (int) (mDisplayHeight / currentScale / mOriginalZoom);
 
-        int lastTileIndexX = (int) Math.min(mOriginalImageWidth / TILE_WIDTH, (regionStartX + regionWidth) / TILE_WIDTH);
-        int lastTileIndexY = (int) Math.min(mOriginalImageHeight / TILE_WIDTH, (regionStartY + regionHeight) / TILE_WIDTH);
+        // Calcular índices de la primera Tile visible actualmente.
+        int firstTileIndexX = (int) regionStartX / mTileSize;
+        int firstTileIndexY = (int) regionStartY / mTileSize;
 
-//        long endComputeIndexes = System.currentTimeMillis();
-//        int numberOfHorizontalTiles = lastTileIndexX - firstTileIndexX + 1;
-//        int numberOfVerticalTiles = lastTileIndexY - firstTileIndexY + 1;
+        // Calcular índices de la última Tile visible actualmente.
+        int lastTileIndexX = (int) Math.min(mOriginalImageWidth / mTileSize,
+            (regionStartX + regionWidth) / mTileSize);
+        int lastTileIndexY = (int) Math.min(mOriginalImageHeight / mTileSize,
+            (regionStartY + regionHeight) / mTileSize);
 
+        // Determinar el SampleLevel adecuado para el factor de escala actual.
         int sampleLevel = 1;
-
         while (regionWidth / sampleLevel > mDisplayWidth ||
             regionHeight / sampleLevel > mDisplayHeight) {
             sampleLevel <<= 1;
         }
-        Log.d("Compute", "Width/Height/SampleLevel: " + regionWidth + "/" + regionHeight + "/" + sampleLevel);
-
-//        if (mBitmapOptions.inSampleSize != sampleLevel) {
-//            mImageTileCache.evictAll();
-//        }
         mBitmapOptions.inSampleSize = sampleLevel;
 
-        // Calcular Tiles visibles.
-        long startGenerateTileList = System.currentTimeMillis();
+        // Calcular Tiles visibles actualmente.
         List<ImageTile> visibleTiles = new ArrayList<>();
         for(int rowIndex = firstTileIndexX; rowIndex <= lastTileIndexX; rowIndex++) {
             for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
+
                 // Región correspondiente a la Tile.
-                RectF region = new RectF(rowIndex * TILE_WIDTH, columnIndex * TILE_WIDTH,
-                    (rowIndex + 1) * TILE_WIDTH, (columnIndex + 1) * TILE_WIDTH);
+                RectF region = new RectF(rowIndex * mTileSize, columnIndex * mTileSize,
+                    (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
 
-                // Mapear según escalado original de Glide.
-//                    matrix.mapRect(region);
-
-                ImageTile imageTile = new ImageTile(region, sampleLevel);
-
-                visibleTiles.add(imageTile);
+                visibleTiles.add(new ImageTile(region, sampleLevel));
             }
         }
-//        long endGenerateTileList = System.currentTimeMillis();
-//        long startFiltering = System.currentTimeMillis();
 
+        // Actualizar lista de Tiles actual.
         mTilesDraw.clear();
         mTilesDraw.addAll(visibleTiles);
-//        mTilesDraw.retainAll(visibleTiles);
-//        mTilesDraw.addAll(visibleTiles);
-//        long endFiltering = System.currentTimeMillis();
 
-//        Log.d("ComputeVisibleTiles", "ComputeIndexes:" + (endComputeIndexes - startComputeIndexes));
-//        Log.d("ComputeVisibleTiles", "ComputeVisibleTiles:" + (endGenerateTileList - startGenerateTileList));
-//        Log.d("ComputeVisibleTiles", "Filtering:" + (endFiltering - startFiltering));
+        // Forzar redibujo.
         invalidate();
-        loadTiles();
 
+        // Iniciar la carga de las Tiles visibles actualmente.
+        loadVisibleTiles();
     }
 
     @Override
@@ -260,17 +208,19 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     public boolean onTouchEvent(MotionEvent event) {
         this.performClick();
 
-        // Verificar si se está en modo de dibujo o no.
+        // Verificar modo actual.
         if (!mState.equals(States.Drawing)) {
-            // Informar del evento a los detectores de gestos y escala.
-            mLastMatrix = new Matrix(mCurrentMatrix);
+            // TODO: Verificar si es necesario realizar esto.
+            // Matriz que almacena el último estado de la matriz actual.
+            Matrix mLastMatrix = new Matrix(mCurrentMatrix);
 
+            // No se está en modo Dibujo, informar del evento a los detectores de gestos y escala.
             mScaleGestureDetector.onTouchEvent(event);
             mGestureDetector.onTouchEvent(event);
 
             // Verificar necesidad de desplazamiento al finalizar un scroll.
             if (event.getAction() == MotionEvent.ACTION_UP && mState.equals(States.Scrolling)) {
-                setState(States.None);
+                // Verificar que no se vean zonas fuera de la imagen. De verse, ajustar el desplazamiento.
                 handleScrollEnded();
             }
 
@@ -279,12 +229,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             }
         }
         else {
+            // TODO: Revisar todo este branch.
+            // Determinar en qué estado del dibujo se está.
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN: {
-                    //FIXME: Prueba Path
                     if (mPath == null) {
                         mPath = new Path();
-//                        mPath.setFillType(Path.FillType.);
                     }
                     mPath.reset();
                     float x = event.getX();
@@ -292,31 +242,9 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                     mPath.moveTo(x, y);
                     mX = x;
                     mY = y;
-
-//
-//                    float[] matrixValues = new float[9];
-//                    mCurrentMatrix.getValues(matrixValues);
-//                    float offsetX = matrixValues[Matrix.MTRANS_X];
-//                    float offsetY = matrixValues[Matrix.MTRANS_Y];
-//                    float scale = matrixValues[Matrix.MSCALE_X];
-//                    float bitmapX = (event.getX() - offsetX) / scale;
-//                    float bitmapY = (event.getY() - offsetY) / scale;
-//
-//                    if (mStart == null) {
-//                        mStart = new PointF(bitmapX, bitmapY);
-//                    }
-//                    else {
-//                        mStart.set(bitmapX, bitmapY);
-//                    }
-//
-//                    mDrawingStart = new PointF(event.getX(), event.getY());
-//
-//                    mEnd = null;
-
                     break;
                 }
                 case MotionEvent.ACTION_MOVE: {
-                    //FIXME
                     float x = event.getX();
                     float y = event.getY();
                     float dx = Math.abs(x - mX);
@@ -325,39 +253,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                         mPath.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
                         mX = x;
                         mY = y;
-
-//                        circlePath.reset();
-//                        circlePath.addCircle(mX, mY, 30, Path.Direction.CW);
                     }
-
-
-//                    float[] matrixValues = new float[9];
-//                    mCurrentMatrix.getValues(matrixValues);
-//                    float offsetX = matrixValues[Matrix.MTRANS_X];
-//                    float offsetY = matrixValues[Matrix.MTRANS_Y];
-//                    float scale = matrixValues[Matrix.MSCALE_X];
-//                    float bitmapX = (event.getX() - offsetX) / scale;
-//                    float bitmapY = (event.getY() - offsetY) / scale;
-//
-//                    if (mEnd == null) {
-//                        mEnd = new PointF(bitmapX, bitmapY);
-//                    }
-//                    else {
-//                        mEnd.set(bitmapX, bitmapY);
-//                    }
-//                    mDrawingEnd = new PointF(event.getX(), event.getY());
                     break;
                 }
                 case MotionEvent.ACTION_UP: {
-                    //FIXME
                     mPath.lineTo(mX, mY);
-//                    circlePath.reset();
-//                    // commit the path to our offscreen
-//                    mCanvas.drawPath(mPath,  mPaint);
-//                    // kill this so we don't double draw
-//                    mPath.reset();
-
-                    mRealPath = new Path(mPath);
+                    Path mRealPath = new Path(mPath);
                     Matrix inverse = new Matrix();
                     mCurrentMatrix.invert(inverse);
                     mRealPath.transform(inverse);
@@ -376,120 +277,62 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        long startTime = System.currentTimeMillis();
-
+        // Guardar estado actual del Canvas y aplicar matriz de dibujo.
         canvas.save();
-
-//        Matrix canvasMatrix = new Matrix();
-////        mOriginalMatrix.invert(canvasMatrix);
-////        canvasMatrix.set(mOriginalMatrix);
-//        canvasMatrix.setScale(mOriginalZoom, mOriginalZoom);
-//        canvasMatrix.postConcat(mCurrentMatrix);
-
-        canvas.setMatrix(mDrawMatrix);
-
-        long loopStartTime = System.currentTimeMillis();
+        canvas.setMatrix(mCanvasMatrix);
+        // Dibujar los bitmaps de cada Tile.
+        Bitmap mDrawBitmap;
         for (ImageTile imageTile: mTilesDraw) {
-            // Rectángulo
-//            mOriginalMatrix.mapRect(mDrawRectF, imageTile.Rect);
-//            mCurrentMatrix.mapRect(mDrawRectF);
-//                mDrawMatrix.mapRect(mDrawRectF, imageTile.Rect);
-
-            // Bitmap
             mDrawBitmap = mImageTileCache.get(imageTile.Key);
-//                Bitmap bitmap = mImageTileCache.get(imageTile.getKey());
             if (mDrawBitmap != null) {
-//                canvas.drawBitmap(mDrawBitmap, null, mDrawRectF, null);
                 canvas.drawBitmap(mDrawBitmap, null, imageTile.Rect, null);
             }
-//            canvas.drawRect(mDrawRectF, mPaint);
-
-            // FIXME: Prueba
-//            canvas.drawRect(imageTile.Rect, mPaint);
         }
-        long loopStopTime = System.currentTimeMillis();
+        // Restaurar el Canvas a su estado original.
         canvas.restore();
-        long stopTime = System.currentTimeMillis();
-
-
-//        //        mTilesDraw = new ArrayList<>(mTiles);
-//        synchronized (mTilesDraw) {
-//            long loopStartTime = System.currentTimeMillis();
-//            for (ImageTile imageTile: mTilesDraw) {
-//                // Rectángulo
-//                mOriginalMatrix.mapRect(mDrawRectF, imageTile.Rect);
-//                mCurrentMatrix.mapRect(mDrawRectF);
-////                mDrawMatrix.mapRect(mDrawRectF, imageTile.Rect);
-//
-//                // Bitmap
-//                mDrawBitmap = mImageTileCache.get(imageTile.getKey());
-////                Bitmap bitmap = mImageTileCache.get(imageTile.getKey());
-//                if (mDrawBitmap != null) {
-//                    canvas.drawBitmap(mDrawBitmap, null, mDrawRectF, null);
-//                }
-//                canvas.drawRect(mDrawRectF, mPaint);
-//            }
-//            long stopTime = System.currentTimeMillis();
-//            loopTime = stopTime - loopStartTime;
-//        }
-
-//        long elapsedTime = stopTime - startTime;
-//        Log.d("ImageView", "Tiempo de Dibujo: " + (stopTime - startTime) + "; Tiempo de Loop: " + (loopStopTime - loopStartTime));
-
-
-//        if (mDrawingStart != null && mDrawingEnd != null) {
-//            canvas.drawLine(mDrawingStart.x, mDrawingStart.y, mDrawingEnd.x, mDrawingEnd.y, mPaint);
-//        }
-
-        //FIXME
-//        if (mPath != null) {
-//            canvas.drawPath(mPath, mPaint);
-//        }
-
-
-        canvas.drawText(mState.toString(), 10, 50, mTextPaint);
+//        mDrawBitmap = null;
     }
 
+    /**
+     * Método ejecutado al finalizar un movimiento de scroll. Asegura que la imagen se vea correctamente.
+     */
     private void handleScrollEnded() {
-        // Verificar que no se vean zonas negras fuera de la imagen. En tal caso, ajustar el desplazamiento.
-        final float[] matrixValues = new float[9];
-        mCurrentMatrix.getValues(matrixValues);
+        // Cambiar estado actual, ya que se detuvo el scroll.
+        setState(States.None);
 
+        // Obtener valores de la matriz actual.
+        mCurrentMatrix.getValues(mMatrixValues);
         // Si el factor de escala es menor al mínimo, no realizar ninguna acción.
-        if (matrixValues[Matrix.MSCALE_X] < mMinScaleFactor) {
+        if (mMatrixValues[Matrix.MSCALE_X] < MIN_SCALE_FACTOR) {
             return;
         }
+        final float transX = mMatrixValues[Matrix.MTRANS_X];
+        final float transY = mMatrixValues[Matrix.MTRANS_Y];
 
-        // Desplazamiento actual.
-        final float transX = matrixValues[Matrix.MTRANS_X];
-        final float transY = matrixValues[Matrix.MTRANS_Y];
+        // Calcular dimensiones actuales de la imagen.
+        float currentImageWidth = mBitmapWidth * mMatrixValues[Matrix.MSCALE_X];
+        float currentImageHeight = mBitmapHeight * mMatrixValues[Matrix.MSCALE_Y];
 
-        // Dimensiones actuales de la imagen.
-        float currentImageWidth = mBitmapWidth * matrixValues[Matrix.MSCALE_X];
-        float currentImageHeight = mBitmapHeight * matrixValues[Matrix.MSCALE_Y];
+        // Calcular límites de desplazamiento en X e Y.
+        float minTransX = Math.min(mDisplayWidth - currentImageWidth, 0);
+        float maxTransX = Math.max(mDisplayWidth - currentImageWidth, 0);
 
-        // Límites de desplazamiento.
-        float dX = mDisplayWidth - currentImageWidth;
-        float minTransX = dX < 0 ? dX : 0;
-        float maxTransX = dX < 0 ? 0 : dX;
+        float minTransY = Math.min(mDisplayHeight - currentImageHeight, 0);
+        float maxTransY = Math.max(mDisplayHeight - currentImageHeight, 0);
 
-        float dY = mDisplayHeight - currentImageHeight;
-        float minTransY = dY < 0 ? dY : 0;
-        float maxTransY = dY < 0 ? 0 : dY;
-
+        // Calcular delta X necesario para colocar la imagen nuevamente dentro de los límites permitidos.
         float deltaTransX = 0;
-        float deltaTransY = 0;
-        // Si el desplazamiento no se encuentra dentro de los límites permitidos. Calcular delta.
         if (transX > maxTransX || transX < minTransX) {
             float limitX = transX > maxTransX ? maxTransX : minTransX;
             deltaTransX = limitX - transX;
         }
-        // Si el ancho de la imagen es menor al ancho de la pantalla, centrar horizontalmente.
+        // Centrar horizontalmente en caso de que el ancho de la imagen sea menor al ancho de la pantalla.
         if (mDisplayWidth > currentImageWidth) {
             deltaTransX = (mDisplayWidth - currentImageWidth) / 2 - transX;
         }
 
-        // Si el desplazamiento no se encuentra dentro de los límites permitidos. Calcular delta.
+        // Calcular delta Y necesario para colocar la imagen nuevamente dentro de los límites permitidos.
+        float deltaTransY = 0;
         if (transY > maxTransY || transY < minTransY) {
             float limitY = transY > maxTransY ? maxTransY : minTransY;
             deltaTransY = limitY - transY;
@@ -501,18 +344,18 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Si no es necesario desplazar la matriz, no realizar ninguna acción.
         if (deltaTransX == 0 && deltaTransY == 0) {
-            setState(States.None);
+            // TODO: Verificar que sea necesario actualizar la matriz de la View y calcular Tiles.
             updateImageMatrix(true);
             return;
         }
 
-        // Desplazar la matriz.
+        // Animar el desplazamiento de la matriz.
         ValueAnimator transValueAnimator = ValueAnimator.ofFloat(0, 1);
         transValueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         transValueAnimator.setDuration(ANIMATION_DURATION);
         final float finalDeltaTransX = deltaTransX;
         final float finalDeltaTransY = deltaTransY;
-        final float currentScale = matrixValues[Matrix.MSCALE_X];
+        final float currentScale = mMatrixValues[Matrix.MSCALE_X];
         transValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
@@ -521,7 +364,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 float animatedTransY = transY + (finalDeltaTransY * animatedFraction);
                 mCurrentMatrix.setScale(currentScale, currentScale);
                 mCurrentMatrix.postTranslate(animatedTransX, animatedTransY);
-
                 ZoomableImageView.this.updateImageMatrix(false);
             }
         });
@@ -530,13 +372,29 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     }
 
     //region Setters
-    //FIXME: Prueba RegionDecoder
-    public void setImageUri(Uri uri) {
-        mImageUri = uri;
+
+    /**
+     * Método que inicializa y configura la View para su utilización.
+     * @param displayWidth Ancho de la pantalla del dispositivo en píxeles.
+     * @param displayHeight Alto de la pantalla del dispositivo en píxeles.
+     * @param uri Uri de la imagen original a mostrar.
+     * @param drawable Imagen escalada generada por Glide.
+     */
+    public void setupZoomableImageView(int displayWidth, int displayHeight, Uri uri, Drawable drawable) {
+        // Establecer recurso Drawable de la View.
+        this.setImageDrawable(drawable);
+
+        // Establecer variables de dimensiones de pantalla del dispositivo.
+        mDisplayWidth = displayWidth;
+        mDisplayHeight = displayHeight;
+
+        // Establecer variables de tamaño de la imagen.
+        mBitmapWidth = drawable.getIntrinsicWidth();
+        mBitmapHeight = drawable.getIntrinsicHeight();
 
         try {
             // Establecer valor a las variables de dimensiones originales de la imagen.
-            InputStream inputStream = getContext().getContentResolver().openInputStream(mImageUri);
+            InputStream inputStream = getContext().getContentResolver().openInputStream(uri);
             BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
             onlyBoundsOptions.inJustDecodeBounds = true;
             onlyBoundsOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;
@@ -548,7 +406,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             }
 
             // Iniciar BitmapRegionDecoder.
-            InputStream input = getContext().getContentResolver().openInputStream(mImageUri);
+            InputStream input = getContext().getContentResolver().openInputStream(uri);
             mBitmapRegionDecoder = BitmapRegionDecoder.newInstance(input, false);
             if (input != null) {
                 input.close();
@@ -560,25 +418,15 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Establecer valor a la variable de escalado original.
         mOriginalZoom = (float) mBitmapWidth / mOriginalImageWidth;
-        mOriginalMatrix = new Matrix();
-        mOriginalMatrix.setScale(mOriginalZoom, mOriginalZoom);
-        mDrawMatrix.setScale(mOriginalZoom, mOriginalZoom);
-    }
 
-    public void setScale(int displayWidth, int displayHeight) {
-        if (mBitmapWidth != null) {
-            return;
-        }
+        // Determinar ancho máximo de las Tiles visibles en un momento dado en escala real (1).
+        int maxHeightVisibleTiles = (int) Math.ceil((mDisplayHeight / (double) mTileSize) + 1) * mTileSize;
+        int maxWidthVisibleTiles = (int) Math.ceil((mDisplayWidth / (double) mTileSize) + 1) * mTileSize;
 
-        //FIXME: Prueba RegionDecoder
-        mDisplayWidth = displayWidth;
-        mDisplayHeight = displayHeight;
-
-        int maxTilesWidth = (int) Math.ceil((mDisplayHeight / (double) TILE_WIDTH) + 1) * TILE_WIDTH;
-        int maxTilesHeight = (int) Math.ceil((mDisplayWidth / (double) TILE_WIDTH) + 1) * TILE_WIDTH;
-        int computedCacheSize = 4 * maxTilesWidth * maxTilesHeight;
-
-        ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+        // Calcular tamaño óptimo para la caché de Tiles: tamaño calculado o 1/8 de la memoria disponible.
+        int computedCacheSize = 4 * maxHeightVisibleTiles * maxWidthVisibleTiles;
+        ActivityManager activityManager = (ActivityManager) getContext()
+            .getSystemService(Context.ACTIVITY_SERVICE);
         if (activityManager != null) {
             int availableCacheSize = activityManager.getMemoryClass() * 1024 * 1024 / 8;
             mImageTileCache = new ImageTileLruCache(Math.min(availableCacheSize, computedCacheSize));
@@ -587,22 +435,39 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             mImageTileCache = new ImageTileLruCache(computedCacheSize);
         }
 
-        // Establecer variables de tamaño de la imagen.
-        Drawable drawable = this.getDrawable();
-        mBitmapWidth = drawable.getIntrinsicWidth();
-        mBitmapHeight = drawable.getIntrinsicHeight();
-
-        // Escalar y centrar matriz de la view que contiene la imagen.
+        // Centrar matriz de la View que contiene la imagen.
         RectF dest = new RectF(0, 0, displayWidth, displayHeight);
         RectF src = new RectF(0, 0, mBitmapWidth, mBitmapHeight);
         mCurrentMatrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
         mDefaultMatrix.set(mCurrentMatrix);
-
-        // Establecer los valores para el factor de escala mínimo y máximo.
-        setZoomValues();
-
-        this.updateImageMatrix(false);
+        updateImageMatrix(false);
     }
+
+    /**
+     * Método utilizado para lanzar la tarea asíncrona encargada de decodificar Tiles.
+     */
+    private void loadVisibleTiles() {
+        if (mAsyncImageRegionDecoder != null) {
+            mAsyncImageRegionDecoder.cancel(true);
+        }
+
+        mAsyncImageRegionDecoder = new AsyncImageRegionDecoder(this);
+        mAsyncImageRegionDecoder.execute();
+    }
+
+    /**
+     * Método que inicializa variables fundamentales de la View.
+     */
+    private void initializeMembers() {
+        // Establecer tipo de escala de la vista a Matriz.
+        this.setScaleType(ScaleType.MATRIX);
+
+        // Establecer configuración para la decodificación de Bitmaps.
+        mBitmapOptions = new BitmapFactory.Options();
+        mBitmapOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        mBitmapOptions.inPreferQualityOverSpeed = true;
+    }
+    //endregion
 
     public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Void> {
         // TODO: Verificar que esta task no rompe si se destruye la vista.
@@ -615,6 +480,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         @Override
         protected void onProgressUpdate(Void... values) {
+            // Cada vez que se finaliza la decodificación de una Tile, requerir redibujo de la View.
             ZoomableImageView zoomableImageView = zoomableImageViewWeakReference.get();
             if (zoomableImageView != null) {
                 zoomableImageView.invalidate();
@@ -624,20 +490,24 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-
                 ZoomableImageView view = zoomableImageViewWeakReference.get();
+                // Verificar que el BitmapRegionDecoder esté disponible.
                 if (view.mBitmapRegionDecoder == null) {
                     return null;
                 }
 
+                // Copiar lista de Tiles a decodificar.
                 Set<ImageTile> tilesDraw = new HashSet<>(view.mTilesDraw);
                 for (ImageTile tile : tilesDraw) {
+                    // Si la tarea asíncrona fue cancelada, abortar ejecución.
                     if (isCancelled()) {
                         return null;
                     }
+                    // Buscar bitmap de la Tile en la memoria caché. De no encontrarse, generarlo.
                     Bitmap bitmap = view.mImageTileCache.get(tile.Key);
                     if (bitmap == null) {
-                        Rect rect = new Rect((int) tile.Rect.left, (int) tile.Rect.top, (int) tile.Rect.right, (int) tile.Rect.bottom);
+                        Rect rect = new Rect((int) tile.Rect.left, (int) tile.Rect.top,
+                            (int) tile.Rect.right, (int) tile.Rect.bottom);
                         bitmap = view.mBitmapRegionDecoder.decodeRegion(rect, view.mBitmapOptions);
                         view.mImageTileCache.put(tile.Key, bitmap);
                         publishProgress();
@@ -652,167 +522,108 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         }
     }
 
-    public static class AsyncComputeVisibleTiles extends AsyncTask<Void, Void, Void> {
-        private WeakReference<ZoomableImageView> zoomableImageViewReference;
-
-        AsyncComputeVisibleTiles(ZoomableImageView zoomableImageView) {
-            this.zoomableImageViewReference = new WeakReference<>(zoomableImageView);
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            ZoomableImageView zoomableImageView = zoomableImageViewReference.get();
-            if (zoomableImageView != null) {
-                zoomableImageView.loadTiles();
-            }
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            ZoomableImageView zoomableImageView = zoomableImageViewReference.get();
-
-            if (zoomableImageView == null) {
-                return null;
-            }
-
-            Matrix matrix = new Matrix();
-            matrix.setScale(zoomableImageView.mOriginalZoom, zoomableImageView.mOriginalZoom);
-
-            float[] matrixValues = new float[9];
-            zoomableImageView.mCurrentMatrix.getValues(matrixValues);
-
-            float offsetX = matrixValues[Matrix.MTRANS_X];
-            float offsetY = matrixValues[Matrix.MTRANS_Y];
-            float currentScale = matrixValues[Matrix.MSCALE_X];
-
-//        float regionStartX = -offsetX / currentScale / mOriginalZoom;
-            float regionStartX = Math.max(0, -offsetX / currentScale / zoomableImageView.mOriginalZoom);
-//        float regionStartY = -offsetY / currentScale / mOriginalZoom;
-            float regionStartY = Math.max(0, -offsetY / currentScale / zoomableImageView.mOriginalZoom);
-
-            int firstTileIndexX = (int) regionStartX / TILE_WIDTH;
-            int firstTileIndexY = (int) regionStartY / TILE_WIDTH;
-            int regionWidth = (int) (zoomableImageView.mDisplayWidth / currentScale / zoomableImageView.mOriginalZoom);
-            int regionHeight = (int) (zoomableImageView.mDisplayHeight / currentScale / zoomableImageView.mOriginalZoom);
-
-//        int lastTileIndexX = (int) (regionStartX + regionWidth) / TILE_WIDTH;
-            int lastTileIndexX = (int) Math.min(zoomableImageView.mOriginalImageWidth / TILE_WIDTH, (regionStartX + regionWidth) / TILE_WIDTH);
-//        int lastTileIndexY = (int) (regionStartY + regionHeight) / TILE_WIDTH;
-            int lastTileIndexY = (int) Math.min(zoomableImageView.mOriginalImageHeight / TILE_WIDTH, (regionStartY + regionHeight) / TILE_WIDTH);
-
-            // Calcular Tiles visibles.
-            List<ImageTile> visibleTiles = new ArrayList<>();
-            for(int rowIndex = firstTileIndexX; rowIndex <= lastTileIndexX; rowIndex++) {
-                for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
-                    if (isCancelled()) {
-                        return null;
-                    }
-
-                    // Región correspondiente a la Tile.
-                    RectF region = new RectF(rowIndex * TILE_WIDTH, columnIndex * TILE_WIDTH,
-                        (rowIndex + 1) * TILE_WIDTH, (columnIndex + 1) * TILE_WIDTH);
-
-                    // Mapear según escalado original de Glide.
-//                    matrix.mapRect(region);
-
-                    ImageTile imageTile = new ImageTile(region, 1);
-
-                    visibleTiles.add(imageTile);
-                }
-            }
-
-            // Eliminar de la lista actual de Tiles, aquellas que ya no son visibles.
-//        Set<ImageTile> imageTiles = new HashSet<>(mTiles);
-            if (isCancelled()) {
-                return null;
-            }
-            synchronized (zoomableImageView.mTilesDraw) {
-                zoomableImageView.mTilesDraw.retainAll(visibleTiles);
-                zoomableImageView.mTilesDraw.addAll(visibleTiles);
-            }
-
-            return null;
-        }
-    }
-
-    private void loadTiles() {
-        if (mAsyncImageRegionDecoder != null) {
-            mAsyncImageRegionDecoder.cancel(true);
-        }
-
-        mAsyncImageRegionDecoder = new AsyncImageRegionDecoder(this);
-        mAsyncImageRegionDecoder.execute();
-    }
-
-
-    private void setZoomValues() {
-        float[] matrixValues = new float[9];
-        mDefaultMatrix.getValues(matrixValues);
-
-        // El factor de escala mínimo será el que se setea por defecto al escalar la imagen a la vista.
-        mMinScaleFactor = matrixValues[Matrix.MSCALE_X];
-
-        // El factor de escala máximo será el resultado de multiplicar el factor de escala mínimo por el
-        // factor de escala de zoom máximo configurado.
-        mMaxScaleFactor = mMinScaleFactor * MAX_ZOOM_SCALE;
-    }
-
-    private void initializeMembers() {
-        // Establecer tipo de escala de la vista a Matriz.
-        this.setScaleType(ScaleType.MATRIX);
-        mDefaultMatrix = new Matrix();
-        mCurrentMatrix = new Matrix();
-
-        // Inicializar detectores de gestos y escala.
-        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ZoomableImageViewScaleListener());
-        mGestureDetector = new GestureDetector(getContext(), new ZoomableImageViewGestureListener());
-
-        // Inicializar objeto Paint para los dibujos sobre la imagen.
-        mPaint = new Paint();
-        mPaint.setColor(Color.RED);
-        mPaint.setStrokeWidth(1f);
-        mPaint.setAlpha(180);
-//        mPaint.setAntiAlias(true);
-        mPaint.setStyle(Paint.Style.STROKE);
-
-        // FIXME: Prueba RegionDecoder.
-        mAlphaPaint = new Paint();
-        mAlphaPaint.setAlpha(180);
-
-        mTextPaint = new Paint();
-        mTextPaint.setColor(Color.GREEN);
-        mTextPaint.setStyle(Paint.Style.FILL);
-        mTextPaint.setAntiAlias(true);
-        mTextPaint.setTextSize(50.f);
-
-        mBitmapOptions = new BitmapFactory.Options();
-        mBitmapOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        mBitmapOptions.inPreferQualityOverSpeed = true;
-
-        mInitializationFinished = true;
-    }
-    //endregion
+//    public static class AsyncComputeVisibleTiles extends AsyncTask<Void, Void, Void> {
+//        private WeakReference<ZoomableImageView> zoomableImageViewReference;
+//
+//        AsyncComputeVisibleTiles(ZoomableImageView zoomableImageView) {
+//            this.zoomableImageViewReference = new WeakReference<>(zoomableImageView);
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Void aVoid) {
+//            ZoomableImageView zoomableImageView = zoomableImageViewReference.get();
+//            if (zoomableImageView != null) {
+//                zoomableImageView.loadVisibleTiles();
+//            }
+//        }
+//
+//        @Override
+//        protected Void doInBackground(Void... voids) {
+//            ZoomableImageView zoomableImageView = zoomableImageViewReference.get();
+//
+//            if (zoomableImageView == null) {
+//                return null;
+//            }
+//
+//            Matrix matrix = new Matrix();
+//            matrix.setScale(zoomableImageView.mOriginalZoom, zoomableImageView.mOriginalZoom);
+//
+//            zoomableImageView.mCurrentMatrix.getValues(zoomableImageView.mMatrixValues);
+//
+//            float offsetX = zoomableImageView.mMatrixValues[Matrix.MTRANS_X];
+//            float offsetY = zoomableImageView.mMatrixValues[Matrix.MTRANS_Y];
+//            float currentScale = zoomableImageView.mMatrixValues[Matrix.MSCALE_X];
+//
+////        float regionStartX = -offsetX / currentScale / mOriginalZoom;
+//            float regionStartX = Math.max(0, -offsetX / currentScale / zoomableImageView.mOriginalZoom);
+////        float regionStartY = -offsetY / currentScale / mOriginalZoom;
+//            float regionStartY = Math.max(0, -offsetY / currentScale / zoomableImageView.mOriginalZoom);
+//
+//            int firstTileIndexX = (int) regionStartX / mTileSize;
+//            int firstTileIndexY = (int) regionStartY / mTileSize;
+//            int regionWidth = (int) (zoomableImageView.mDisplayWidth / currentScale / zoomableImageView.mOriginalZoom);
+//            int regionHeight = (int) (zoomableImageView.mDisplayHeight / currentScale / zoomableImageView.mOriginalZoom);
+//
+////        int lastTileIndexX = (int) (regionStartX + regionWidth) / mTileSize;
+//            int lastTileIndexX = (int) Math.min(zoomableImageView.mOriginalImageWidth / mTileSize, (regionStartX + regionWidth) / mTileSize);
+////        int lastTileIndexY = (int) (regionStartY + regionHeight) / mTileSize;
+//            int lastTileIndexY = (int) Math.min(zoomableImageView.mOriginalImageHeight / mTileSize, (regionStartY + regionHeight) / mTileSize);
+//
+//            // Calcular Tiles visibles.
+//            List<ImageTile> visibleTiles = new ArrayList<>();
+//            for(int rowIndex = firstTileIndexX; rowIndex <= lastTileIndexX; rowIndex++) {
+//                for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
+//                    if (isCancelled()) {
+//                        return null;
+//                    }
+//
+//                    // Región correspondiente a la Tile.
+//                    RectF region = new RectF(rowIndex * mTileSize, columnIndex * mTileSize,
+//                        (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
+//
+//                    // Mapear según escalado original de Glide.
+////                    matrix.mapRect(region);
+//
+//                    ImageTile imageTile = new ImageTile(region, 1);
+//
+//                    visibleTiles.add(imageTile);
+//                }
+//            }
+//
+//            // Eliminar de la lista actual de Tiles, aquellas que ya no son visibles.
+////        Set<ImageTile> imageTiles = new HashSet<>(mTiles);
+//            if (isCancelled()) {
+//                return null;
+//            }
+//            synchronized (zoomableImageView.mTilesDraw) {
+//                zoomableImageView.mTilesDraw.retainAll(visibleTiles);
+//                zoomableImageView.mTilesDraw.addAll(visibleTiles);
+//            }
+//
+//            return null;
+//        }
+//    }
 
     private class ZoomableImageViewGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(final MotionEvent e) {
+            // Determinar acción a realizar (zoom in o zoom out).
             if (!mCurrentMatrix.equals(mDefaultMatrix)) {
-                // La imagen debe volver a su estado original (mDefaultMatrix).
-                // Obtener valores finales (default) de la animación.
-                float[] defaultMatrixValues = new float[9];
-                mDefaultMatrix.getValues(defaultMatrixValues);
-                float finalScaleFactor = defaultMatrixValues[Matrix.MSCALE_X];
-                float finalTransX = defaultMatrixValues[Matrix.MTRANS_X];
-                float finalTransY = defaultMatrixValues[Matrix.MTRANS_Y];
+                // Restablecer matriz a su estado original.
 
-                // Obtener valores iniciales (actuales) de la animación.
-                float[] currentMatrixValues = new float[9];
-                mCurrentMatrix.getValues(currentMatrixValues);
-                float currentScaleFactor = currentMatrixValues[Matrix.MSCALE_X];
-                float currentTransX = currentMatrixValues[Matrix.MTRANS_X];
-                float currentTransY = currentMatrixValues[Matrix.MTRANS_Y];
+                // Obtener valores finales (default) de la matriz.
+                mDefaultMatrix.getValues(mMatrixValues);
+                float finalScaleFactor = mMatrixValues[Matrix.MSCALE_X];
+                float finalTransX = mMatrixValues[Matrix.MTRANS_X];
+                float finalTransY = mMatrixValues[Matrix.MTRANS_Y];
 
-                // Animar - ValueAnimator
+                // Obtener valores iniciales (actuales) de la matriz.
+                mCurrentMatrix.getValues(mMatrixValues);
+                float currentScaleFactor = mMatrixValues[Matrix.MSCALE_X];
+                float currentTransX = mMatrixValues[Matrix.MTRANS_X];
+                float currentTransY = mMatrixValues[Matrix.MTRANS_Y];
+
+                // Animar transición.
                 mCurrentMatrix.reset();
                 ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
                 valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -823,23 +634,21 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 valueAnimator.start();
             }
             else {
-//                float scale = mMinScaleFactor * MAX_ZOOM_SCALE / 6;
-                float scale = MAX_ZOOM_SCALE / 2;
-                final float currentScale = mMinScaleFactor;
-                final float deltaScale = scale - currentScale;
+                // Escalar hasta 1/3 del factor de escala máximo, con centro en las coordenadas del evento.
+                final float deltaScale = MAX_SCALE_FACTOR / 3 - MIN_SCALE_FACTOR;
 
+                // Animar transición.
                 ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
                 valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
                 valueAnimator.setDuration(ANIMATION_DURATION);
                 valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    private float mLastScaleFactor = currentScale;
-                    private final PointF pivot = new PointF(e.getX(),// getWidth() / 2,
-                        e.getY());// getHeight() / 2);
+                    private float mLastScaleFactor = MIN_SCALE_FACTOR;
+                    private final PointF pivot = new PointF(e.getX(), e.getY());
 
                     @Override
                     public void onAnimationUpdate(ValueAnimator valueAnimator) {
                         float animatedFraction = valueAnimator.getAnimatedFraction();
-                        float currentScaleFactor = currentScale + deltaScale * animatedFraction;
+                        float currentScaleFactor = MIN_SCALE_FACTOR + deltaScale * animatedFraction;
                         float deltaScaleFactor = currentScaleFactor / mLastScaleFactor;
                         mLastScaleFactor = mLastScaleFactor * deltaScaleFactor;
 
@@ -859,7 +668,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             // Establecer estado de scroll.
             setState(States.Scrolling);
 
-            // Desplazar matriz. Las distancias se invierten para que sean correctas.
+            // Desplazar matriz. Las distancias se deben invertir para ser correctas.
             mCurrentMatrix.postTranslate(-distanceX, -distanceY);
 
             return true;
@@ -870,62 +679,56 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
+            // Obtener factor de escala del gesto.
             float scaleFactor = detector.getScaleFactor();
 
             // Obtener factor de escala actual.
-            float[] matrixValues = new float[9];
-            mCurrentMatrix.getValues(matrixValues);
-            float currentScaleFactor = matrixValues[Matrix.MSCALE_X];
+            mCurrentMatrix.getValues(mMatrixValues);
+            float currentScaleFactor = mMatrixValues[Matrix.MSCALE_X];
 
-            // Forzar que el factor de escala sea menor o igual al factor de escala máximo.
-            if (currentScaleFactor * scaleFactor > mMaxScaleFactor) {
-                scaleFactor = mMaxScaleFactor / currentScaleFactor;
+            // Forzar que el factor de escala resultante sea menor o igual al factor de escala máximo.
+            if (currentScaleFactor * scaleFactor > MAX_SCALE_FACTOR) {
+                scaleFactor = MAX_SCALE_FACTOR / currentScaleFactor;
             }
 
-
-            PointF focus = new PointF(detector.getFocusX(), detector.getFocusY());
-            // Escalar matriz.
-            mCurrentMatrix.postScale(scaleFactor, scaleFactor, focus.x, focus.y);
+            // Escalar matriz con centro en las coordenadas del evento.
+            mCurrentMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
 
             return true;
         }
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
-
-            // FIXME: Si se hace zoom- y se scrollea al mismo tiempo, la imagen queda chica.
             // Verificar que el factor de escala final se encuentre dentro del rango permitido.
-            float[] initialMatrixValues = new float[9];
-            mCurrentMatrix.getValues(initialMatrixValues);
-            final float initialScaleFactor = initialMatrixValues[Matrix.MSCALE_X];
+            mCurrentMatrix.getValues(mMatrixValues);
+            final float initialScaleFactor = mMatrixValues[Matrix.MSCALE_X];
 
             // Si el factor de escala es mayor al mínimo establecido, no llevar a cabo ninguna acción.
-            if (initialScaleFactor > mMinScaleFactor) {
+            if (initialScaleFactor > MIN_SCALE_FACTOR) {
                 return;
             }
 
             // Determinar valores iniciales y finales para la animación.
-            float initialTransX = initialMatrixValues[Matrix.MTRANS_X];
-            float initialTransY = initialMatrixValues[Matrix.MTRANS_Y];
+            float initialTransX = mMatrixValues[Matrix.MTRANS_X];
+            float initialTransY = mMatrixValues[Matrix.MTRANS_Y];
 
-            float[] defaultMatrixValues = new float[9];
-            mDefaultMatrix.getValues(defaultMatrixValues);
-            float finalScaleFactor = mMinScaleFactor;
-            float finalTransX = defaultMatrixValues[Matrix.MTRANS_X];
-            float finalTransY = defaultMatrixValues[Matrix.MTRANS_Y];
+            mDefaultMatrix.getValues(mMatrixValues);
+            float finalTransX = mMatrixValues[Matrix.MTRANS_X];
+            float finalTransY = mMatrixValues[Matrix.MTRANS_Y];
 
-            // Animar - ValueAnimator
+            // Animar transición.
             mCurrentMatrix.reset();
             ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
             valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
             valueAnimator.setDuration(ANIMATION_DURATION);
             valueAnimator.addUpdateListener(new ZoomAnimatorUpdateListener(initialScaleFactor, initialTransX,
-                initialTransY, finalScaleFactor, finalTransX, finalTransY));
+                initialTransY, (float) MIN_SCALE_FACTOR, finalTransX, finalTransY));
             valueAnimator.addListener(new ZoomAnimatorListener(false));
             valueAnimator.start();
         }
     }
 
+    //region Animaciones
     public class ZoomAnimatorUpdateListener implements ValueAnimator.AnimatorUpdateListener {
         private float mInitialScaleFactor;
         private float mInitialTransX;
@@ -962,7 +765,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     public class ZoomAnimatorListener implements ValueAnimator.AnimatorListener {
         private boolean setDefaultMatrix;
 
-        public ZoomAnimatorListener(boolean setDefaultMatrix) {
+        ZoomAnimatorListener(boolean setDefaultMatrix) {
             this.setDefaultMatrix = setDefaultMatrix;
         }
 
@@ -973,10 +776,15 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         @Override
         public void onAnimationEnd(Animator animator) {
+            // Establecer estado None al finalizar la animación de zoom.
             setState(States.None);
+
+            // Reemplazar la matriz actual por la matriz por defecto (double-tap zoom out) si es necesario.
             if (setDefaultMatrix) {
                 mCurrentMatrix.set(mDefaultMatrix);
             }
+
+            // Recalcular Tiles visibles.
             updateImageMatrix(true);
         }
 
@@ -996,6 +804,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         @Override
         public void onAnimationEnd(Animator animator) {
+            // Establecer estado None y recalcular Tiles visibles al finalizar scroll.
             setState(States.None);
             updateImageMatrix(true);
         }
@@ -1006,4 +815,5 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         @Override
         public void onAnimationRepeat(Animator animator) {}
     }
+    //endregion
 }

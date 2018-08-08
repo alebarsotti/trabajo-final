@@ -33,13 +33,10 @@ import java.io.InputStream;
 
 import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.customViews.ZoomableImageView;
-import barsotti.alejandro.prototipotf.interfaces.IZoomableImageView;
 
 public class ImageViewerActivity extends AppCompatActivity {
     public static final String BITMAP_URI_EXTRA = "bitmapUri";
     public static final String BITMAP_EDGES_URI_EXTRA = "bitmapEdgesUri";
-    public static final String BITMAP_WIDTH = "bitmapWidth";
-    public static final String BITMAP_HEIGHT = "bitmapHeight";
 
     private Point mScreenSize;
 
@@ -123,27 +120,10 @@ public class ImageViewerActivity extends AppCompatActivity {
                 @Override
                 public void onResourceReady(@NonNull Drawable resource,
                                             @Nullable Transition<? super Drawable> transition) {
-                    mZoomableImageView.setImageDrawable(resource);
-                    mZoomableImageView.setScale(mScreenSize.x, mScreenSize.y);
-                    mZoomableImageView.setImageUri(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
+                    mZoomableImageView.setupZoomableImageView(mScreenSize.x, mScreenSize.y,
+                        edgesOnly ? mBitmapEdgesUri : mBitmapUri, resource);
                 }
             });
-
-//        // Método malo pero sin perder calidad.
-//        mZoomableImageView.setImageURI(edgesOnly ? mBitmapEdgesUri : mBitmapUri);
-
-
-//        // Método mejor pero perdiendo calidad.
-//        Glide.with(this)
-//            .load(edgesOnly ? mBitmapEdgesUri : mBitmapUri)
-//            .into(new ViewTarget<ZoomableImageView, Drawable>(mZoomableImageView) {
-//
-//                @Override
-//                public void onResourceReady(@NonNull Drawable resource,
-//                                            @Nullable Transition<? super Drawable> transition) {
-//                    mZoomableImageView.setImageDrawable(resource);
-//                }
-//            });
     }
 
     @Override
@@ -161,90 +141,4 @@ public class ImageViewerActivity extends AppCompatActivity {
             );
         }
     }
-
-
-//    public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Bitmap> {
-//
-//        private ContentResolver mContentResolver;
-//        private Uri mImageUri;
-//        private int mBitmapWidth;
-//        private Matrix mCurrentMatrix;
-//        private IZoomableImageView mListener;
-//        private Point mScreenSize;
-//        private RectF mRegion = new RectF();
-//
-//        public AsyncImageRegionDecoder(ContentResolver mContentResolver, Uri mImageUri, int mBitmapWidth,
-//                                Matrix mCurrentMatrix, IZoomableImageView mListener, Point mScreenSize) {
-//            this.mContentResolver = mContentResolver;
-//            this.mImageUri = mImageUri;
-//            this.mBitmapWidth = mBitmapWidth;
-//            this.mCurrentMatrix = mCurrentMatrix;
-//            this.mListener = mListener;
-//            this.mScreenSize = mScreenSize;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(Bitmap bitmap) {
-//            if (bitmap != null && !isCancelled() && mListener != null) {
-//                mListener.setRegionBitmap(bitmap);
-//                mListener.setRegionRect(mRegion);
-//            }
-//        }
-//
-//        @Override
-//        protected Bitmap doInBackground(Void... voids) {
-//            try {
-//                InputStream input = mContentResolver.openInputStream(mImageUri);
-//                BitmapRegionDecoder bitmapRegionDecoder = BitmapRegionDecoder.newInstance(input, false);
-//                int originalWidth = bitmapRegionDecoder.getWidth();
-//                float originalSampling = originalWidth / (float) mBitmapWidth;
-//
-//                float[] matrixValues = new float[9];
-//                mCurrentMatrix.getValues(matrixValues);
-//                float offsetX = matrixValues[Matrix.MTRANS_X];
-//                float offsetY = matrixValues[Matrix.MTRANS_Y];
-//                float currentScale = matrixValues[Matrix.MSCALE_X];
-//
-////                int regionWidth = (int) (mScreenSize.x / currentScale * originalSampling);
-////                int regionHeight = (int) (mScreenSize.y / currentScale * originalSampling);
-//                int regionWidth = 128;
-//                int regionHeight = 128;
-//                int regionStartX = (int) (-offsetX / currentScale * originalSampling);
-//                int regionStartY = (int) (-offsetY / currentScale * originalSampling);
-//
-//                Rect region = new Rect(regionStartX, regionStartY,
-//                    regionStartX + regionWidth, regionStartY + regionHeight);
-//
-//                if (region.height() > 4096 || region.width() > 4096) {
-//                    return null;
-//                }
-//
-//                final BitmapFactory.Options options = new BitmapFactory.Options();
-//                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-//                options.inPreferQualityOverSpeed = true;
-//
-//                Bitmap imageRegion = bitmapRegionDecoder.decodeRegion(region, options);
-////                imageRegion = Bitmap.createScaledBitmap(imageRegion, mScreenSize.x, mScreenSize.y,
-////                    false);
-//
-//
-//                Matrix matrix = new Matrix();
-//                matrix.setScale(1/originalSampling, 1/originalSampling);
-//                RectF rectF = new RectF(region);
-//                matrix.mapRect(rectF);
-//                mRegion.set(rectF);
-//
-//
-//                if (input != null) {
-//                    input.close();
-//                }
-//
-//                return imageRegion;
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//
-//                return null;
-//            }
-//        }
-//    }
 }
