@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -45,13 +46,16 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private static final int ANIMATION_DURATION = 250;
     // Tolerancia de desplazamiento para el dibujo de un nuevo punto en un Path en el modo de dibujo.
     private static final float TOUCH_TOLERANCE = 10;
+    // Dimensiones inicial y máxima de cada Tile.
+    private static final int INITIAL_TILE_SIZE = 64;
+    private static final int MAX_TILE_SIZE = 1024;
 
     // endregion
 
     // region Variables
 
     // Ancho de cada Tile en píxeles.
-    private int mTileSize = 256;
+    private int mTileSize = INITIAL_TILE_SIZE;
     // Ancho y alto en píxeles de la imagen escalada por Glide inicialmente.
     private Integer mBitmapWidth;
     private Integer mBitmapHeight;
@@ -92,6 +96,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private BitmapRegionDecoder mBitmapRegionDecoder;
     // Opciones utilizadas para especificar cómo decodificar Tiles.
     private BitmapFactory.Options mBitmapOptions;
+    // Pintura con AntiAlias para dibujado de Tiles.
+    private Paint mPaint = new Paint();
 
     // TODO: Revisar variables de dibujo de trazo.
     private Path mPath;
@@ -154,23 +160,38 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         float regionStartY = Math.max(0, -offsetY / currentScale / mOriginalZoom);
 
         // Calcular dimensiones de la región visible actualmente.
-        int regionWidth = (int) (mDisplayWidth / currentScale / mOriginalZoom);
-        int regionHeight = (int) (mDisplayHeight / currentScale / mOriginalZoom);
+        float regionWidth = mDisplayWidth / currentScale / mOriginalZoom;
+        float regionHeight = mDisplayHeight / currentScale / mOriginalZoom;
 
-        // Calcular índices de la primera Tile visible actualmente.
-        int firstTileIndexX = (int) regionStartX / mTileSize;
-        int firstTileIndexY = (int) regionStartY / mTileSize;
+        // Calcular índices de Tiles visibles y tamaño de Tiles adecuado.
+        int firstTileIndexX, firstTileIndexY, lastTileIndexX, lastTileIndexY;
+        mTileSize = INITIAL_TILE_SIZE >> 1;
+        do {
+            mTileSize <<= 1;
 
-        // Calcular índices de la última Tile visible actualmente.
-        int lastTileIndexX = (int) Math.min(mOriginalImageWidth / mTileSize,
-            (regionStartX + regionWidth) / mTileSize);
-        int lastTileIndexY = (int) Math.min(mOriginalImageHeight / mTileSize,
-            (regionStartY + regionHeight) / mTileSize);
+            // Calcular índices de la primera Tile visible actualmente con el tamaño de Tile actual.
+            firstTileIndexX = (int) regionStartX / mTileSize;
+            firstTileIndexY = (int) regionStartY / mTileSize;
 
-        // Determinar el SampleLevel adecuado para el factor de escala actual.
+            // Calcular índices de la última Tile visible actualmente con el tamaño de Tile actual.
+            lastTileIndexX = (int) Math.min(mOriginalImageWidth / mTileSize,
+                (regionStartX + regionWidth) / mTileSize);
+            lastTileIndexY = (int) Math.min(mOriginalImageHeight / mTileSize,
+                (regionStartY + regionHeight) / mTileSize);
+        } while (Math.max(lastTileIndexX - firstTileIndexX, lastTileIndexY - firstTileIndexY) + 1 > 9 &&
+            mTileSize < MAX_TILE_SIZE);
+
+        // Determinar el SampleLevel adecuado para el factor de escala actual y el tamaño de la caché.
         int sampleLevel = 1;
+        int cacheMaxSize = mImageTileCache.maxSize();
+        double totalBitmapBytes = 4 * // Cada pixel requiere 4 bytes.
+            Math.ceil((mDisplayWidth / (double) mTileSize) + 1) * // Tiles en X.
+            Math.ceil((mDisplayHeight / (double) mTileSize) + 1) * // Tiles en Y.
+            Math.pow(mTileSize, 2); // Cantidad de píxeles de cada Tile.
+
         while (regionWidth / sampleLevel > mDisplayWidth ||
-            regionHeight / sampleLevel > mDisplayHeight) {
+            regionHeight / sampleLevel > mDisplayHeight ||
+            cacheMaxSize < (totalBitmapBytes / Math.pow(sampleLevel, 2))) {
             sampleLevel <<= 1;
         }
         mBitmapOptions.inSampleSize = sampleLevel;
@@ -181,10 +202,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
 
                 // Región correspondiente a la Tile.
-                RectF region = new RectF(rowIndex * mTileSize, columnIndex * mTileSize,
+                Rect region = new Rect(rowIndex * mTileSize, columnIndex * mTileSize,
                     (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
 
-                visibleTiles.add(new ImageTile(region, sampleLevel));
+                visibleTiles.add(new ImageTile(region, sampleLevel, mTileSize));
             }
         }
 
@@ -210,10 +231,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Verificar modo actual.
         if (!mState.equals(States.Drawing)) {
-            // TODO: Verificar si es necesario realizar esto.
-            // Matriz que almacena el último estado de la matriz actual.
-            Matrix mLastMatrix = new Matrix(mCurrentMatrix);
-
             // No se está en modo Dibujo, informar del evento a los detectores de gestos y escala.
             mScaleGestureDetector.onTouchEvent(event);
             mGestureDetector.onTouchEvent(event);
@@ -224,9 +241,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 handleScrollEnded();
             }
 
-            if (!mLastMatrix.equals(mCurrentMatrix)) {
-                updateImageMatrix(false);
-            }
+            updateImageMatrix(false);
         }
         else {
             // TODO: Revisar todo este branch.
@@ -284,8 +299,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         Bitmap mDrawBitmap;
         for (ImageTile imageTile: mTilesDraw) {
             mDrawBitmap = mImageTileCache.get(imageTile.Key);
+
             if (mDrawBitmap != null) {
-                canvas.drawBitmap(mDrawBitmap, null, imageTile.Rect, null);
+//                canvas.drawBitmap(mDrawBitmap, null, imageTile.Rect, null);
+                canvas.drawBitmap(mDrawBitmap, null, imageTile.Rect, mPaint);
             }
         }
         // Restaurar el Canvas a su estado original.
@@ -464,8 +481,9 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Establecer configuración para la decodificación de Bitmaps.
         mBitmapOptions = new BitmapFactory.Options();
-        mBitmapOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        mBitmapOptions.inPreferQualityOverSpeed = true;
+
+        // Establecer AntiAlias para el dibujado de Tiles.
+        mPaint.setAntiAlias(true);
     }
     //endregion
 
@@ -506,8 +524,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                     // Buscar bitmap de la Tile en la memoria caché. De no encontrarse, generarlo.
                     Bitmap bitmap = view.mImageTileCache.get(tile.Key);
                     if (bitmap == null) {
-                        Rect rect = new Rect((int) tile.Rect.left, (int) tile.Rect.top,
-                            (int) tile.Rect.right, (int) tile.Rect.bottom);
+                        Rect rect = new Rect(tile.Rect.left, tile.Rect.top,
+                            tile.Rect.right, tile.Rect.bottom);
                         bitmap = view.mBitmapRegionDecoder.decodeRegion(rect, view.mBitmapOptions);
                         view.mImageTileCache.put(tile.Key, bitmap);
                         publishProgress();
