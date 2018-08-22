@@ -17,11 +17,13 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.OverScroller;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,9 +80,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private Integer mDisplayHeight;
     // Tarea asíncrona para cargar Tiles.
     private AsyncImageRegionDecoder mAsyncImageRegionDecoder;
-    // TODO: Ver si se usa finalmente.
-    // Tarea asíncrona para calcular Tiles visibles.
-//    private AsyncComputeVisibleTiles mAsyncComputeVisibleTiles;
     // Factor de escala aplicado por Glide al cargar la imagen inicialmente.
     private float mOriginalZoom;
     // Lista de Tiles a dibujar.
@@ -98,6 +97,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private BitmapFactory.Options mBitmapOptions;
     // Pintura con AntiAlias para dibujado de Tiles.
     private Paint mPaint = new Paint();
+    // Scroller utilizado para realizar el movimiento de fling.
+    private OverScroller mScroller = new OverScroller(getContext());
 
     // TODO: Revisar variables de dibujo de trazo.
     private Path mPath;
@@ -110,6 +111,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         None,
         Scrolling,
         Animating,
+        Flinging,
         Drawing
     }
 
@@ -185,8 +187,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         int sampleLevel = 1;
         int cacheMaxSize = mImageTileCache.maxSize();
         double totalBitmapBytes = 4 * // Cada pixel requiere 4 bytes.
-            Math.ceil((mDisplayWidth / (double) mTileSize) + 1) * // Tiles en X.
-            Math.ceil((mDisplayHeight / (double) mTileSize) + 1) * // Tiles en Y.
+            Math.ceil((regionWidth / (double) mTileSize) + 1) * // Tiles en X.
+            Math.ceil((regionHeight / (double) mTileSize) + 1) * // Tiles en Y.
             Math.pow(mTileSize, 2); // Cantidad de píxeles de cada Tile.
 
         while (regionWidth / sampleLevel > mDisplayWidth ||
@@ -238,7 +240,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             // Verificar necesidad de desplazamiento al finalizar un scroll.
             if (event.getAction() == MotionEvent.ACTION_UP && mState.equals(States.Scrolling)) {
                 // Verificar que no se vean zonas fuera de la imagen. De verse, ajustar el desplazamiento.
-                handleScrollEnded();
+                verifyAndCorrectImagePosition();
             }
 
             updateImageMatrix(false);
@@ -295,26 +297,26 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         // Guardar estado actual del Canvas y aplicar matriz de dibujo.
         canvas.save();
         canvas.setMatrix(mCanvasMatrix);
+
         // Dibujar los bitmaps de cada Tile.
         Bitmap mDrawBitmap;
         for (ImageTile imageTile: mTilesDraw) {
             mDrawBitmap = mImageTileCache.get(imageTile.Key);
 
             if (mDrawBitmap != null) {
-//                canvas.drawBitmap(mDrawBitmap, null, imageTile.Rect, null);
                 canvas.drawBitmap(mDrawBitmap, null, imageTile.Rect, mPaint);
             }
         }
+
         // Restaurar el Canvas a su estado original.
         canvas.restore();
-//        mDrawBitmap = null;
     }
 
     /**
-     * Método ejecutado al finalizar un movimiento de scroll. Asegura que la imagen se vea correctamente.
+     * Método ejecutado al finalizar un movimiento. Asegura que la imagen se vea correctamente.
      */
-    private void handleScrollEnded() {
-        // Cambiar estado actual, ya que se detuvo el scroll.
+    private void verifyAndCorrectImagePosition() {
+        // Cambiar estado actual, ya que se detuvo la acción realizada.
         setState(States.None);
 
         // Obtener valores de la matriz actual.
@@ -361,7 +363,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Si no es necesario desplazar la matriz, no realizar ninguna acción.
         if (deltaTransX == 0 && deltaTransY == 0) {
-            // TODO: Verificar que sea necesario actualizar la matriz de la View y calcular Tiles.
+            // Actualizar la matriz de la View y calcular Tiles.
             updateImageMatrix(true);
             return;
         }
@@ -488,8 +490,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     //endregion
 
     public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Void> {
-        // TODO: Verificar que esta task no rompe si se destruye la vista.
-
         private WeakReference<ZoomableImageView> zoomableImageViewWeakReference;
 
         AsyncImageRegionDecoder(ZoomableImageView zoomableImageViewWeakReference) {
@@ -502,6 +502,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             ZoomableImageView zoomableImageView = zoomableImageViewWeakReference.get();
             if (zoomableImageView != null) {
                 zoomableImageView.invalidate();
+            }
+            else {
+                // Cancelar si ya no se posee la referencia a la View.
+                this.cancel(true);
             }
         }
 
@@ -540,88 +544,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         }
     }
 
-//    public static class AsyncComputeVisibleTiles extends AsyncTask<Void, Void, Void> {
-//        private WeakReference<ZoomableImageView> zoomableImageViewReference;
-//
-//        AsyncComputeVisibleTiles(ZoomableImageView zoomableImageView) {
-//            this.zoomableImageViewReference = new WeakReference<>(zoomableImageView);
-//        }
-//
-//        @Override
-//        protected void onPostExecute(Void aVoid) {
-//            ZoomableImageView zoomableImageView = zoomableImageViewReference.get();
-//            if (zoomableImageView != null) {
-//                zoomableImageView.loadVisibleTiles();
-//            }
-//        }
-//
-//        @Override
-//        protected Void doInBackground(Void... voids) {
-//            ZoomableImageView zoomableImageView = zoomableImageViewReference.get();
-//
-//            if (zoomableImageView == null) {
-//                return null;
-//            }
-//
-//            Matrix matrix = new Matrix();
-//            matrix.setScale(zoomableImageView.mOriginalZoom, zoomableImageView.mOriginalZoom);
-//
-//            zoomableImageView.mCurrentMatrix.getValues(zoomableImageView.mMatrixValues);
-//
-//            float offsetX = zoomableImageView.mMatrixValues[Matrix.MTRANS_X];
-//            float offsetY = zoomableImageView.mMatrixValues[Matrix.MTRANS_Y];
-//            float currentScale = zoomableImageView.mMatrixValues[Matrix.MSCALE_X];
-//
-////        float regionStartX = -offsetX / currentScale / mOriginalZoom;
-//            float regionStartX = Math.max(0, -offsetX / currentScale / zoomableImageView.mOriginalZoom);
-////        float regionStartY = -offsetY / currentScale / mOriginalZoom;
-//            float regionStartY = Math.max(0, -offsetY / currentScale / zoomableImageView.mOriginalZoom);
-//
-//            int firstTileIndexX = (int) regionStartX / mTileSize;
-//            int firstTileIndexY = (int) regionStartY / mTileSize;
-//            int regionWidth = (int) (zoomableImageView.mDisplayWidth / currentScale / zoomableImageView.mOriginalZoom);
-//            int regionHeight = (int) (zoomableImageView.mDisplayHeight / currentScale / zoomableImageView.mOriginalZoom);
-//
-////        int lastTileIndexX = (int) (regionStartX + regionWidth) / mTileSize;
-//            int lastTileIndexX = (int) Math.min(zoomableImageView.mOriginalImageWidth / mTileSize, (regionStartX + regionWidth) / mTileSize);
-////        int lastTileIndexY = (int) (regionStartY + regionHeight) / mTileSize;
-//            int lastTileIndexY = (int) Math.min(zoomableImageView.mOriginalImageHeight / mTileSize, (regionStartY + regionHeight) / mTileSize);
-//
-//            // Calcular Tiles visibles.
-//            List<ImageTile> visibleTiles = new ArrayList<>();
-//            for(int rowIndex = firstTileIndexX; rowIndex <= lastTileIndexX; rowIndex++) {
-//                for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
-//                    if (isCancelled()) {
-//                        return null;
-//                    }
-//
-//                    // Región correspondiente a la Tile.
-//                    RectF region = new RectF(rowIndex * mTileSize, columnIndex * mTileSize,
-//                        (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
-//
-//                    // Mapear según escalado original de Glide.
-////                    matrix.mapRect(region);
-//
-//                    ImageTile imageTile = new ImageTile(region, 1);
-//
-//                    visibleTiles.add(imageTile);
-//                }
-//            }
-//
-//            // Eliminar de la lista actual de Tiles, aquellas que ya no son visibles.
-////        Set<ImageTile> imageTiles = new HashSet<>(mTiles);
-//            if (isCancelled()) {
-//                return null;
-//            }
-//            synchronized (zoomableImageView.mTilesDraw) {
-//                zoomableImageView.mTilesDraw.retainAll(visibleTiles);
-//                zoomableImageView.mTilesDraw.addAll(visibleTiles);
-//            }
-//
-//            return null;
-//        }
-//    }
-
     private class ZoomableImageViewGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(final MotionEvent e) {
@@ -653,7 +575,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             }
             else {
                 // Escalar hasta 1/3 del factor de escala máximo, con centro en las coordenadas del evento.
-                final float deltaScale = MAX_SCALE_FACTOR / 3 - MIN_SCALE_FACTOR;
+                final float deltaScale = MAX_SCALE_FACTOR / 3;
 
                 // Animar transición.
                 ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
@@ -682,14 +604,75 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         }
 
         @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            // Establecer estado de fling.
+            setState(States.Flinging);
+
+            // Realizar el fling.
+            fling(velocityX, velocityY);
+
+            return true;
+        }
+
+        @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             // Establecer estado de scroll.
             setState(States.Scrolling);
 
             // Desplazar matriz. Las distancias se deben invertir para ser correctas.
             mCurrentMatrix.postTranslate(-distanceX, -distanceY);
+//            scroll(-distanceX, -distanceY);
 
             return true;
+        }
+    }
+
+    private void fling(float velocityX, float velocityY) {
+        // Cancelar cualquier animación que pudiera estar en progreso.
+        mScroller.forceFinished(true);
+
+        // Obtener valores de la matriz actual.
+        mCurrentMatrix.getValues(mMatrixValues);
+
+        // Calcular dimensiones actuales de la imagen.
+        float currentImageWidth = mBitmapWidth * mMatrixValues[Matrix.MSCALE_X];
+        float currentImageHeight = mBitmapHeight * mMatrixValues[Matrix.MSCALE_Y];
+
+        // Calcular límites de desplazamiento en X e Y.
+        int minTransX = (int) Math.min(mDisplayWidth - currentImageWidth, 0);
+        int maxTransX = (int) Math.max(mDisplayWidth - currentImageWidth, 0);
+        int minTransY = (int) Math.min(mDisplayHeight - currentImageHeight, 0);
+        int maxTransY = (int) Math.max(mDisplayHeight - currentImageHeight, 0);
+
+        // Crear la animación de fling.
+        mScroller.fling((int)mMatrixValues[Matrix.MTRANS_X], (int)mMatrixValues[Matrix.MTRANS_Y],
+            (int)velocityX, (int)velocityY, minTransX, maxTransX, minTransY, maxTransY, 5, 5);
+
+        // Desencadenar computeScroll().
+        ViewCompat.postInvalidateOnAnimation(this);
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+
+        if (mState.equals(States.Flinging)) {
+            boolean computeVisibleTiles = false;
+            if (mScroller.computeScrollOffset() && !mScroller.isOverScrolled()) {
+                mCurrentMatrix.getValues(mMatrixValues);
+
+                mCurrentMatrix.postTranslate(mScroller.getCurrX() - mMatrixValues[Matrix.MTRANS_X],
+                    mScroller.getCurrY() - mMatrixValues[Matrix.MTRANS_Y]);
+            }
+            else {
+                setState(States.None);
+                // Verificar que el desplazamiento haya finalizado dentro de los límites establecidos.
+                verifyAndCorrectImagePosition();
+                // Calcular Tiles visibles, dado que el desplazamiento finalizó.
+                computeVisibleTiles = true;
+            }
+            updateImageMatrix(computeVisibleTiles);
+            ViewCompat.postInvalidateOnAnimation(this);
         }
     }
 
@@ -800,6 +783,9 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             // Reemplazar la matriz actual por la matriz por defecto (double-tap zoom out) si es necesario.
             if (setDefaultMatrix) {
                 mCurrentMatrix.set(mDefaultMatrix);
+            }
+            else {
+                verifyAndCorrectImagePosition();
             }
 
             // Recalcular Tiles visibles.

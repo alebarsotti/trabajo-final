@@ -31,7 +31,7 @@
         </activity>
         <activity
             android:name=".photoCapture.ImageViewerActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="keyboardHidden|screenSize"
             android:label="@string/title_activity_image_viewer"
             android:parentActivityName=".photoCapture.PhotoCaptureMainActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" >

@@ -38,7 +38,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     public static final String BITMAP_URI_EXTRA = "bitmapUri";
     public static final String BITMAP_EDGES_URI_EXTRA = "bitmapEdgesUri";
 
-    private Point mScreenSize;
+    private Point mScreenSize = new Point();
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
@@ -48,7 +48,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+//        super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_image_viewer);
 
@@ -96,11 +96,12 @@ public class ImageViewerActivity extends AppCompatActivity {
         mBitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
         mBitmapEdgesUri = intent.getParcelableExtra(BITMAP_EDGES_URI_EXTRA);
 
-        mScreenSize = new Point();
-        getWindowManager().getDefaultDisplay().getRealSize(mScreenSize);
+//        getWindowManager().getDefaultDisplay().getRealSize(mScreenSize);
 
         setBitmap();
         mNavigationView.getMenu().findItem(R.id.original_image).setChecked(true);
+
+        super.onCreate(savedInstanceState);
     }
 
     private void setBitmap() {
@@ -109,6 +110,8 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private void setBitmap(final boolean edgesOnly) {
         // Nuevo método quizá mejor (?)
+        getWindowManager().getDefaultDisplay().getRealSize(mScreenSize);
+
         RequestOptions glideOptions = new RequestOptions()
             .fitCenter()
             .override(mScreenSize.x, mScreenSize.y);
