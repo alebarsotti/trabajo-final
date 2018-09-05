@@ -10,7 +10,6 @@ import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -101,9 +100,11 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     private OverScroller mScroller = new OverScroller(getContext());
 
     // TODO: Revisar variables de dibujo de trazo.
-    private Path mPath;
-    private float mX;
-    private float mY;
+    private PointF circlePoint1;
+    private PointF circlePoint2;
+    private PointF circlePoint3;
+    private Circle mCircle;
+    private Circumference mCircumference;
 
     // endregion
 
@@ -250,45 +251,140 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
             // Determinar en qué estado del dibujo se está.
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN: {
-                    if (mPath == null) {
-                        mPath = new Path();
-                    }
-                    mPath.reset();
-                    float x = event.getX();
-                    float y = event.getY();
-                    mPath.moveTo(x, y);
-                    mX = x;
-                    mY = y;
-                    break;
-                }
-                case MotionEvent.ACTION_MOVE: {
-                    float x = event.getX();
-                    float y = event.getY();
-                    float dx = Math.abs(x - mX);
-                    float dy = Math.abs(y - mY);
-                    if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
-                        mPath.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
-                        mX = x;
-                        mY = y;
-                    }
-                    break;
-                }
-                case MotionEvent.ACTION_UP: {
-                    mPath.lineTo(mX, mY);
-                    Path mRealPath = new Path(mPath);
-                    Matrix inverse = new Matrix();
-                    mCurrentMatrix.invert(inverse);
-                    mRealPath.transform(inverse);
+                    mCurrentMatrix.getValues(mMatrixValues);
 
-                    setState(States.None);
+                    float x = (-mMatrixValues[Matrix.MTRANS_X] + event.getX())
+                        / mMatrixValues[Matrix.MSCALE_X] / mOriginalZoom;
+                    float y = (-mMatrixValues[Matrix.MTRANS_Y] + event.getY())
+                        / mMatrixValues[Matrix.MSCALE_X] / mOriginalZoom;
+
+
+                    if (circlePoint1 == null) {
+                        circlePoint1 = new PointF(x, y);
+                    } else if (circlePoint2 == null) {
+                        circlePoint2 = new PointF(x, y);
+                    } else if (circlePoint3 == null) {
+                        circlePoint3 = new PointF(x, y);
+//                        initThreePointCircle(circlePoint1, circlePoint2, circlePoint3);
+                        mCircumference = new Circumference(circlePoint1, circlePoint2, circlePoint3);
+                        setState(States.None);
+                    } else {
+                        setState(States.None);
+                    }
+
+
+
+
+//                    if (mPath == null) {
+//                        mPath = new Path();
+//                    }
+//                    mPath.reset();
+//                    float x = event.getX();
+//                    float y = event.getY();
+//                    mPath.moveTo(x, y);
+//                    mX = x;
+//                    mY = y;
                     break;
                 }
+//                case MotionEvent.ACTION_MOVE: {
+//                    float x = event.getX();
+//                    float y = event.getY();
+//                    float dx = Math.abs(x - mX);
+//                    float dy = Math.abs(y - mY);
+//                    if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+//                        mPath.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
+//                        mX = x;
+//                        mY = y;
+//                    }
+//                    break;
+//                }
+//                case MotionEvent.ACTION_UP: {
+//                    mPath.lineTo(mX, mY);
+//                    Path mRealPath = new Path(mPath);
+//                    Matrix inverse = new Matrix();
+//                    mCurrentMatrix.invert(inverse);
+//                    mRealPath.transform(inverse);
+//
+//                    setState(States.None);
+//                    break;
+//                }
             }
             invalidate();
         }
 
         return true;
     }
+
+
+
+
+    private class Circle {
+        double OriginalRadius, OriginalX, OriginalY;
+        double DrawRadius, DrawX, DrawY;
+
+        public Circle(double originalRadius, double originalX, double originalY) {
+            OriginalRadius = originalRadius;
+            OriginalX = originalX;
+            OriginalY = originalY;
+        }
+
+        public void updateValues(Matrix matrix) {
+
+        }
+    }
+
+    private void initThreePointCircle(PointF p1, PointF p2, PointF p3) {
+        double a13, b13, c13;
+        double a23, b23, c23;
+        double x, y, rad;
+
+        // begin pre-calculations for linear system reduction
+        a13 = 2 * (p1.x - p3.x);
+        b13 = 2 * (p1.y - p3.y);
+        c13 = (p1.y * p1.y - p3.y * p3.y) + (p1.x * p1.x - p3.x * p3.x);
+        a23 = 2 * (p2.x - p3.x);
+        b23 = 2 * (p2.y - p3.y);
+        c23 = (p2.y * p2.y - p3.y * p3.y) + (p2.x * p2.x - p3.x * p3.x);
+        // testsuite-suite to be certain we have three distinct points passed
+        double smallNumber = 0.01;
+        if ((Math.abs(a13) < smallNumber && Math.abs(b13) < smallNumber)
+            || (Math.abs(a13) < smallNumber && Math.abs(b13) < smallNumber)) {
+            // // points too close so set to default circle
+            x = 0;
+            y = 0;
+            rad = 0;
+        } else {
+            // everything is acceptable do the y calculation
+            y = (a13 * c23 - a23 * c13) / (a13 * b23 - a23 * b13);
+            // x calculation
+            // choose best formula for calculation
+            if (Math.abs(a13) > Math.abs(a23)) {
+                x = (c13 - b13 * y) / a13;
+            } else {
+                x = (c23 - b23 * y) / a23;
+            }
+            // radius calculation
+            rad = Math.sqrt((x - p1.x) * (x - p1.x) + (y - p1.y) * (y - p1.y));
+        }
+
+        this.mCircle = new Circle(rad, x, y);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -310,6 +406,11 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Restaurar el Canvas a su estado original.
         canvas.restore();
+
+        if (mCircumference != null) {
+            mCircumference.updateShape(mCanvasMatrix);
+            mCircumference.draw(canvas);
+        }
     }
 
     /**
