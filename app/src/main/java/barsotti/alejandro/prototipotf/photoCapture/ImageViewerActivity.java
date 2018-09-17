@@ -20,6 +20,7 @@ import com.bumptech.glide.request.transition.Transition;
 
 import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.customViews.ZoomableImageView;
+import barsotti.alejandro.prototipotf.customViews.ZoomableImageViewGroup;
 
 public class ImageViewerActivity extends AppCompatActivity {
     public static final String BITMAP_URI_EXTRA = "bitmapUri";
@@ -29,7 +30,8 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
-    private ZoomableImageView mZoomableImageView;
+//    private ZoomableImageView mZoomableImageView;
+    private ZoomableImageViewGroup mZoomableImageViewGroup;
     private Uri mBitmapUri;
     private Uri mBitmapEdgesUri;
 
@@ -42,7 +44,9 @@ public class ImageViewerActivity extends AppCompatActivity {
         mNavigationView = findViewById(R.id.navigation_view);
         mNavigationView.setNavigationItemSelectedListener(new ItemSelectedLister());
 
-        mZoomableImageView = findViewById(R.id.zoomable_image_view);
+//        mZoomableImageView = findViewById(R.id.zoomable_image_view);
+        mZoomableImageViewGroup = findViewById(R.id.zoomable_image_view_group);
+
         Intent intent = getIntent();
         mBitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
         mBitmapEdgesUri = intent.getParcelableExtra(BITMAP_EDGES_URI_EXTRA);
@@ -62,18 +66,19 @@ public class ImageViewerActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.detected_edges: {
                     setBitmap(true);
-                    mZoomableImageView.setState(ZoomableImageView.States.None);
+                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.State.None);
                     item.setChecked(true);
                     break;
                 }
                 case R.id.original_image: {
                     setBitmap(false);
-                    mZoomableImageView.setState(ZoomableImageView.States.None);
+                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.State.None);
                     item.setChecked(true);
                     break;
                 }
                 case R.id.draw: {
-                    mZoomableImageView.setState(ZoomableImageView.States.Drawing);
+//                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.State.Drawing);
+                    mZoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true);
                     break;
                 }
             }
@@ -96,11 +101,11 @@ public class ImageViewerActivity extends AppCompatActivity {
         Glide.with(this)
             .load(edgesOnly ? mBitmapEdgesUri : mBitmapUri)
             .apply(glideOptions)
-            .into(new ViewTarget<ZoomableImageView, Drawable>(mZoomableImageView) {
+            .into(new ViewTarget<ZoomableImageViewGroup, Drawable>(mZoomableImageViewGroup) {
                 @Override
                 public void onResourceReady(@NonNull Drawable resource,
                                             @Nullable Transition<? super Drawable> transition) {
-                    mZoomableImageView.setupZoomableImageView(mScreenSize.x, mScreenSize.y,
+                    mZoomableImageViewGroup.setupZoomableImageView(mScreenSize.x, mScreenSize.y,
                         edgesOnly ? mBitmapEdgesUri : mBitmapUri, resource);
                 }
             });

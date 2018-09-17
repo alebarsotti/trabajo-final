@@ -6,12 +6,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
-    <!--android:fitsSystemWindows="true"-->
-
     <!--Contenido original de la actividad-->
-    <include layout="@layout/activity_image_viewer_content"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent" />
+    <barsotti.alejandro.prototipotf.customViews.ZoomableImageViewGroup
+        android:id="@+id/zoomable_image_view_group"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <!--Menú de la actividad-->
     <android.support.design.widget.NavigationView
@@ -21,6 +20,4 @@
         android:layout_gravity="start"
         app:headerLayout="@layout/header_navigation_view_image_viewer"
         app:menu="@menu/menu_navigation_view_image_viewer" />
-        <!--android:fitsSystemWindows="true"-->
-
 </android.support.v4.widget.DrawerLayout>
