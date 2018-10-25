@@ -1,7 +1,6 @@
 package barsotti.alejandro.prototipotf.customViews;
 
 import android.content.Context;
-import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -9,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -17,9 +17,10 @@ import java.util.ArrayList;
 import barsotti.alejandro.prototipotf.R;
 
 public class ZoomableImageViewGroup extends FrameLayout {
+    private static final String TAG = "ZoomableImageViewGroup";
     private ZoomableImageView mZoomableImageView;
-    private ArrayList<IOnMatrixViewChangeListener> mShapeList = new ArrayList<>();
-    private IOnMatrixViewChangeListener mInProgressShape;
+    private ArrayList<Shape> mShapeList = new ArrayList<>();
+    private Shape mInProgressShape;
 
 
     // region Constructors
@@ -55,10 +56,15 @@ public class ZoomableImageViewGroup extends FrameLayout {
     public void addPointToInProgressShape(PointF point) {
         if (mInProgressShape == null) {
             mInProgressShape = new Circle(getContext(), mZoomableImageView);
-            this.addView((Circle) mInProgressShape);
+            mInProgressShape.selectShape(true);
+            for (Shape shape: mShapeList) {
+                shape.selectShape(false);
+            }
+            mShapeList.add(mInProgressShape);
+            this.addView(mInProgressShape);
         }
 
-        if (!((Circle) mInProgressShape).addPoint(point)) {
+        if (!mInProgressShape.addPoint(point)) {
             setZoomableImageViewDrawingInProgress(false);
         }
 
@@ -66,4 +72,33 @@ public class ZoomableImageViewGroup extends FrameLayout {
 //        this.addView(circle);
 //        mZoomableImageView.addOnMatrixViewChangeListener(circle);
     }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        Log.d(TAG, "onInterceptTouchEvent: " + String.valueOf(ev));
+        return super.onInterceptTouchEvent(ev);
+    }
+
+    public void checkShapeSelection(PointF point) {
+        for (int i = mShapeList.size() - 1; i >= 0; i--) {
+            if (mShapeList.get(i).verifyShapeTouched(point)) {
+                return;
+            }
+        }
+
+
+        // FIXME: v1. La lista debería recorrerse en orden inverso, preferentemente.
+//        for (Shape shape : mShapeList) {
+//            if (shape.verifyShapeTouched(point)) {
+//                return;
+//            }
+//        }
+    }
+
+//    // FIXME: Prueba!
+//    public void verifyShapeTouched(MotionEvent event) {
+//        for (Shape shape: mShapeList) {
+//            shape.verifyShapeTouched(event);
+//        }
+//    }
 }

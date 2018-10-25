@@ -103,11 +103,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     // Scroller utilizado para realizar el movimiento de fling.
     private OverScroller mScroller = new OverScroller(getContext());
 
-//    // TODO: Revisar variables de dibujo de trazo.
-//    private PointF circlePoint1;
-//    private PointF circlePoint2;
-//    private PointF circlePoint3;
-
     private ArrayList<IOnMatrixViewChangeListener> mListeners = new ArrayList<>();
 
     // TODO: Prueba. Revisar.
@@ -164,12 +159,13 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         // Actualizar matriz utilizada en onDraw.
         mCanvasMatrix.setScale(mOriginalZoom, mOriginalZoom);
         mCanvasMatrix.postConcat(mCurrentMatrix);
-        triggerOnMatrixViewChange(mCanvasMatrix);
 
         // Calcular Tiles visibles según la nueva matriz.
         if (computeVisibleTiles) {
             ComputeVisibleTiles();
         }
+
+        triggerOnMatrixViewChange(mCanvasMatrix);
 
         // Actualizar matrix de la View.
         this.setImageMatrix(mCurrentMatrix);
@@ -261,6 +257,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         this.performClick();
+
 
 //        // Verificar modo actual.
 //        if (!mState.equals(State.Drawing)) {
@@ -595,6 +592,11 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 //        parent.createCircle(new Circle(getContext(), circlePoint1, circlePoint2, circlePoint3));
     }
 
+    public void checkShapeSelection(PointF point) {
+        ZoomableImageViewGroup parent = (ZoomableImageViewGroup) this.getParent();
+        parent.checkShapeSelection(point);
+    }
+
 
     private class ZoomableImageViewGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -630,6 +632,9 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 //                    circlePoint2 = null;
 //                    circlePoint3 = null;
 //                }
+            }
+            else {
+                checkShapeSelection(new PointF(e.getX(), e.getY()));
             }
 
             return true;
@@ -735,7 +740,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Crear la animación de fling.
         mScroller.fling((int)mMatrixValues[Matrix.MTRANS_X], (int)mMatrixValues[Matrix.MTRANS_Y],
-            (int)velocityX, (int)velocityY, minTransX, maxTransX, minTransY, maxTransY, 5, 5);
+            (int)velocityX, (int)velocityY, minTransX, maxTransX, minTransY, maxTransY, 10, 10);
 
         // Desencadenar computeScroll().
         ViewCompat.postInvalidateOnAnimation(this);
