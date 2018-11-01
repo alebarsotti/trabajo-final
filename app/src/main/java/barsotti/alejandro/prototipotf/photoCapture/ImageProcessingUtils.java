@@ -45,20 +45,23 @@ public class ImageProcessingUtils {
 //        Imgproc.Canny(thresholdBlurredGrayScaleMat, edgesOnlyMat, OPEN_CV_EDGE_THRESHOLD1,
 //            OPEN_CV_EDGE_THRESHOLD2, OPEN_CV_CANNY_APERTURE_SIZE, OPEN_CV_CANNY_USE_L2_GRADIENT);
 
-        // Crear archivo.
-        File edgesBitmap = new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), filename);
 
-//        // Guardar archivo de imagen.
-//        Imgcodecs.imwrite(edgesBitmap.getAbsolutePath(), edgesOnlyMat);
+        return new Uri.Builder().build();
 
-        // Agregar a MediaStore para que pueda visualizarse en la galería.
-        try {
-            MediaStore.Images.Media.insertImage(context.getContentResolver(), edgesBitmap.getAbsolutePath(),
-                edgesBitmap.getName(), "Edges Only Image");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return Uri.fromFile(edgesBitmap);
+//        // Crear archivo.
+//        File edgesBitmap = new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), filename);
+//
+////        // Guardar archivo de imagen.
+////        Imgcodecs.imwrite(edgesBitmap.getAbsolutePath(), edgesOnlyMat);
+//
+//        // Agregar a MediaStore para que pueda visualizarse en la galería.
+//        try {
+//            MediaStore.Images.Media.insertImage(context.getContentResolver(), edgesBitmap.getAbsolutePath(),
+//                edgesBitmap.getName(), "Edges Only Image");
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return Uri.fromFile(edgesBitmap);
     }
 }

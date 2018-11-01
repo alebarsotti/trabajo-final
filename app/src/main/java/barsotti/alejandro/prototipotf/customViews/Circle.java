@@ -1,25 +1,17 @@
 package barsotti.alejandro.prototipotf.customViews;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.PointF;
-import android.graphics.PorterDuff;
-import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
-
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
@@ -30,18 +22,6 @@ public class Circle extends Shape {
     private static final String TAG = "Circle";
     private PointF center;
     private float radius;
-//    private ArrayList<PointF> mPoints = new ArrayList<>();
-
-    // TODO: Al detectar un toque, se puede crear un path con la forma y un path con el toque, para
-    // determinar si se intersecan.
-
-//    private Paint shapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//    private Paint selectedShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//    private Paint shapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//    private Paint selectedShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//    private Paint pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//    private Paint pointBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//    private Paint pointCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Paint shapePaint = new Paint();
     private Paint selectedShapePaint = new Paint();
     private Paint shapeBorderPaint = new Paint();
@@ -49,22 +29,17 @@ public class Circle extends Shape {
     private Paint pointPaint = new Paint();
     private Paint pointBorderPaint = new Paint();
     private Paint pointCenterPaint = new Paint();
-
-    // FIXME: Prueba
     private Path mPath = new Path();
-    private Bitmap mBitmap;
-    private Canvas mBitmapCanvas;
-    private AsyncCircleDrawer mAsyncCircleDrawer;
-
-
+    private final Path mPathToDraw = new Path();
+    private AsyncCircumferenceComputer mAsyncCircumferenceComputer;
     private PointF Center;
     private float Radius;
 
-    private Circle(Context context) {
-        this(context, (AttributeSet) null);
+    public Circle(Context context) {
+        this(context, null);
     }
 
-    private Circle(Context context, @Nullable AttributeSet attrs) {
+    public Circle(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
         initializeShape();
@@ -99,31 +74,7 @@ public class Circle extends Shape {
 
         pointBorderPaint.set(selectedShapeBorderPaint);
         pointBorderPaint.setStrokeWidth(2);
-//        pointBorderPaint.setPathEffect(new DashPathEffect(new float[] {4, 4}, 0));
     }
-
-    public Circle(Context context, IShapeCreator shapeCreator) {
-        this(context);
-
-        shapeCreator.addOnMatrixViewChangeListener(this);
-    }
-//    public Circle(Context context, PointF point1, PointF point2, PointF point3) {
-//        this(context);
-//
-//        mPoints.add(point1);
-//        mPoints.add(point2);
-//        mPoints.add(point3);
-//
-//        computeCenterAndRadiusFromPoints(point1, point2, point3);
-//    }
-//
-//    public Circle(Context context, PointF center, float radius) {
-//        this(context);
-//
-//        this.shapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//        this.center = center;
-//        this.radius = radius;
-//    }
 
     private PointF mapPoint(Matrix matrix, PointF point) {
         if (point == null) {
@@ -159,64 +110,17 @@ public class Circle extends Shape {
 
     @Override
     protected void onDraw(Canvas canvas) {
-//        if (Center != null && Radius != 0) {
-//            canvas.drawCircle(Center.x, Center.y, Radius,
-//                mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
-//            canvas.drawCircle(Center.x, Center.y, Radius,
-//                mIsSelected ? selectedShapePaint : shapePaint);
-
-
-//            this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
-//            if (mBitmap != null) {
-//                canvas.drawBitmap(mBitmap, 0, 0, null);
-//            }
-
-        long s = System.currentTimeMillis();
-        if (Center != null && Radius != 0 && mPath != null) {
-            canvas.drawPath(mPath, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
-            canvas.drawPath(mPath, mIsSelected ? selectedShapePaint : shapePaint);
+        synchronized (mPathToDraw) {
+            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
+            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapePaint : shapePaint);
         }
-        long e = System.currentTimeMillis();
-        if ((e - s) > 5) {
-            Log.d(TAG, "onDraw: " + (e - s));
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//        }
 
         // Dibujar puntos solo si la figura está seleccionada.
-        PointF lastPoint = new PointF();
-
         if (mIsSelected) {
             for (PointF pointToDraw: mMappedPoints) {
                 canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) mPointRadius, pointPaint);
                 canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) mPointRadius, pointBorderPaint);
                 canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) mCurrentZoom, pointCenterPaint);
-
-                if (!lastPoint.equals(0, 0) && !lastPoint.equals(pointToDraw)) {
-                    canvas.drawLine(lastPoint.x, lastPoint.y, pointToDraw.x, pointToDraw.y, shapePaint);
-                }
-                lastPoint.set(pointToDraw);
             }
         }
     }
@@ -227,7 +131,6 @@ public class Circle extends Shape {
             return;
         }
 
-        // FIXME: Prueba de MathUtils.
         MathUtils.circumferenceFromThreePoints(this);
 
         // TODO: Determinar por qué puse esto acá.
@@ -237,54 +140,31 @@ public class Circle extends Shape {
     @Override
     public void updateViewMatrix(Matrix matrix) {
         if (matrix != null) {
-            mLastMatrix = matrix;
-        }
-        Radius = mLastMatrix.mapRadius(radius);
-        Center = mapPoint(mLastMatrix, center);
-        mMappedPoints = mapPoints(mLastMatrix, mPoints);
+            mPreviousMatrix.set(mCurrentMatrix);
+            mCurrentMatrix.set(matrix);
 
-        // FIXME: Prueba.
+            if (mPreviousMatrix == null) {
+                mPath.transform(mCurrentMatrix, mPathToDraw);
+            }
+            else {
+                Matrix inverse = new Matrix(mPreviousMatrix);
+                inverse.invert(inverse);
+                Path path = new Path();
+                mPathToDraw.transform(inverse, path);
+                path.transform(mCurrentMatrix);
+                mPathToDraw.set(path);
+            }
+        }
+        Radius = mCurrentMatrix.mapRadius(radius);
+        Center = mapPoint(mCurrentMatrix, center);
+        mMappedPoints = mapPoints(mCurrentMatrix, mPoints);
+
         float[] floats = new float[9];
-        mLastMatrix.getValues(floats);
+        mCurrentMatrix.getValues(floats);
         mCurrentZoom = floats[Matrix.MSCALE_X];
         mPointRadius = (float) (POINT_RADIUS * Math.max(1, mCurrentZoom) * 1.5d);
 
-        drawCircleInBitmap();
-//        if (Center != null && Radius != 0) {
-//            // FIXME: Prueba de círculo con curvas Bezier.
-//            double m = 0.551915024494d;
-//            double deltaM = m * Radius;
-//
-//            mPath.reset();
-//            mPath.moveTo(Center.x, Center.y + Radius);
-//            mPath.cubicTo((float) (Center.x + deltaM), Center.y + Radius,
-//                Center.x + Radius, (float) (Center.y + deltaM),
-//                Center.x + Radius, Center.y);
-//            mPath.cubicTo(Center.x + Radius, (float) (Center.y - deltaM),
-//                (float) (Center.x + deltaM), Center.y - Radius,
-//                Center.x, Center.y - Radius);
-//            mPath.cubicTo((float) (Center.x - deltaM), Center.y - Radius,
-//                Center.x - Radius, (float) (Center.y - deltaM),
-//                Center.x - Radius, Center.y);
-//            mPath.cubicTo(Center.x - Radius, (float) (Center.y + deltaM),
-//                (float) (Center.x - deltaM), Center.y + Radius,
-//                Center.x, Center.y + Radius);
-//            mPath.close();
-////            canvas.drawPath(path, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
-////            canvas.drawPath(path, mIsSelected ? selectedShapePaint : shapePaint);
-//
-//            mBitmap = Bitmap.createBitmap(this.getMeasuredWidth(), this.getMeasuredHeight(),
-//                Bitmap.Config.ARGB_8888);
-//
-//            mBitmapCanvas = new Canvas(mBitmap);
-//
-//            mBitmapCanvas.save();
-////            bitmapCanvas.translate(offsetX, offsetY);
-////            bitmapCanvas.drawColor(0xfff9f9f9);
-//            mBitmapCanvas.drawPath(mPath, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
-//            mBitmapCanvas.drawPath(mPath, mIsSelected ? selectedShapePaint : shapePaint);
-//            mBitmapCanvas.restore();
-//        }
+        computeNewCircumferencePath();
 
         invalidate();
     }
@@ -292,19 +172,18 @@ public class Circle extends Shape {
     @Override
     public void selectShape(boolean isSelected) {
         super.selectShape(isSelected);
-        drawCircleInBitmap();
+        computeNewCircumferencePath();
     }
 
-    private void drawCircleInBitmap() {
-        // FIXME: Prueba de círculo con curvas Bezier.
-        if (Center != null && Radius != 0) {
-            if (mAsyncCircleDrawer != null) {
-                mAsyncCircleDrawer.cancel(true);
+    private void computeNewCircumferencePath() {
+//        if (Center != null && Radius != 0) {
+            if (mAsyncCircumferenceComputer != null) {
+                mAsyncCircumferenceComputer.cancel(true);
             }
 
-            mAsyncCircleDrawer = new AsyncCircleDrawer(this);
-            mAsyncCircleDrawer.execute();
-        }
+            mAsyncCircumferenceComputer = new AsyncCircumferenceComputer(this);
+            mAsyncCircumferenceComputer.execute();
+//        }
     }
 
     @Override
@@ -341,11 +220,14 @@ public class Circle extends Shape {
         radius = newRadius;
     }
 
-    public static class AsyncCircleDrawer extends AsyncTask<Void, Void, Void> {
-        private WeakReference<Circle> circleWeakReference;
-        private final double mBezierCurveConstant = 0.551915024494d;
+    public void setPath(Path path) {
+        mPath.set(path);
+    }
 
-        AsyncCircleDrawer(Circle circle) {
+    public static class AsyncCircumferenceComputer extends AsyncTask<Void, Void, Void> {
+        private WeakReference<Circle> circleWeakReference;
+
+        AsyncCircumferenceComputer(Circle circle) {
             this.circleWeakReference = new WeakReference<>(circle);
         }
 
@@ -357,34 +239,29 @@ public class Circle extends Shape {
 
         @Override
         protected Void doInBackground(Void... voids) {
-            long start = System.currentTimeMillis();
             Circle view = circleWeakReference.get();
 
-            // FIXME: Prueba de círculo con curvas Bezier.
-//                double m = 0.551915024494d;
-            double deltaM = mBezierCurveConstant * view.Radius;
+            Path path = new Path();
+//            view.mPath.transform(view.mCurrentMatrix, view.mPathToDraw);
+            view.mPath.transform(view.mCurrentMatrix, path);
+            if (isCancelled()) {
+                return null;
+            }
+//            int delta = 10;
+            int deltaX = view.getMeasuredWidth();
+            int deltaY = (int) (0.25 * view.getMeasuredHeight());
+//            Region region = new Region(-delta, -delta, view.getMeasuredWidth() + 2 * delta, view.getMeasuredHeight() + 2 * delta);
+            Region region = new Region(-deltaX, -deltaY, view.getMeasuredWidth() + deltaX, view.getMeasuredHeight() + deltaY);
+            if (isCancelled()) {
+                return null;
+            }
 
-            Path newPath = new Path();
-            newPath.reset();
-            newPath.moveTo(view.Center.x, view.Center.y + view.Radius);
-            newPath.cubicTo((float) (view.Center.x + deltaM), view.Center.y + view.Radius,
-                view.Center.x + view.Radius, (float) (view.Center.y + deltaM),
-                view.Center.x + view.Radius, view.Center.y);
-            newPath.cubicTo(view.Center.x + view.Radius, (float) (view.Center.y - deltaM),
-                (float) (view.Center.x + deltaM), view.Center.y - view.Radius,
-                view.Center.x, view.Center.y - view.Radius);
-            newPath.cubicTo((float) (view.Center.x - deltaM), view.Center.y - view.Radius,
-                view.Center.x - view.Radius, (float) (view.Center.y - deltaM),
-                view.Center.x - view.Radius, view.Center.y);
-            newPath.cubicTo(view.Center.x - view.Radius, (float) (view.Center.y + deltaM),
-                (float) (view.Center.x - deltaM), view.Center.y + view.Radius,
-                view.Center.x, view.Center.y + view.Radius);
-            newPath.close();
+//            view.mPathToDraw.op(region.getBoundaryPath(), Path.Op.INTERSECT);
+            path.op(region.getBoundaryPath(), Path.Op.INTERSECT);
 
-            Region region = new Region(-10, -10, view.getMeasuredWidth() + 10, view.getMeasuredHeight() + 10);
-            newPath.op(region.getBoundaryPath(), Path.Op.INTERSECT);
-
-            view.mPath.set(newPath);
+            synchronized (view.mPathToDraw) {
+                view.mPathToDraw.set(path);
+            }
 
             return null;
         }

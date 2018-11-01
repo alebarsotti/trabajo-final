@@ -258,74 +258,19 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     public boolean onTouchEvent(MotionEvent event) {
         this.performClick();
 
+        mScaleGestureDetector.onTouchEvent(event);
+        mGestureDetector.onTouchEvent(event);
 
-//        // Verificar modo actual.
-//        if (!mState.equals(State.Drawing)) {
-            // No se está en modo Dibujo, informar del evento a los detectores de gestos y escala.
-            mScaleGestureDetector.onTouchEvent(event);
-            mGestureDetector.onTouchEvent(event);
+        // Verificar necesidad de desplazamiento al finalizar un scroll.
+        if (event.getAction() == MotionEvent.ACTION_UP && mState.equals(State.Scrolling)) {
+            // Verificar que no se vean zonas fuera de la imagen. De verse, ajustar el desplazamiento.
+            verifyAndCorrectImagePosition();
+        }
 
-            // Verificar necesidad de desplazamiento al finalizar un scroll.
-            if (event.getAction() == MotionEvent.ACTION_UP && mState.equals(State.Scrolling)) {
-                // Verificar que no se vean zonas fuera de la imagen. De verse, ajustar el desplazamiento.
-                verifyAndCorrectImagePosition();
-            }
-
-            updateImageMatrix(false);
-//        }
-//        else {
-//            // TODO: Revisar todo este branch.
-//            // Determinar en qué estado del dibujo se está.
-//            switch (event.getAction() & MotionEvent.ACTION_MASK) {
-//                case MotionEvent.ACTION_DOWN: {
-//                    mCurrentMatrix.getValues(mMatrixValues);
-//
-//                    float x = (-mMatrixValues[Matrix.MTRANS_X] + event.getX())
-//                        / mMatrixValues[Matrix.MSCALE_X] / mOriginalZoom;
-//                    float y = (-mMatrixValues[Matrix.MTRANS_Y] + event.getY())
-//                        / mMatrixValues[Matrix.MSCALE_X] / mOriginalZoom;
-//
-//
-//                    if (circlePoint1 == null) {
-//                        circlePoint1 = new PointF(x, y);
-//                    } else if (circlePoint2 == null) {
-//                        circlePoint2 = new PointF(x, y);
-//                    } else if (circlePoint3 == null) {
-//                        circlePoint3 = new PointF(x, y);
-//                        // TODO: armar view de circunferencia.
-////                        mCircumference = new Circumference(circlePoint1, circlePoint2, circlePoint3);
-//                        ZoomableImageViewGroup parent = (ZoomableImageViewGroup) this.getParent();
-//                        parent.createCircle(new Circle(getContext(), circlePoint1, circlePoint2, circlePoint3));
-//                        setState(State.None);
-//                    } else {
-//                        setState(State.None);
-//                    }
-//                }
-//            }
-//            invalidate();
-//        }
+        updateImageMatrix(false);
 
         return true;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -581,15 +526,9 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         }
     }
 
-//    // TODO: Prueba, verificar.
-//    public void CreateCircle() {
-//        ZoomableImageViewGroup parent = (ZoomableImageViewGroup) this.getParent();
-//        parent.createCircle(new Circle(getContext(), circlePoint1, circlePoint2, circlePoint3));
-//    }
     public void addPointToShape(PointF point) {
         ZoomableImageViewGroup parent = (ZoomableImageViewGroup) this.getParent();
         parent.addPointToInProgressShape(point);
-//        parent.createCircle(new Circle(getContext(), circlePoint1, circlePoint2, circlePoint3));
     }
 
     public void checkShapeSelection(PointF point) {
@@ -612,26 +551,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                 addPointToShape(new PointF(x, y));
 
                 updateImageMatrix(false);
-
-//                if (circlePoint1 == null) {
-//                    circlePoint1 = new PointF(x, y);
-//                } else if (circlePoint2 == null) {
-//                    circlePoint2 = new PointF(x, y);
-//                } else if (circlePoint3 == null) {
-//                    circlePoint3 = new PointF(x, y);
-//                    createCircle();
-////                    setState(State.None);
-//                    mDrawingInProgress = false;
-//                    circlePoint1 = null;
-//                    circlePoint2 = null;
-//                    circlePoint3 = null;
-//                } else {
-////                    setState(State.None);
-//                    mDrawingInProgress = false;
-//                    circlePoint1 = null;
-//                    circlePoint2 = null;
-//                    circlePoint3 = null;
-//                }
             }
             else {
                 checkShapeSelection(new PointF(e.getX(), e.getY()));
@@ -752,6 +671,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         if (mState.equals(State.Flinging)) {
             boolean computeVisibleTiles = false;
+            // TODO: Probar sacar isOverScrolled para evitar que el fling se detenga en los bordes.
             if (mScroller.computeScrollOffset() && !mScroller.isOverScrolled()) {
                 mCurrentMatrix.getValues(mMatrixValues);
 

@@ -7,11 +7,14 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.R;
@@ -41,10 +44,28 @@ public class ZoomableImageViewGroup extends FrameLayout {
         mZoomableImageView.setState(state);
     }
 
-    // TODO: Prueba. Revisar.
-    public void setZoomableImageViewDrawingInProgress(boolean drawingInProgress) {
+    public void setZoomableImageViewDrawingInProgress(boolean drawingInProgress, Class shapeClass) {
         if (!drawingInProgress) {
             mInProgressShape = null;
+        }
+        else {
+            try {
+                Class<?> myClassType = Class.forName(shapeClass.getName());
+                Class<?>[] types = new Class[] { Context.class };
+                Constructor<?> cons = myClassType.getConstructor(types);
+                mInProgressShape = (Shape) cons.newInstance(getContext());
+                mInProgressShape.addShapeCreatorListener(mZoomableImageView);
+                mInProgressShape.selectShape(true);
+                for (Shape shape: mShapeList) {
+                    shape.selectShape(false);
+                }
+                mShapeList.add(mInProgressShape);
+                this.addView(mInProgressShape);
+            } catch (InstantiationException | IllegalAccessException
+                | NoSuchMethodException | InvocationTargetException | ClassNotFoundException e) {
+                Log.d(TAG, "setZoomableImageViewDrawingInProgress:");
+                e.printStackTrace();
+            }
         }
         mZoomableImageView.setDrawingInProgress(drawingInProgress);
     }
@@ -54,18 +75,18 @@ public class ZoomableImageViewGroup extends FrameLayout {
     }
 
     public void addPointToInProgressShape(PointF point) {
-        if (mInProgressShape == null) {
-            mInProgressShape = new Circle(getContext(), mZoomableImageView);
-            mInProgressShape.selectShape(true);
-            for (Shape shape: mShapeList) {
-                shape.selectShape(false);
-            }
-            mShapeList.add(mInProgressShape);
-            this.addView(mInProgressShape);
-        }
+//        if (mInProgressShape == null) {
+//            mInProgressShape = new Circle(getContext(), mZoomableImageView);
+//            mInProgressShape.selectShape(true);
+//            for (Shape shape: mShapeList) {
+//                shape.selectShape(false);
+//            }
+//            mShapeList.add(mInProgressShape);
+//            this.addView(mInProgressShape);
+//        }
 
-        if (!mInProgressShape.addPoint(point)) {
-            setZoomableImageViewDrawingInProgress(false);
+        if (mInProgressShape != null && !mInProgressShape.addPoint(point)) {
+            setZoomableImageViewDrawingInProgress(false, null);
         }
 
 //        mShapeList.add(circle);
@@ -75,7 +96,6 @@ public class ZoomableImageViewGroup extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        Log.d(TAG, "onInterceptTouchEvent: " + String.valueOf(ev));
         return super.onInterceptTouchEvent(ev);
     }
 
@@ -85,20 +105,5 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 return;
             }
         }
-
-
-        // FIXME: v1. La lista debería recorrerse en orden inverso, preferentemente.
-//        for (Shape shape : mShapeList) {
-//            if (shape.verifyShapeTouched(point)) {
-//                return;
-//            }
-//        }
     }
-
-//    // FIXME: Prueba!
-//    public void verifyShapeTouched(MotionEvent event) {
-//        for (Shape shape: mShapeList) {
-//            shape.verifyShapeTouched(event);
-//        }
-//    }
 }

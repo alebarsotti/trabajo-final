@@ -2,14 +2,12 @@ package barsotti.alejandro.prototipotf.customViews;
 
 import android.content.Context;
 import android.graphics.Matrix;
-import android.graphics.Path;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -22,16 +20,12 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     private static final String TAG = "Shape";
     protected Integer mSelectedPointIndex;
     protected boolean mIsSelected = false;
-    protected PointF mTouch;
-    protected Path mDrawPath = new Path();
     protected ArrayList<PointF> mPoints = new ArrayList<>();
     private GestureDetector mGestureDetector = new GestureDetector(getContext(), new ShapeGestureListener());
     protected ArrayList<PointF> mMappedPoints = new ArrayList<>();
-    protected Matrix mLastMatrix;
+    protected Matrix mCurrentMatrix = new Matrix();
+    protected Matrix mPreviousMatrix = new Matrix();
     protected double mCurrentZoom;
-
-    // FIXME: Prueba
-    protected ArrayList<PointF> mTouchList;
 
     //region Constructors
     public Shape(Context context) {
@@ -56,20 +50,16 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     public abstract void updateViewMatrix(Matrix matrix);
     //endregion
 
+    public void addShapeCreatorListener(IShapeCreator shapeCreator) {
+        shapeCreator.addOnMatrixViewChangeListener(this);
+    }
+
     public void selectShape(boolean isSelected) {
         mIsSelected = isSelected;
         invalidate();
     }
 
     public boolean verifyShapeTouched(PointF point) {
-//        checkTouchToSelect();
-//        Path touch = new Path();
-//        touch.addCircle(point.x, point.y, TOUCH_RADIUS, Path.Direction.CW);
-//
-//        boolean op = touch.op(mDrawPath, Path.Op.INTERSECT);
-//
-//        selectShape(op && !touch.isEmpty());
-
         selectShape(checkTouchToSelect(point));
 
         return mIsSelected;
@@ -86,20 +76,6 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             return false;
         }
 
-//        // FIXME: Descomentar.
-//        boolean pointTouched = false;
-//        for (PointF point: mPoints) {
-//            if (Math.sqrt(Math.pow(event.getX() - point.x, 2) + Math.pow(event.getY() - point.y, 2))
-//                < TOUCH_RADIUS) {
-//                pointTouched = true;
-//            }
-//        }
-//        if (!pointTouched) {
-//            return false;
-//        }
-
-//        return true;
-//        return false;
         boolean gestureDetectorResponse = mGestureDetector.onTouchEvent(event);
         // Detectar si finalizó un scroll de un punto. De ser así, se debe calcular nuevamente la forma.
         if (event.getAction() == MotionEvent.ACTION_UP) {
@@ -108,34 +84,13 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         }
 
         return gestureDetectorResponse;
-
-//        mGestureDetector.onTouchEvent(event);
-//        return super.onTouchEvent(event);
     }
 
     private class ShapeGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDown(MotionEvent e) {
-//            mTouchList = new ArrayList<>();
-//            mTouchList.add(new PointF(e.getX(), e.getY()));
-//
-//            if (mTouch == null) {
-//                mTouch = new PointF();
-//            }
-//            mTouch.set(e.getX(), e.getY());
-//            // FIXME: Invalidate utilizado para mostrar el toque, quitar luego.
-//            invalidate();
-//
-//            return false;
-
-
-
-//            for (PointF point: mMappedPoints) {
-//                if (MathUtils.distanceBetweenPoints(e.getX(), e.getY(), point.x, point.y) <=
-//                    TOUCH_RADIUS) {
-//                    return true;
-//                }
-//            }
+            // Verificar que el toque haya sido cerca de uno de los puntos de la figura. De no ser así, no
+            // capturar el evento.
             for (int i = 0; i < mMappedPoints.size(); i++) {
                 PointF point = mMappedPoints.get(i);
                 if (MathUtils.distanceBetweenPoints(e.getX(), e.getY(), point.x, point.y) <=
@@ -152,7 +107,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-//            mTouchList.add(new PointF(e2.getX(), e2.getY()));
+            // Si un punto está seleccionado, desplazarlo según el scroll detectado.
             if (mSelectedPointIndex != null) {
                 mPoints.get(mSelectedPointIndex).offset((float) (-distanceX / mCurrentZoom),
                     (float) (-distanceY / mCurrentZoom));
@@ -166,6 +121,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
+            // Verificar si la figura fue tocada. De no ser así, deseleccionarla.
             verifyShapeTouched(new PointF(e.getX(), e.getY()));
 
             return true;

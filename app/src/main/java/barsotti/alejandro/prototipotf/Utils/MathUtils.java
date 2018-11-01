@@ -1,16 +1,14 @@
 package barsotti.alejandro.prototipotf.Utils;
 
+import android.graphics.Path;
 import android.graphics.PointF;
-import android.util.Log;
 
 import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.customViews.Circle;
 
 public class MathUtils {
-    private static String TAG = "MathUtils";
-    private static double TOLERANCE = 0.0001;
-    private static double TANGENT_POINT_DISTANCE = 2000;
+    private static double TOLERANCE = 0.0001d;
 
     public static double distanceBetweenPoints(double x1, double y1, double x2, double y2) {
         return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -38,20 +36,21 @@ public class MathUtils {
         ArrayList<PointF> tangent = new ArrayList<>();
 
         // Determinar si la diferencia en la coordenada "y" de los puntos es cero (caso especial).
+        double tangentPointDistance = 2000d;
         if (Math.abs(pointInCircumference.y - center.y) < TOLERANCE) {
             tangent.add(new PointF(pointInCircumference.x,
-                (float) (pointInCircumference.y + TANGENT_POINT_DISTANCE)));
+                (float) (pointInCircumference.y + tangentPointDistance)));
             tangent.add(new PointF(pointInCircumference.x,
-                (float) (pointInCircumference.y - TANGENT_POINT_DISTANCE)));
+                (float) (pointInCircumference.y - tangentPointDistance)));
         }
         else {
             // Los nombres de variables "a" y "b" hacen referencia a la fórmula de la recta: y = a * x + b.
             double a = -1 * (pointInCircumference.x - center.x) / (pointInCircumference.y - center.y);
             double b = pointInCircumference.y - pointInCircumference.x * a;
 
-            double firstPointX = pointInCircumference.x - TANGENT_POINT_DISTANCE;
+            double firstPointX = pointInCircumference.x - tangentPointDistance;
             double firstPointY = a * firstPointX + b;
-            double secondPointX = pointInCircumference.x + TANGENT_POINT_DISTANCE;
+            double secondPointX = pointInCircumference.x + tangentPointDistance;
             double secondPointY = a * secondPointX + b;
 
             tangent.add(new PointF((float) firstPointX, (float) firstPointY));
@@ -101,7 +100,30 @@ public class MathUtils {
         // Calcular radio.
         radius = Math.sqrt(Math.pow(x - point1X, 2) + Math.pow(y - point1Y, 2));
 
-        // Establecer resultados.
+        // Establecer centro y radio.
         circle.setCenterAndRadius(new PointF((float) x, (float) y), (float) radius);
+
+        // Crear path que representa la circunferencia mediante curvas Bézier.
+        double bezierCurveConstant = 0.551915024494d;
+        double deltaM = bezierCurveConstant * radius;
+
+        Path newPath = new Path();
+        newPath.moveTo((float) x, (float) (y + radius));
+        newPath.cubicTo((float) (x + deltaM), (float) (y + radius),
+            (float) (x + radius), (float) (y + deltaM),
+            (float) (x + radius), (float) y);
+        newPath.cubicTo((float) (x + radius), (float) (y - deltaM),
+            (float) (x + deltaM), (float) (y - radius),
+            (float) x, (float) (y - radius));
+        newPath.cubicTo((float) (x - deltaM), (float) (y - radius),
+            (float) (x - radius), (float) (y - deltaM),
+            (float) (x - radius), (float) y);
+        newPath.cubicTo((float) (x - radius), (float) (y + deltaM),
+            (float) (x - deltaM), (float) (y + radius),
+            (float) x, (float) (y + radius));
+        newPath.close();
+
+        // Establecer path.
+        circle.setPath(newPath);
     }
 }
