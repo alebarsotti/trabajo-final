@@ -15,7 +15,7 @@ import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
 public abstract class Shape extends View implements IOnMatrixViewChangeListener {
     protected static final float TOUCH_RADIUS = 75;
-    protected static final double POINT_RADIUS = 20;
+    protected static final double POINT_RADIUS = 30;
     protected double mPointRadius = POINT_RADIUS;
     private static final String TAG = "Shape";
     protected Integer mSelectedPointIndex;
@@ -25,7 +25,9 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     protected ArrayList<PointF> mMappedPoints = new ArrayList<>();
     protected Matrix mCurrentMatrix = new Matrix();
     protected Matrix mPreviousMatrix = new Matrix();
-    protected double mCurrentZoom;
+    protected float mCurrentZoom = 0;
+    protected float mInitialZoom = 0;
+    protected float mPointRadiusLimit = 0;
 
     //region Constructors
     public Shape(Context context) {
@@ -109,8 +111,8 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             // Si un punto está seleccionado, desplazarlo según el scroll detectado.
             if (mSelectedPointIndex != null) {
-                mPoints.get(mSelectedPointIndex).offset((float) (-distanceX / mCurrentZoom),
-                    (float) (-distanceY / mCurrentZoom));
+                mPoints.get(mSelectedPointIndex).offset(-distanceX / mCurrentZoom,
+                    -distanceY / mCurrentZoom);
                 updateViewMatrix(null);
 
                 return true;

@@ -1,6 +1,7 @@
 package barsotti.alejandro.prototipotf.Utils;
 
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.PointF;
 
 import java.util.ArrayList;
@@ -123,7 +124,46 @@ public class MathUtils {
             (float) x, (float) (y + radius));
         newPath.close();
 
+
+        int numberOfPoints = 360 * 2;
+        PointF[] pointArray = new PointF[numberOfPoints];
+        PathMeasure pm = new PathMeasure(newPath, false);
+        float length = pm.getLength();
+        float distance = 0f;
+        float speed = length / numberOfPoints;
+        int counter = 0;
+        float[] aCoordinates = new float[2];
+
+        while ((distance <= length) && (counter < numberOfPoints)) {
+            // get point from the path
+            pm.getPosTan(distance, aCoordinates, null);
+            pointArray[counter] = new PointF(aCoordinates[0], aCoordinates[1]);
+            counter++;
+            distance = distance + speed;
+        }
+
+        float[] floats = new float[pointArray.length * 4];
+        int count = 0;
+        for (PointF point: pointArray) {
+            floats[count++] = point.x;
+            floats[count++] = point.y;
+            if (count != 2) {
+                floats[count++] = point.x;
+                floats[count++] = point.y;
+            }
+        }
+        floats[count++] = pointArray[0].x;
+        floats[count] = pointArray[0].y;
+
+
+
+
+
+
+
         // Establecer path.
         circle.setPath(newPath);
+
+        circle.setPoints(floats);
     }
 }

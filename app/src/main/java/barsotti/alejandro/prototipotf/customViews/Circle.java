@@ -8,10 +8,13 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
@@ -35,6 +38,9 @@ public class Circle extends Shape {
     private PointF Center;
     private float Radius;
 
+    private float[] mPointsInCircle;
+    private float[] mPointsInCircleDraw;
+
     public Circle(Context context) {
         this(context, null);
     }
@@ -50,13 +56,13 @@ public class Circle extends Shape {
         int mShapeColor = Color.RED;
         shapePaint.setColor(mShapeColor);
         shapePaint.setStyle(Paint.Style.STROKE);
-        shapePaint.setStrokeWidth(8);
+        shapePaint.setStrokeWidth(4);
 
         selectedShapePaint.set(shapePaint);
         selectedShapePaint.setAlpha(127);
 
         shapeBorderPaint.setColor(Color.BLACK);
-        shapeBorderPaint.setStrokeWidth(16);
+        shapeBorderPaint.setStrokeWidth(8);
         shapeBorderPaint.setStyle(Paint.Style.STROKE);
 
         selectedShapeBorderPaint.set(shapeBorderPaint);
@@ -110,19 +116,93 @@ public class Circle extends Shape {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        synchronized (mPathToDraw) {
-            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
-            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapePaint : shapePaint);
+
+        long s = System.currentTimeMillis();
+
+//        canvas.save();
+//        canvas.setMatrix(mCurrentMatrix);
+        if (mPointsInCircle != null) {
+//            PointF lastPoint = null;
+//            for (PointF point : mPointsInCircle) {
+//                if (lastPoint != null) {
+//                    canvas.drawLine(lastPoint.x, lastPoint.y, point.x, point.y, selectedShapePaint);
+//
+//                }
+//                lastPoint = new PointF(point.x, point.y);
+//            }
+
+//            float[] floats = new float[mPointsInCircle.length * 4];
+//            int count = 0;
+//            for (PointF point: mPointsInCircle) {
+//                floats[count++] = point.x;
+//                floats[count++] = point.y;
+//                if (count != 2) {
+//                    floats[count++] = point.x;
+//                    floats[count++] = point.y;
+//                }
+//            }
+//            floats[count++] = mPointsInCircle[0].x;
+//            floats[count] = mPointsInCircle[0].y;
+            selectedShapeBorderPaint.setStrokeJoin(Paint.Join.ROUND);
+            shapeBorderPaint.setStrokeJoin(Paint.Join.ROUND);
+            selectedShapePaint.setStrokeJoin(Paint.Join.ROUND);
+            shapePaint.setStrokeJoin(Paint.Join.ROUND);
+            canvas.drawLines(mPointsInCircleDraw, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
+            canvas.drawLines(mPointsInCircleDraw, mIsSelected ? selectedShapePaint : shapePaint);
         }
+//        canvas.restore();
+
+
+//        synchronized (mPathToDraw) {
+//            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
+//            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapePaint : shapePaint);
+//        }
+
+
+
+//        if (center != null) {
+//            canvas.save();
+//            canvas.setMatrix(mCurrentMatrix);
+////            canvas.drawCircle(center.x, center.y, radius, selectedShapePaint);
+//            RectF rectF = new RectF(center.x - radius, center.y - radius,
+//                center.x + radius, center.y + radius);
+////            canvas.drawOval(rectF, selectedShapePaint);
+//            canvas.drawArc(rectF, 45, 315, false, selectedShapePaint);
+//            canvas.restore();
+//        }
+
+////        synchronized (mPathToDraw) {
+////            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
+////            canvas.drawPath(mPathToDraw, mIsSelected ? selectedShapePaint : shapePaint);
+//
+//        canvas.save();
+//        canvas.setMatrix(mCurrentMatrix);
+////            canvas.drawPath(mPathToDraw, shapePaint);
+//
+//        Path path = new Path(mPath);
+//        float[] floats = new float[9];
+//        mCurrentMatrix.getValues(floats);
+//        Region region = new Region(0, 0, 2000, 2000);
+//        path.op(region.getBoundaryPath(), Path.Op.INTERSECT);
+//
+//
+//        canvas.drawPath(path, shapePaint);
+//        canvas.restore();
+////        if (Center != null) {
+////            canvas.drawCircle(Center.x, Center.y, Radius, shapePaint);
+////        }
+////        }
 
         // Dibujar puntos solo si la figura está seleccionada.
         if (mIsSelected) {
             for (PointF pointToDraw: mMappedPoints) {
                 canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) mPointRadius, pointPaint);
                 canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) mPointRadius, pointBorderPaint);
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) mCurrentZoom, pointCenterPaint);
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, (float) 2, pointCenterPaint);
             }
         }
+        long e = System.currentTimeMillis();
+        Log.d(TAG, "onDraw: " + (e-s));
     }
 
     @Override
@@ -139,6 +219,7 @@ public class Circle extends Shape {
 
     @Override
     public void updateViewMatrix(Matrix matrix) {
+        long s = System.currentTimeMillis();
         if (matrix != null) {
             mPreviousMatrix.set(mCurrentMatrix);
             mCurrentMatrix.set(matrix);
@@ -162,11 +243,25 @@ public class Circle extends Shape {
         float[] floats = new float[9];
         mCurrentMatrix.getValues(floats);
         mCurrentZoom = floats[Matrix.MSCALE_X];
-        mPointRadius = (float) (POINT_RADIUS * Math.max(1, mCurrentZoom) * 1.5d);
+//        mInitialZoom = Math.min(mInitialZoom, mCurrentZoom);
+        if (mInitialZoom == 0) {
+            mInitialZoom = mCurrentZoom;
+            mPointRadiusLimit = Math.max(this.getMeasuredWidth(), this.getMeasuredHeight()) / 6;
+        }
+        mPointRadius = (float) Math.min((POINT_RADIUS * mCurrentZoom / mInitialZoom/* * 1.5d*/), mPointRadiusLimit);
+
+        if (mPointsInCircle != null) {
+            if (mPointsInCircleDraw == null) {
+                mPointsInCircleDraw = new float[mPointsInCircle.length];
+            }
+            mCurrentMatrix.mapPoints(mPointsInCircleDraw, mPointsInCircle);
+        }
 
         computeNewCircumferencePath();
 
         invalidate();
+        long e = System.currentTimeMillis();
+        Log.d(TAG, "updateViewMatrix: " + (e-s));
     }
 
     @Override
@@ -177,12 +272,12 @@ public class Circle extends Shape {
 
     private void computeNewCircumferencePath() {
 //        if (Center != null && Radius != 0) {
-            if (mAsyncCircumferenceComputer != null) {
-                mAsyncCircumferenceComputer.cancel(true);
-            }
-
-            mAsyncCircumferenceComputer = new AsyncCircumferenceComputer(this);
-            mAsyncCircumferenceComputer.execute();
+//            if (mAsyncCircumferenceComputer != null) {
+//                mAsyncCircumferenceComputer.cancel(true);
+//            }
+//
+//            mAsyncCircumferenceComputer = new AsyncCircumferenceComputer(this);
+//            mAsyncCircumferenceComputer.execute();
 //        }
     }
 
@@ -224,6 +319,10 @@ public class Circle extends Shape {
         mPath.set(path);
     }
 
+    public void setPoints(float[] pointsArray) {
+        mPointsInCircle = pointsArray;
+    }
+
     public static class AsyncCircumferenceComputer extends AsyncTask<Void, Void, Void> {
         private WeakReference<Circle> circleWeakReference;
 
@@ -259,9 +358,9 @@ public class Circle extends Shape {
 //            view.mPathToDraw.op(region.getBoundaryPath(), Path.Op.INTERSECT);
             path.op(region.getBoundaryPath(), Path.Op.INTERSECT);
 
-            synchronized (view.mPathToDraw) {
+//            synchronized (view.mPathToDraw) {
                 view.mPathToDraw.set(path);
-            }
+//            }
 
             return null;
         }
