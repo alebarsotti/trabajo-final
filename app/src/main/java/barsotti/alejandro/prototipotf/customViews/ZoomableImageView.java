@@ -35,30 +35,26 @@ import java.util.Set;
 
 import barsotti.alejandro.prototipotf.Utils.ImageTile;
 import barsotti.alejandro.prototipotf.Utils.ImageTileLruCache;
-
-import static android.support.constraint.Constraints.TAG;
+import barsotti.alejandro.prototipotf.Utils.ViewUtils;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
     implements IShapeCreator {
 
     // region Constantes
-
     // Mínimo factor de escala permitido para la matriz de la View.
-    private static final int MIN_SCALE_FACTOR = 1;
+    private static final int MIN_SCALE_FACTOR = ViewUtils.MIN_SCALE_FACTOR;
     // Máximo factor de escala permitido para la matriz de la View.
-    private static final int MAX_SCALE_FACTOR = 30;
+    private static final int MAX_SCALE_FACTOR = ViewUtils.MAX_SCALE_FACTOR;
     // Duración de las animaciones (desplazamiento, zoom) en milisegundos.
     private static final int ANIMATION_DURATION = 250;
-    // Tolerancia de desplazamiento para el dibujo de un nuevo punto en un Path en el modo de dibujo.
-    private static final float TOUCH_TOLERANCE = 10;
     // Dimensiones inicial y máxima de cada Tile.
     private static final int INITIAL_TILE_SIZE = 64;
     private static final int MAX_TILE_SIZE = 1024;
-
+    // Tag para propósitos de debug.
+    private static final String TAG = "ZoomableImageView";
     // endregion
 
     // region Variables
-
     // Ancho de cada Tile en píxeles.
     private int mTileSize = INITIAL_TILE_SIZE;
     // Ancho y alto en píxeles de la imagen escalada por Glide inicialmente.
@@ -99,22 +95,19 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
     // Opciones utilizadas para especificar cómo decodificar Tiles.
     private BitmapFactory.Options mBitmapOptions;
     // Pintura con AntiAlias para dibujado de Tiles.
-    private Paint mPaint = new Paint();
+    private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Scroller utilizado para realizar el movimiento de fling.
     private OverScroller mScroller = new OverScroller(getContext());
-
-    private ArrayList<IOnMatrixViewChangeListener> mListeners = new ArrayList<>();
-
-    // TODO: Prueba. Revisar.
+    // Variable que indica si se está dibujando una figura actualmente.
     private boolean mDrawingInProgress = false;
-
+    // Lista de objetos suscritos al evento de actualización de la matriz de esta vista.
+    private ArrayList<IOnMatrixViewChangeListener> mListeners = new ArrayList<>();
     // endregion
 
     public enum State {
         None,
         Scrolling,
         Animating,
-//        Drawing,
         Flinging
     }
 
@@ -125,7 +118,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     public ZoomableImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initializeMembers();
+
+        // Establecer tipo de escala de la vista a Matriz.
+        this.setScaleType(ScaleType.MATRIX);
+
+        // Establecer configuración para la decodificación de Bitmaps.
+        mBitmapOptions = new BitmapFactory.Options();
     }
     //endregion
 
@@ -137,10 +135,10 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         mDrawingInProgress = drawingInProgress;
     }
 
-//    @Override
-//    public void addPoint(PointF point) {
-//
-//    }
+    @Override
+    public float getOriginalZoom() {
+        return mOriginalZoom;
+    }
 
     public void addOnMatrixViewChangeListener(IOnMatrixViewChangeListener listener) {
         mListeners.add(listener);
@@ -162,91 +160,96 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         // Calcular Tiles visibles según la nueva matriz.
         if (computeVisibleTiles) {
-            ComputeVisibleTiles();
+            //region Calcular tiles visibles.
+            // Obtener valores de la matriz actual.
+            mCurrentMatrix.getValues(mMatrixValues);
+            float offsetX = mMatrixValues[Matrix.MTRANS_X];
+            float offsetY = mMatrixValues[Matrix.MTRANS_Y];
+            float currentScale = mMatrixValues[Matrix.MSCALE_X];
+
+            // Calcular coordenadas que representan el inicio de la region visible en la imagen original.
+            float regionStartX = Math.max(0, -offsetX / currentScale / mOriginalZoom);
+            float regionStartY = Math.max(0, -offsetY / currentScale / mOriginalZoom);
+
+            // Calcular dimensiones de la región visible actualmente.
+            float regionWidth = mDisplayWidth / currentScale / mOriginalZoom;
+            float regionHeight = mDisplayHeight / currentScale / mOriginalZoom;
+
+            // Calcular índices de Tiles visibles y tamaño de Tiles adecuado.
+            int firstTileIndexX, firstTileIndexY, lastTileIndexX, lastTileIndexY;
+            mTileSize = INITIAL_TILE_SIZE >> 1;
+            do {
+                mTileSize <<= 1;
+
+                // Calcular índices de la primera Tile visible actualmente con el tamaño de Tile actual.
+                firstTileIndexX = (int) regionStartX / mTileSize;
+                firstTileIndexY = (int) regionStartY / mTileSize;
+
+                // Calcular índices de la última Tile visible actualmente con el tamaño de Tile actual.
+                lastTileIndexX = (int) Math.min(mOriginalImageWidth / mTileSize,
+                    (regionStartX + regionWidth) / mTileSize);
+                lastTileIndexY = (int) Math.min(mOriginalImageHeight / mTileSize,
+                    (regionStartY + regionHeight) / mTileSize);
+            } while (Math.max(lastTileIndexX - firstTileIndexX, lastTileIndexY - firstTileIndexY) + 1 > 9 &&
+                mTileSize < MAX_TILE_SIZE);
+
+            // Determinar el SampleLevel adecuado para el factor de escala actual y el tamaño de la caché.
+            int sampleLevel = 1;
+            int cacheMaxSize = mImageTileCache.maxSize();
+            double totalBitmapBytes = 4 * // Cada pixel requiere 4 bytes.
+                Math.ceil((regionWidth / (double) mTileSize) + 1) * // Tiles en X.
+                Math.ceil((regionHeight / (double) mTileSize) + 1) * // Tiles en Y.
+                Math.pow(mTileSize, 2); // Cantidad de píxeles de cada Tile.
+
+            while (regionWidth / sampleLevel > mDisplayWidth ||
+                regionHeight / sampleLevel > mDisplayHeight ||
+                cacheMaxSize < (totalBitmapBytes / Math.pow(sampleLevel, 2))) {
+                sampleLevel <<= 1;
+            }
+            mBitmapOptions.inSampleSize = sampleLevel;
+
+            // Calcular Tiles visibles actualmente.
+            List<ImageTile> visibleTiles = new ArrayList<>();
+            for(int rowIndex = firstTileIndexX; rowIndex <= lastTileIndexX; rowIndex++) {
+                for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
+
+                    // Región correspondiente a la Tile.
+                    Rect region = new Rect(rowIndex * mTileSize, columnIndex * mTileSize,
+                        (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
+
+                    visibleTiles.add(new ImageTile(region, sampleLevel, mTileSize));
+                }
+            }
+
+            // Actualizar lista de Tiles actual.
+            mTilesDraw.clear();
+            mTilesDraw.addAll(visibleTiles);
+
+            // Forzar redibujo.
+            invalidate();
+
+            // Iniciar la carga de las Tiles visibles actualmente.
+            //region Cargar tiles visibles
+            if (mAsyncImageRegionDecoder != null) {
+                mAsyncImageRegionDecoder.cancel(true);
+            }
+
+            mAsyncImageRegionDecoder = new AsyncImageRegionDecoder(this);
+            mAsyncImageRegionDecoder.execute();
+            //endregion
+            //endregion
         }
 
-        triggerOnMatrixViewChange(mCanvasMatrix);
+        // TODO: Revisar esto. Si se agrega el if, se reduce la cantidad de llamadas a onDraw en hijos.
+        // Desencadenar evento de actualización de matriz para listeners.
+//        if (!mState.equals(State.Animating)) {
+            for (IOnMatrixViewChangeListener listener: mListeners) {
+                listener.updateViewMatrix(mCanvasMatrix);
+            }
+//        }
 
         // Actualizar matrix de la View.
         this.setImageMatrix(mCurrentMatrix);
-    }
-
-    private void triggerOnMatrixViewChange(Matrix matrix) {
-        for (IOnMatrixViewChangeListener listener: mListeners) {
-            listener.updateViewMatrix(matrix);
-        }
-    }
-
-    private void ComputeVisibleTiles() {
-        // Obtener valores de la matriz actual.
-        mCurrentMatrix.getValues(mMatrixValues);
-        float offsetX = mMatrixValues[Matrix.MTRANS_X];
-        float offsetY = mMatrixValues[Matrix.MTRANS_Y];
-        float currentScale = mMatrixValues[Matrix.MSCALE_X];
-
-        // Calcular coordenadas que representan el inicio de la region visible en la imagen original.
-        float regionStartX = Math.max(0, -offsetX / currentScale / mOriginalZoom);
-        float regionStartY = Math.max(0, -offsetY / currentScale / mOriginalZoom);
-
-        // Calcular dimensiones de la región visible actualmente.
-        float regionWidth = mDisplayWidth / currentScale / mOriginalZoom;
-        float regionHeight = mDisplayHeight / currentScale / mOriginalZoom;
-
-        // Calcular índices de Tiles visibles y tamaño de Tiles adecuado.
-        int firstTileIndexX, firstTileIndexY, lastTileIndexX, lastTileIndexY;
-        mTileSize = INITIAL_TILE_SIZE >> 1;
-        do {
-            mTileSize <<= 1;
-
-            // Calcular índices de la primera Tile visible actualmente con el tamaño de Tile actual.
-            firstTileIndexX = (int) regionStartX / mTileSize;
-            firstTileIndexY = (int) regionStartY / mTileSize;
-
-            // Calcular índices de la última Tile visible actualmente con el tamaño de Tile actual.
-            lastTileIndexX = (int) Math.min(mOriginalImageWidth / mTileSize,
-                (regionStartX + regionWidth) / mTileSize);
-            lastTileIndexY = (int) Math.min(mOriginalImageHeight / mTileSize,
-                (regionStartY + regionHeight) / mTileSize);
-        } while (Math.max(lastTileIndexX - firstTileIndexX, lastTileIndexY - firstTileIndexY) + 1 > 9 &&
-            mTileSize < MAX_TILE_SIZE);
-
-        // Determinar el SampleLevel adecuado para el factor de escala actual y el tamaño de la caché.
-        int sampleLevel = 1;
-        int cacheMaxSize = mImageTileCache.maxSize();
-        double totalBitmapBytes = 4 * // Cada pixel requiere 4 bytes.
-            Math.ceil((regionWidth / (double) mTileSize) + 1) * // Tiles en X.
-            Math.ceil((regionHeight / (double) mTileSize) + 1) * // Tiles en Y.
-            Math.pow(mTileSize, 2); // Cantidad de píxeles de cada Tile.
-
-        while (regionWidth / sampleLevel > mDisplayWidth ||
-            regionHeight / sampleLevel > mDisplayHeight ||
-            cacheMaxSize < (totalBitmapBytes / Math.pow(sampleLevel, 2))) {
-            sampleLevel <<= 1;
-        }
-        mBitmapOptions.inSampleSize = sampleLevel;
-
-        // Calcular Tiles visibles actualmente.
-        List<ImageTile> visibleTiles = new ArrayList<>();
-        for(int rowIndex = firstTileIndexX; rowIndex <= lastTileIndexX; rowIndex++) {
-            for(int columnIndex = firstTileIndexY; columnIndex <= lastTileIndexY; columnIndex++) {
-
-                // Región correspondiente a la Tile.
-                Rect region = new Rect(rowIndex * mTileSize, columnIndex * mTileSize,
-                    (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
-
-                visibleTiles.add(new ImageTile(region, sampleLevel, mTileSize));
-            }
-        }
-
-        // Actualizar lista de Tiles actual.
-        mTilesDraw.clear();
-        mTilesDraw.addAll(visibleTiles);
-
-        // Forzar redibujo.
-        invalidate();
-
-        // Iniciar la carga de las Tiles visibles actualmente.
-        loadVisibleTiles();
     }
 
     @Override
@@ -443,32 +446,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         mDefaultMatrix.set(mCurrentMatrix);
         updateImageMatrix(false);
     }
-
-    /**
-     * Método utilizado para lanzar la tarea asíncrona encargada de decodificar Tiles.
-     */
-    private void loadVisibleTiles() {
-        if (mAsyncImageRegionDecoder != null) {
-            mAsyncImageRegionDecoder.cancel(true);
-        }
-
-        mAsyncImageRegionDecoder = new AsyncImageRegionDecoder(this);
-        mAsyncImageRegionDecoder.execute();
-    }
-
-    /**
-     * Método que inicializa variables fundamentales de la View.
-     */
-    private void initializeMembers() {
-        // Establecer tipo de escala de la vista a Matriz.
-        this.setScaleType(ScaleType.MATRIX);
-
-        // Establecer configuración para la decodificación de Bitmaps.
-        mBitmapOptions = new BitmapFactory.Options();
-
-        // Establecer AntiAlias para el dibujado de Tiles.
-        mPaint.setAntiAlias(true);
-    }
     //endregion
 
     public static class AsyncImageRegionDecoder extends AsyncTask<Void, Void, Void> {
@@ -535,7 +512,6 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
         ZoomableImageViewGroup parent = (ZoomableImageViewGroup) this.getParent();
         parent.checkShapeSelection(point);
     }
-
 
     private class ZoomableImageViewGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -671,10 +647,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
         if (mState.equals(State.Flinging)) {
             boolean computeVisibleTiles = false;
-            // TODO: Probar sacar isOverScrolled para evitar que el fling se detenga en los bordes.
-            if (mScroller.computeScrollOffset() && !mScroller.isOverScrolled()) {
+            if (mScroller.computeScrollOffset()) {
                 mCurrentMatrix.getValues(mMatrixValues);
-
                 mCurrentMatrix.postTranslate(mScroller.getCurrX() - mMatrixValues[Matrix.MTRANS_X],
                     mScroller.getCurrY() - mMatrixValues[Matrix.MTRANS_Y]);
             }

@@ -12,11 +12,16 @@ import android.view.View;
 import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.Utils.ViewUtils;
 
 public abstract class Shape extends View implements IOnMatrixViewChangeListener {
+    // Mínimo factor de escala permitido para la matriz de la View a la que pertenece la figura.
+    protected static final int MIN_SCALE_FACTOR = ViewUtils.MIN_SCALE_FACTOR;
+    // Máximo factor de escala permitido para la matriz de la View a la que pertenece la figura.
+    protected static final int MAX_SCALE_FACTOR = ViewUtils.MAX_SCALE_FACTOR;
     protected static final float TOUCH_RADIUS = 75;
-    protected static final double POINT_RADIUS = 30;
-    protected double mPointRadius = POINT_RADIUS;
+    protected static final float POINT_RADIUS = 30;
+    protected float mPointRadius = POINT_RADIUS;
     private static final String TAG = "Shape";
     protected Integer mSelectedPointIndex;
     protected boolean mIsSelected = false;
@@ -24,10 +29,11 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     private GestureDetector mGestureDetector = new GestureDetector(getContext(), new ShapeGestureListener());
     protected ArrayList<PointF> mMappedPoints = new ArrayList<>();
     protected Matrix mCurrentMatrix = new Matrix();
-    protected Matrix mPreviousMatrix = new Matrix();
     protected float mCurrentZoom = 0;
     protected float mInitialZoom = 0;
-    protected float mPointRadiusLimit = 0;
+    protected float mOriginalZoom = 0;
+    protected float mPointRadiusMaxLimit = 0;
+    protected float mPointRadiusMinLimit = 0;
 
     //region Constructors
     public Shape(Context context) {
@@ -52,7 +58,13 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     public abstract void updateViewMatrix(Matrix matrix);
     //endregion
 
+    protected void initializePointRadiusRange() {
+        mPointRadiusMaxLimit = Math.max(this.getMeasuredWidth(), this.getMeasuredHeight()) / 6;
+        mPointRadiusMinLimit = mPointRadiusMaxLimit / 3;
+    }
+
     public void addShapeCreatorListener(IShapeCreator shapeCreator) {
+        mOriginalZoom = shapeCreator.getOriginalZoom();
         shapeCreator.addOnMatrixViewChangeListener(this);
     }
 
@@ -93,10 +105,11 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         public boolean onDown(MotionEvent e) {
             // Verificar que el toque haya sido cerca de uno de los puntos de la figura. De no ser así, no
             // capturar el evento.
+            float eX = e.getX();
+            float eY = e.getY();
             for (int i = 0; i < mMappedPoints.size(); i++) {
                 PointF point = mMappedPoints.get(i);
-                if (MathUtils.distanceBetweenPoints(e.getX(), e.getY(), point.x, point.y) <=
-                    mPointRadius * 1.25) {
+                if (MathUtils.distanceBetweenPoints(eX, eY, point.x, point.y) <= mPointRadius) {
                     mSelectedPointIndex = i;
                     return true;
                 }

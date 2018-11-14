@@ -1,5 +1,6 @@
 package barsotti.alejandro.prototipotf.Utils;
 
+import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.PointF;
@@ -61,12 +62,49 @@ public class MathUtils {
         return tangent;
     }
 
+//    public static PointF mapPoint(Matrix matrix, PointF point) {
+//        if (point == null) {
+//            return null;
+//        }
+//
+//        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
+//        float[] floats = { point.x, point.y };
+//
+//        // Mapear el punto.
+//        matrix.mapPoints(floats);
+//
+//        // Crear punto con el resultado del mapeo.
+//        return new PointF(floats[0], floats[1]);
+//    }
+//
+//    public static ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
+//        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
+//        float[] pointsArray = new float[pointsToMap.size() * 2];
+//        for (int i = 0; i < pointsToMap.size(); i++) {
+//            PointF point = pointsToMap.get(i);
+//            pointsArray[i * 2] = point.x;
+//            pointsArray[i * 2 + 1] = point.y;
+//        }
+//
+//        // Mapear los puntos.
+//        matrix.mapPoints(pointsArray);
+//
+//        // Crear ArrayList resultado con los puntos mapeados.
+//        ArrayList<PointF> mappedPoints = new ArrayList<>();
+//        for (int i = 0; i < pointsToMap.size(); i++) {
+//            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
+//        }
+//
+//        return mappedPoints;
+//    }
+
     public static void circumferenceFromThreePoints(Circle circle) {
         ArrayList<PointF> points = circle.getPoints();
 
-        double point1X, point1Y, point2X, point2Y, point3X, point3Y, delta1, delta2, point12X, point12Y,
+        float point1X, point1Y, point2X, point2Y, point3X, point3Y, delta1, delta2, point12X, point12Y,
             point23X, point23Y, x, y, radius;
 
+        // Separar coordenadas de los puntos de la circunferencia con el fin de utilizarlos fácilmente.
         point1X = points.get(0).x;
         point1Y = points.get(0).y;
         point2X = points.get(1).x;
@@ -74,6 +112,7 @@ public class MathUtils {
         point3X = points.get(2).x;
         point3Y = points.get(2).y;
 
+        // Calcular deltas entre puntos.
         delta1 = (point2X - point1X) / (point2Y - point1Y);
         delta2 = (point3X - point2X) / (point3Y - point2Y);
 
@@ -99,71 +138,48 @@ public class MathUtils {
         y = -1 * x * delta1 + point12Y + point12X * delta1;
 
         // Calcular radio.
-        radius = Math.sqrt(Math.pow(x - point1X, 2) + Math.pow(y - point1Y, 2));
+        radius = (float) Math.sqrt(Math.pow(x - point1X, 2) + Math.pow(y - point1Y, 2));
 
-        // Establecer centro y radio.
-        circle.setCenterAndRadius(new PointF((float) x, (float) y), (float) radius);
+        // Establecer centro y radio de la circunferencia.
+        circle.setCenterAndRadius(new PointF(x, y), radius);
 
         // Crear path que representa la circunferencia mediante curvas Bézier.
-        double bezierCurveConstant = 0.551915024494d;
-        double deltaM = bezierCurveConstant * radius;
-
+        float bezierCurveConstant = 0.551915024494f;
+        float deltaM = bezierCurveConstant * radius;
         Path newPath = new Path();
-        newPath.moveTo((float) x, (float) (y + radius));
-        newPath.cubicTo((float) (x + deltaM), (float) (y + radius),
-            (float) (x + radius), (float) (y + deltaM),
-            (float) (x + radius), (float) y);
-        newPath.cubicTo((float) (x + radius), (float) (y - deltaM),
-            (float) (x + deltaM), (float) (y - radius),
-            (float) x, (float) (y - radius));
-        newPath.cubicTo((float) (x - deltaM), (float) (y - radius),
-            (float) (x - radius), (float) (y - deltaM),
-            (float) (x - radius), (float) y);
-        newPath.cubicTo((float) (x - radius), (float) (y + deltaM),
-            (float) (x - deltaM), (float) (y + radius),
-            (float) x, (float) (y + radius));
+        newPath.moveTo(x, y + radius);
+        newPath.cubicTo(x + deltaM, y + radius, x + radius, y + deltaM, x + radius, y);
+        newPath.cubicTo(x + radius, y - deltaM, x + deltaM, y - radius, x, y - radius);
+        newPath.cubicTo(x - deltaM, y - radius, x - radius, y - deltaM, x - radius, y);
+        newPath.cubicTo(x - radius, y + deltaM, x - deltaM, y + radius, x, y + radius);
         newPath.close();
 
-
-        int numberOfPoints = 360 * 2;
-        PointF[] pointArray = new PointF[numberOfPoints];
+        // Calcular coordenadas de los puntos que forman la circunferencia.
+        int numberOfPoints = Circle.NUMBER_OF_POINTS_TO_DRAW;
         PathMeasure pm = new PathMeasure(newPath, false);
-        float length = pm.getLength();
         float distance = 0f;
-        float speed = length / numberOfPoints;
-        int counter = 0;
-        float[] aCoordinates = new float[2];
+        float deltaDistance = pm.getLength() / numberOfPoints;
+        int pointArrayPosition = 0;
+        float[] pointCoordinates = new float[2];
+        float[] pointCoordinatesArray = new float[numberOfPoints * 4];
 
-        while ((distance <= length) && (counter < numberOfPoints)) {
-            // get point from the path
-            pm.getPosTan(distance, aCoordinates, null);
-            pointArray[counter] = new PointF(aCoordinates[0], aCoordinates[1]);
-            counter++;
-            distance = distance + speed;
-        }
-
-        float[] floats = new float[pointArray.length * 4];
-        int count = 0;
-        for (PointF point: pointArray) {
-            floats[count++] = point.x;
-            floats[count++] = point.y;
-            if (count != 2) {
-                floats[count++] = point.x;
-                floats[count++] = point.y;
+        for (int counter = 0; counter < numberOfPoints; counter++) {
+            pm.getPosTan(distance, pointCoordinates, null);
+            pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[0];
+            pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[1];
+            if (counter != 0) {
+                pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[0];
+                pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[1];
             }
+            else {
+                pointCoordinatesArray[pointCoordinatesArray.length - 2] = pointCoordinates[0];
+                pointCoordinatesArray[pointCoordinatesArray.length - 1] = pointCoordinates[1];
+            }
+
+            distance = distance + deltaDistance;
         }
-        floats[count++] = pointArray[0].x;
-        floats[count] = pointArray[0].y;
 
-
-
-
-
-
-
-        // Establecer path.
-        circle.setPath(newPath);
-
-        circle.setPoints(floats);
+        // Establecer la lista de puntos.
+        circle.setPoints(pointCoordinatesArray);
     }
 }
