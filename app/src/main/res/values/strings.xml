@@ -23,4 +23,5 @@
     <string name="stark_logo_CD">Stark Logo</string>
     <string name="progress_text_placeholder">Ejecutando</string>
     <string name="detect_edges_progress_text">Detectando bordes...</string>
+    <string name="cannot_draw_tangent_message">No es posible dibujar una tangente si no se ha dibujado una circunferencia previamente.</string>
 </resources>

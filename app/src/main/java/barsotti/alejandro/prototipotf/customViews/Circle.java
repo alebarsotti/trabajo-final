@@ -4,8 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -15,24 +13,18 @@ import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
-public class Circle extends Shape {
+public class Circle extends Shape implements ICircle {
+    private static final String TAG = "Circle";
     private static final int NUMBER_OF_POINTS = 3;
     public static final int NUMBER_OF_POINTS_TO_DRAW = 360;
-    private static final String TAG = "Circle";
-    private PointF center;
-    private float radius;
-    private Paint shapePaint = new Paint();
-    private Paint selectedShapePaint = new Paint();
-    private Paint shapeBorderPaint = new Paint();
-    private Paint selectedShapeBorderPaint = new Paint();
-    private Paint pointPaint = new Paint();
-    private Paint pointBorderPaint = new Paint();
-    private Paint pointCenterPaint = new Paint();
-    private PointF Center;
-    private float Radius;
+    private PointF mCenter;
+    private float mRadius;
+    public PointF mMappedCenter;
+    public float mMappedRadius;
+    private float[] mPathPoints = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
+    private float[] mMappedPathPoints = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
+    private ArrayList<IOnCircleCenterChangeListener> mListeners = new ArrayList<>();
 
-    private float[] mPointsInCircle = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
-    private float[] mPointsInCircleDraw = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
 
     public Circle(Context context) {
         this(context, null);
@@ -42,69 +34,48 @@ public class Circle extends Shape {
         super(context, attrs);
 
         initializeShape();
-        Log.d(TAG, "Circle: constructor.");
+        Log.d(TAG, "Constructor.");
     }
 
     @Override
     protected void initializeShape() {
-        int mShapeColor = Color.RED;
-        shapePaint.setColor(mShapeColor);
-        shapePaint.setStyle(Paint.Style.STROKE);
-        shapePaint.setStrokeWidth(4);
+    }
 
-        selectedShapePaint.set(shapePaint);
-        selectedShapePaint.setAlpha(127);
+    @Override
+    protected int getNumberOfPointsInShape() {
+        return NUMBER_OF_POINTS;
+    }
 
-        shapeBorderPaint.setColor(Color.BLACK);
-        shapeBorderPaint.setStrokeWidth(8);
-        shapeBorderPaint.setStyle(Paint.Style.STROKE);
-
-        selectedShapeBorderPaint.set(shapeBorderPaint);
-        selectedShapeBorderPaint.setAlpha(127);
-
-        pointPaint.setColor(Color.YELLOW);
-        pointPaint.setStyle(Paint.Style.FILL);
-        pointPaint.setStrokeWidth(20);
-        pointPaint.setAlpha(63);
-
-        pointCenterPaint.set(shapeBorderPaint);
-        pointCenterPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        pointCenterPaint.setStrokeWidth(2);
-        pointCenterPaint.setAlpha(127);
-
-        pointBorderPaint.set(selectedShapeBorderPaint);
-        pointBorderPaint.setStrokeWidth(2);
+    @Override
+    protected int getShapeColor() {
+        return Color.RED;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         // Dibujar circunferencia si la misma se encuentra completa.
-        if (mPointsInCircle != null) {
-//            // Dibujar borde.
-//            canvas.drawLines(mPointsInCircleDraw, mIsSelected ? selectedShapeBorderPaint : shapeBorderPaint);
+        if (mPathPoints != null) {
+            // Dibujar borde.
+            canvas.drawLines(mMappedPathPoints, mIsSelected ? mSelectedShapeBorderPaint : mShapeBorderPaint);
             // Dibujar línea principal.
-            canvas.drawLines(mPointsInCircleDraw, mIsSelected ? selectedShapePaint : shapePaint);
+            canvas.drawLines(mMappedPathPoints, mIsSelected ? mSelectedShapePaint : mShapePaint);
         }
 
         // Dibujar puntos solo si la figura está seleccionada.
         if (mIsSelected) {
-            for (PointF pointToDraw: mMappedPoints) {
+            for (PointF pointToDraw: mMappedShapePoints) {
                 // Dibujar relleno del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, pointPaint);
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointPaint);
                 // Dibujar borde del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, pointBorderPaint);
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointBorderPaint);
                 // Dibujar punto central del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, 2, pointCenterPaint);
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, CENTER_POINT_RADIUS, mCenterPointPaint);
             }
         }
     }
 
     @Override
     protected void computeShape() {
-        if (mPoints.size() != NUMBER_OF_POINTS) {
-            return;
-        }
-
         MathUtils.circumferenceFromThreePoints(this);
 
         // TODO: Determinar por qué puse esto acá.
@@ -113,103 +84,120 @@ public class Circle extends Shape {
 
     @Override
     public void updateViewMatrix(Matrix matrix) {
-        if (mPointRadiusMaxLimit == 0) {
-            initializePointRadiusRange();
-        }
-        if (matrix != null) {
-            mCurrentMatrix.set(matrix);
-        }
-        Radius = mCurrentMatrix.mapRadius(radius);
-        Center = mapPoint(mCurrentMatrix, center);
-        mMappedPoints = mapPoints(mCurrentMatrix, mPoints);
+//        if (mPointRadiusMaxLimit == 0) {
+//            initializePointRadiusRange();
+//        }
+//        if (matrix != null) {
+//            mCurrentMatrix.set(matrix);
+//        }
+        super.updateViewMatrix(matrix);
 
-        float[] floats = new float[9];
-        mCurrentMatrix.getValues(floats);
-        mCurrentZoom = floats[Matrix.MSCALE_X];
-        float realZoom = mCurrentZoom / mOriginalZoom;
-        // Calcular porcentaje del rango [MIN_SCALE_FACTOR, MAX_SCALE_FACTOR] al que equivale realZoom.
-        float percentage = (realZoom - MIN_SCALE_FACTOR) / (MAX_SCALE_FACTOR - MIN_SCALE_FACTOR);
-        mPointRadius = mPointRadiusMinLimit + (mPointRadiusMaxLimit - mPointRadiusMinLimit) * percentage;
+        mMappedRadius = mCurrentMatrix.mapRadius(mRadius);
+        mMappedCenter = mapPoint(mCurrentMatrix, mCenter);
+        mMappedShapePoints = mapPoints(mCurrentMatrix, mShapePoints);
 
-        mCurrentMatrix.mapPoints(mPointsInCircleDraw, mPointsInCircle);
+//        float[] floats = new float[9];
+//        mCurrentMatrix.getValues(floats);
+//        mCurrentZoom = floats[Matrix.MSCALE_X];
+//        float realZoom = mCurrentZoom / mOriginalZoom;
+//        // Calcular porcentaje del rango [MIN_SCALE_FACTOR, MAX_SCALE_FACTOR] al que equivale realZoom.
+//        float percentage = (realZoom - MIN_SCALE_FACTOR) / (MAX_SCALE_FACTOR - MIN_SCALE_FACTOR);
+//        mPointRadius = mPointRadiusMinLimit + (mPointRadiusMaxLimit - mPointRadiusMinLimit) * percentage;
+
+        mCurrentMatrix.mapPoints(mMappedPathPoints, mPathPoints);
 
         invalidate();
     }
 
-    @Override
-    public void selectShape(boolean isSelected) {
-        super.selectShape(isSelected);
-    }
-
-    @Override
-    public boolean addPoint(PointF point) {
-        if (mPoints.size() < NUMBER_OF_POINTS) {
-            mPoints.add(point);
-            computeShape();
-
-            invalidate();
-        }
-
-        return mPoints.size() < NUMBER_OF_POINTS;
-    }
+//    @Override
+//    public boolean addPoint(PointF point) {
+//        if (mShapePoints.size() < NUMBER_OF_POINTS) {
+//            mShapePoints.add(point);
+//            computeShape();
+//
+//            invalidate();
+//        }
+//
+//        return mShapePoints.size() < NUMBER_OF_POINTS;
+//    }
 
     @Override
     public boolean checkTouchToSelect(PointF point) {
-        return Center != null &&
+        return mMappedCenter != null &&
             MathUtils.valueWithinRange(
-                MathUtils.distanceBetweenPoints(Center.x, Center.y, point.x, point.y),
-                Radius - TOUCH_RADIUS,
-                Radius + TOUCH_RADIUS);
+                MathUtils.distanceBetweenPoints(mMappedCenter.x, mMappedCenter.y, point.x, point.y),
+                mMappedRadius - TOUCH_RADIUS,
+                mMappedRadius + TOUCH_RADIUS);
     }
 
-    public ArrayList<PointF> getPoints() {
-        return mPoints;
-    }
+//    public ArrayList<PointF> getPointArray() {
+//        return mShapePoints;
+//    }
 
     public void setCenterAndRadius(PointF newCenter, float newRadius) {
-        center = newCenter;
-        radius = newRadius;
-    }
+        mCenter = newCenter;
+        mRadius = newRadius;
 
-    public void setPoints(float[] pointsArray) {
-        mPointsInCircle = pointsArray;
-    }
-
-    //region Utilities
-    private PointF mapPoint(Matrix matrix, PointF point) {
-        if (point == null) {
-            return null;
+        for (IOnCircleCenterChangeListener listener: mListeners) {
+            listener.updateCircleCenterAndRadius(mCenter, mRadius);
         }
-
-        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
-        float[] floats = { point.x, point.y };
-
-        // Mapear el punto.
-        matrix.mapPoints(floats);
-
-        // Crear punto con el resultado del mapeo.
-        return new PointF(floats[0], floats[1]);
     }
 
-    private ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
-        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
-        float[] pointsArray = new float[pointsToMap.size() * 2];
-        for (int i = 0; i < pointsToMap.size(); i++) {
-            PointF point = pointsToMap.get(i);
-            pointsArray[i * 2] = point.x;
-            pointsArray[i * 2 + 1] = point.y;
-        }
-
-        // Mapear los puntos.
-        matrix.mapPoints(pointsArray);
-
-        // Crear ArrayList resultado con los puntos mapeados.
-        ArrayList<PointF> mappedPoints = new ArrayList<>();
-        for (int i = 0; i < pointsToMap.size(); i++) {
-            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
-        }
-
-        return mappedPoints;
+    public void setPathPoints(float[] pointsArray) {
+        mPathPoints = pointsArray;
     }
-    //endregion
+
+    @Override
+    public void addOnCircleCenterChangeListener(IOnCircleCenterChangeListener listener) {
+        mListeners.add(listener);
+        listener.updateCircleCenterAndRadius(mCenter, mRadius);
+    }
+
+    @Override
+    public void removeOnCircleCenterChangeListener(IOnCircleCenterChangeListener listener) {
+        try {
+            mListeners.remove(listener);
+        }
+        catch (Exception e) {
+            Log.d(TAG, "removeOnMatrixViewChangeListener: the object was not found in the list.");
+        }
+    }
+
+//    //region Utilities
+//    private PointF mapPoint(Matrix matrix, PointF point) {
+//        if (point == null) {
+//            return null;
+//        }
+//
+//        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
+//        float[] floats = { point.x, point.y };
+//
+//        // Mapear el punto.
+//        matrix.mapPoints(floats);
+//
+//        // Crear punto con el resultado del mapeo.
+//        return new PointF(floats[0], floats[1]);
+//    }
+//
+//    private ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
+//        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
+//        float[] pointsArray = new float[pointsToMap.size() * 2];
+//        for (int i = 0; i < pointsToMap.size(); i++) {
+//            PointF point = pointsToMap.get(i);
+//            pointsArray[i * 2] = point.x;
+//            pointsArray[i * 2 + 1] = point.y;
+//        }
+//
+//        // Mapear los puntos.
+//        matrix.mapPoints(pointsArray);
+//
+//        // Crear ArrayList resultado con los puntos mapeados.
+//        ArrayList<PointF> mappedPoints = new ArrayList<>();
+//        for (int i = 0; i < pointsToMap.size(); i++) {
+//            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
+//        }
+//
+//        return mappedPoints;
+//    }
+//    //endregion
 }

@@ -12,19 +12,20 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.R;
+import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
 public class ZoomableImageViewGroup extends FrameLayout {
     private static final String TAG = "ZoomableImageViewGroup";
     private ZoomableImageView mZoomableImageView;
     private ArrayList<Shape> mShapeList = new ArrayList<>();
     private Shape mInProgressShape;
-
+    private Shape mCurrentlySelectedShape;
 
     // region Constructors
     public ZoomableImageViewGroup(@NonNull Context context) {
@@ -50,7 +51,18 @@ public class ZoomableImageViewGroup extends FrameLayout {
         }
         else {
             try {
+                checkCanDrawShape(shapeClass);
+
                 Class<?> myClassType = Class.forName(shapeClass.getName());
+
+//                for (Shape shape: mShapeList) {
+//                    if (shape.getClass() == Circle.class) {
+//                        String message = "No es posible dibujar más de una circunferencia";
+//                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+//                        throw new InstantiationException(message);
+//                    }
+//                }
+
                 Class<?>[] types = new Class[] { Context.class };
                 Constructor<?> cons = myClassType.getConstructor(types);
                 mInProgressShape = (Shape) cons.newInstance(getContext());
@@ -61,13 +73,32 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 }
                 mShapeList.add(mInProgressShape);
                 this.addView(mInProgressShape);
-            } catch (InstantiationException | IllegalAccessException
-                | NoSuchMethodException | InvocationTargetException | ClassNotFoundException e) {
+            } catch (Exception e) {
                 Log.d(TAG, "setZoomableImageViewDrawingInProgress:");
                 e.printStackTrace();
+                drawingInProgress = false;
             }
         }
         mZoomableImageView.setDrawingInProgress(drawingInProgress);
+    }
+
+    private void checkCanDrawShape(Class shapeClass) throws Exception {
+        // Caso: Tangente. No es posible dibujar una tangente si no existe una circunferencia previamente.
+        if (shapeClass == Tangent.class) {
+            boolean canDrawTangent = false;
+            for (Shape shape: mShapeList) {
+                if (shape.getClass() == Circle.class) {
+                    canDrawTangent = true;
+                    break;
+                }
+            }
+
+            if (!canDrawTangent) {
+                Toast.makeText(getContext(), R.string.cannot_draw_tangent_message,
+                    Toast.LENGTH_SHORT).show();
+                throw new Exception();
+            }
+        }
     }
 
     public void setupZoomableImageView(int displayWidth, int displayHeight, Uri uri, Drawable drawable) {
@@ -85,8 +116,34 @@ public class ZoomableImageViewGroup extends FrameLayout {
 //            this.addView(mInProgressShape);
 //        }
 
-        if (mInProgressShape != null && !mInProgressShape.addPoint(point)) {
-            setZoomableImageViewDrawingInProgress(false, null);
+        if (mInProgressShape != null) {
+            // Caso: Tangente. Determinar a qué circunferencia corresponde asociar la tangente.
+            if (mInProgressShape.getClass() == Tangent.class) {
+                Circle closestCircle = null;
+                double distance = -1;
+                for (Shape shape : mShapeList) {
+                    if (shape.getClass() == Circle.class) {
+                        PointF circleCenter = ((Circle) shape).mMappedCenter;
+                        double newDistance = Math.abs(MathUtils.distanceBetweenPoints(point.x, point.y,
+                            circleCenter.x, circleCenter.y) - ((Circle) shape).mMappedRadius);
+                        if (distance < 0 || newDistance < distance) {
+                            distance = newDistance;
+                            closestCircle = (Circle) shape;
+                        }
+                    }
+                }
+
+                if (closestCircle != null) {
+                    closestCircle.addOnCircleCenterChangeListener((Tangent) mInProgressShape);
+                }
+            }
+
+            // Agregar punto a la forma y determinar si el dibujo fue finalizado.
+            boolean finishedShape = !mInProgressShape.addPoint(point);
+
+            if (finishedShape) {
+                setZoomableImageViewDrawingInProgress(false, null);
+            }
         }
 
 //        mShapeList.add(circle);
@@ -102,8 +159,10 @@ public class ZoomableImageViewGroup extends FrameLayout {
     public void checkShapeSelection(PointF point) {
         for (int i = mShapeList.size() - 1; i >= 0; i--) {
             if (mShapeList.get(i).verifyShapeTouched(point)) {
+                mCurrentlySelectedShape = mShapeList.get(i);
                 return;
             }
         }
+        mCurrentlySelectedShape = null;
     }
 }

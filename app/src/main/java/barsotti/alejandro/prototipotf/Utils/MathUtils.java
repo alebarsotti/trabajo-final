@@ -1,25 +1,65 @@
 package barsotti.alejandro.prototipotf.Utils;
 
-import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.PointF;
-
 import java.util.ArrayList;
-
 import barsotti.alejandro.prototipotf.customViews.Circle;
 
 public class MathUtils {
+    // Valor de tolerancia utilizado para la realización de cálculos precisos.
     private static double TOLERANCE = 0.0001d;
+    // Tag utilizado a efectos de debug.
+    private static String TAG = "MathUtils";
 
+    /**
+     * Calcula la distancia entre dos puntos dados.
+     * @param x1 Coordenada X del primer punto.
+     * @param y1 Coordenada Y del primer punto.
+     * @param x2 Coordenada X del segundo punto.
+     * @param y2 Coordenada Y del segundo punto.
+     * @return Medida de la distancia entre los puntos especificados.
+     */
     public static double distanceBetweenPoints(double x1, double y1, double x2, double y2) {
         return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 
+    /**
+     * Calcula la distancia entre un punto fijo y la recta definida por otros dos puntos.
+     * Referencia de fórmula: https://brilliant.org/wiki/dot-product-distance-between-point-and-a-line
+     * @param point Punto fijo a partir del cual calcular la distancia.
+     * @param linePoint1 Punto que forma parte de la recta.
+     * @param linePoint2 Punto que forma parte de la recta.
+     * @return Distancia entre el punto y la recta proporcionados.
+     */
+    public static double distanceBetweenLineAndPoint(PointF point, PointF linePoint1, PointF linePoint2) {
+        float a, b = -1, c;
+        a = (linePoint1.y - linePoint2.y) / (linePoint1.x - linePoint2.x);
+        c = a * linePoint1.x + linePoint1.y;
+
+        return (float) (Math.abs(a * point.x + b * point.y + c) /
+            Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2)));
+    }
+
+    /**
+     * Determina si el valor proporcionado se encuentra dentro de los límites establecidos.
+     * @param value Valor a controlar.
+     * @param lowerLimit Límite inferior (inclusivo).
+     * @param upperLimit Límite superior (inclusivo).
+     * @return True si el valor se encuentra dentro del intervalo. False en caso contrario.
+     */
     public static boolean valueWithinRange(double value, double lowerLimit, double upperLimit) {
         return value >= lowerLimit && value <= upperLimit;
     }
 
+    /**
+     * A partir de datos de una circunferencia y un punto 'P', calcula el punto 'Q' más cercano a P que se
+     * encuentra sobre la circunferencia.
+     * @param center Centro de la circunferencia.
+     * @param radius Radio de la circunferencia.
+     * @param point Punto a trasladar.
+     * @return Punto más cercano a P que se encuentra sobre la circunferencia indicada.
+     */
     public static PointF translatePointToCircumference(PointF center, double radius, PointF point) {
         // Calcular coordenada X del punto de la circunferencia a encontrar.
         double tx = (radius * (point.x - center.x)) /
@@ -34,15 +74,25 @@ public class MathUtils {
         return new PointF((float) tx, (float) ty);
     }
 
-    public static ArrayList<PointF> tangentToCircumference(PointF center, PointF pointInCircumference) {
-        ArrayList<PointF> tangent = new ArrayList<>();
+    /**
+     * Calcula la tangente a una circunferencia en un punto dado.
+     * @param center Punto que representa el centro de la circunferencia.
+     * @param pointInCircumference Punto perteneciente a la circunferencia a partir del cual se calculará
+     *                             la tangente.
+     * @param circumferenceRadius Radio de la circunferencia.
+     * @return Array con dos puntos ([x1, y1, x2, y2]) que, al unirse mediante una recta, representan la
+     * tangente calculada.
+     */
+    public static float[] tangentToCircumference(PointF center, PointF pointInCircumference,
+                                                 float circumferenceRadius) {
+        ArrayList<PointF> tangentPointsList = new ArrayList<>();
 
         // Determinar si la diferencia en la coordenada "y" de los puntos es cero (caso especial).
-        double tangentPointDistance = 2000d;
+        double tangentPointDistance = 2 * circumferenceRadius;
         if (Math.abs(pointInCircumference.y - center.y) < TOLERANCE) {
-            tangent.add(new PointF(pointInCircumference.x,
+            tangentPointsList.add(new PointF(pointInCircumference.x,
                 (float) (pointInCircumference.y + tangentPointDistance)));
-            tangent.add(new PointF(pointInCircumference.x,
+            tangentPointsList.add(new PointF(pointInCircumference.x,
                 (float) (pointInCircumference.y - tangentPointDistance)));
         }
         else {
@@ -55,51 +105,28 @@ public class MathUtils {
             double secondPointX = pointInCircumference.x + tangentPointDistance;
             double secondPointY = a * secondPointX + b;
 
-            tangent.add(new PointF((float) firstPointX, (float) firstPointY));
-            tangent.add(new PointF((float) secondPointX, (float) secondPointY));
+            tangentPointsList.add(new PointF((float) firstPointX, (float) firstPointY));
+            tangentPointsList.add(new PointF((float) secondPointX, (float) secondPointY));
         }
 
-        return tangent;
+        float[] tangentPointsArray = new float[4];
+        int index = 0;
+        for (PointF point: tangentPointsList) {
+            tangentPointsArray[index++] = point.x;
+            tangentPointsArray[index++] = point.y;
+        }
+
+        return tangentPointsArray;
     }
 
-//    public static PointF mapPoint(Matrix matrix, PointF point) {
-//        if (point == null) {
-//            return null;
-//        }
-//
-//        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
-//        float[] floats = { point.x, point.y };
-//
-//        // Mapear el punto.
-//        matrix.mapPoints(floats);
-//
-//        // Crear punto con el resultado del mapeo.
-//        return new PointF(floats[0], floats[1]);
-//    }
-//
-//    public static ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
-//        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
-//        float[] pointsArray = new float[pointsToMap.size() * 2];
-//        for (int i = 0; i < pointsToMap.size(); i++) {
-//            PointF point = pointsToMap.get(i);
-//            pointsArray[i * 2] = point.x;
-//            pointsArray[i * 2 + 1] = point.y;
-//        }
-//
-//        // Mapear los puntos.
-//        matrix.mapPoints(pointsArray);
-//
-//        // Crear ArrayList resultado con los puntos mapeados.
-//        ArrayList<PointF> mappedPoints = new ArrayList<>();
-//        for (int i = 0; i < pointsToMap.size(); i++) {
-//            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
-//        }
-//
-//        return mappedPoints;
-//    }
-
+    /**
+     * Calcula centro y radio de la circunferencia a partir de tres puntos dados. Asimismo, establece
+     * la lista de N puntos que conforman la circunferencia, siendo N =
+     * {@link Circle#NUMBER_OF_POINTS_TO_DRAW}
+     * @param circle La instancia de circunferencia para la cual realizar los cálculos.
+     */
     public static void circumferenceFromThreePoints(Circle circle) {
-        ArrayList<PointF> points = circle.getPoints();
+        ArrayList<PointF> points = circle.getPointArray();
 
         float point1X, point1Y, point2X, point2Y, point3X, point3Y, delta1, delta2, point12X, point12Y,
             point23X, point23Y, x, y, radius;
@@ -180,6 +207,6 @@ public class MathUtils {
         }
 
         // Establecer la lista de puntos.
-        circle.setPoints(pointCoordinatesArray);
+        circle.setPathPoints(pointCoordinatesArray);
     }
 }

@@ -14,4 +14,8 @@
         android:id="@+id/draw_circumference"
         android:icon="@drawable/ic_menu_item"
         android:title="Dibujar circunferencia"/>
+    <item
+        android:id="@+id/draw_tangent"
+        android:icon="@drawable/ic_menu_item"
+        android:title="Dibujar tangente"/>
 </menu>

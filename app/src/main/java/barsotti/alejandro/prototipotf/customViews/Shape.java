@@ -1,10 +1,13 @@
 package barsotti.alejandro.prototipotf.customViews;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,25 +18,60 @@ import barsotti.alejandro.prototipotf.Utils.MathUtils;
 import barsotti.alejandro.prototipotf.Utils.ViewUtils;
 
 public abstract class Shape extends View implements IOnMatrixViewChangeListener {
+    //region Constantes
     // Mínimo factor de escala permitido para la matriz de la View a la que pertenece la figura.
     protected static final int MIN_SCALE_FACTOR = ViewUtils.MIN_SCALE_FACTOR;
     // Máximo factor de escala permitido para la matriz de la View a la que pertenece la figura.
     protected static final int MAX_SCALE_FACTOR = ViewUtils.MAX_SCALE_FACTOR;
+    // Radio del círculo que representa el centro de un punto de la figura.
+    protected static final int CENTER_POINT_RADIUS = 2;
+    // Radio de tolerancia de distancia para determinar si se realizó un toque sobre un elemento.
     protected static final float TOUCH_RADIUS = 75;
+    // Valor inicial para el radio de dibujo del círculo que representa un punto de la figura.
     protected static final float POINT_RADIUS = 30;
-    protected float mPointRadius = POINT_RADIUS;
+    // Tag utilizado a efectos de debug.
     private static final String TAG = "Shape";
+    //endregion
+
+    //region Pinturas
+    // Pintura utilizada para el trazo de la figura.
+    protected Paint mShapePaint = new Paint();
+    // Pintura utilizada para el trazo de la figura cuando la misma se encuentra seleccionada.
+    protected Paint mSelectedShapePaint = new Paint();
+    // Pintura utilizada para el borde del trazo de la figura.
+    protected Paint mShapeBorderPaint = new Paint();
+    // Pintura utilizada para el borde del trazo de la figura cuando la misma se encuentra seleccionada.
+    protected Paint mSelectedShapeBorderPaint = new Paint();
+    // Pintura utilizada para el relleno del círculo que representa un punto de la figura.
+    protected Paint mPointPaint = new Paint();
+    // Pintura utilizada para el borde del círculo que representa un punto de la figura.
+    protected Paint mPointBorderPaint = new Paint();
+    // Pintura utilizada para el punto central del círculo que representa un punto de la figura.
+    protected Paint mCenterPointPaint = new Paint();
+    //endregion
+
+    // Índice que indica el índice (posición en la lista) del punto de la figura que fue seleccionado.
     protected Integer mSelectedPointIndex;
+    // Variable que determina si la figura se encuentra seleccionada actualmente.
     protected boolean mIsSelected = false;
-    protected ArrayList<PointF> mPoints = new ArrayList<>();
-    private GestureDetector mGestureDetector = new GestureDetector(getContext(), new ShapeGestureListener());
-    protected ArrayList<PointF> mMappedPoints = new ArrayList<>();
+    // Array de puntos de la figura.
+    protected ArrayList<PointF> mShapePoints = new ArrayList<>();
+    // Array de puntos de la figura mapeados según la matriz de desplazamiento actual (mCurrentZoom).
+    protected ArrayList<PointF> mMappedShapePoints = new ArrayList<>();
+    // Matriz de desplazamiento actual.
     protected Matrix mCurrentMatrix = new Matrix();
+    // Zoom actual de la imagen.
     protected float mCurrentZoom = 0;
-    protected float mInitialZoom = 0;
+    // Zoom aplicado sobre la imagen original al ajustarla a la pantalla.
     protected float mOriginalZoom = 0;
-    protected float mPointRadiusMaxLimit = 0;
+    // Radio de dibujo del círculo que representa un punto de la figura.
+    protected float mPointRadius = POINT_RADIUS;
+    // Límite inferior para el valor del radio de dibujo del círculo que representa un punto de la figura.
     protected float mPointRadiusMinLimit = 0;
+    // Límite superior para el valor del radio de dibujo del círculo que representa un punto de la figura.
+    protected float mPointRadiusMaxLimit = 0;
+    // Detector de gestos utilizado para detectar movimientos, selección.
+    private GestureDetector mGestureDetector = new GestureDetector(getContext(), new ShapeGestureListener());
 
     //region Constructors
     public Shape(Context context) {
@@ -42,21 +80,106 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
     public Shape(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        Log.d(TAG, "Constructor.");
+
+        int shapeColor = getShapeColor();
+        mShapePaint.setColor(shapeColor);
+        mShapePaint.setStyle(Paint.Style.STROKE);
+        mShapePaint.setStrokeWidth(4);
+
+        mSelectedShapePaint.set(mShapePaint);
+        mSelectedShapePaint.setAlpha(127);
+
+        mShapeBorderPaint.setColor(Color.BLACK);
+        mShapeBorderPaint.setStrokeWidth(8);
+        mShapeBorderPaint.setStyle(Paint.Style.STROKE);
+
+        mSelectedShapeBorderPaint.set(mShapeBorderPaint);
+        mSelectedShapeBorderPaint.setAlpha(127);
+
+        mPointPaint.setColor(Color.YELLOW);
+        mPointPaint.setStyle(Paint.Style.FILL);
+        mPointPaint.setStrokeWidth(20);
+        mPointPaint.setAlpha(63);
+
+        mCenterPointPaint.set(mShapeBorderPaint);
+        mCenterPointPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        mCenterPointPaint.setStrokeWidth(2);
+        mCenterPointPaint.setAlpha(127);
+
+        mPointBorderPaint.set(mSelectedShapeBorderPaint);
+        mPointBorderPaint.setStrokeWidth(2);
     }
     //endregion
 
     //region Abstract Methods
+
+    /**
+     * Inicializa variables relevantes para la figura.
+     */
     protected abstract void initializeShape();
 
-    public abstract boolean addPoint(PointF point);
+    /**
+     * Obtiene la cantidad de puntos que conforman la figura.
+     * @return Número que indica la cantidad de puntos que conforman la figura.
+     */
+    protected abstract int getNumberOfPointsInShape();
 
+    /**
+     * Obtiene el color de la pintura utilizada para representar la figura.
+     * @return Número que indica el color de la pintura utilizada para representar la figura.
+     */
+    protected abstract int getShapeColor();
+
+    /**
+     * Determina si el toque efectuado en la posición especificada provocó que la figura se seleccione.
+     * @param point Punto que indica las coordenadas del toque efectuado.
+     * @return True si el toque provocó la selección de la figura. False en caso contrario.
+     */
     public abstract boolean checkTouchToSelect(PointF point);
 
+    /**
+     * Realiza los cálculos y establece los valores necesarios para representar la figura.
+     */
     protected abstract void computeShape();
+    //endregion
 
     @Override
-    public abstract void updateViewMatrix(Matrix matrix);
-    //endregion
+    public void updateViewMatrix(Matrix matrix) {
+        if (mPointRadiusMaxLimit == 0) {
+            initializePointRadiusRange();
+        }
+
+        if (matrix != null) {
+            mCurrentMatrix.set(matrix);
+        }
+
+        float[] floats = new float[9];
+        mCurrentMatrix.getValues(floats);
+        mCurrentZoom = floats[Matrix.MSCALE_X];
+        float realZoom = mCurrentZoom / mOriginalZoom;
+        // Calcular porcentaje del rango [MIN_SCALE_FACTOR, MAX_SCALE_FACTOR] al que equivale realZoom.
+        float percentage = (realZoom - MIN_SCALE_FACTOR) / (MAX_SCALE_FACTOR - MIN_SCALE_FACTOR);
+        mPointRadius = mPointRadiusMinLimit + (mPointRadiusMaxLimit - mPointRadiusMinLimit) * percentage;
+    }
+
+    public ArrayList<PointF> getPointArray() {
+        return mShapePoints;
+    }
+
+    public boolean addPoint(PointF point) {
+        if (mShapePoints.size() < getNumberOfPointsInShape()) {
+            mShapePoints.add(point);
+
+            if (mShapePoints.size() == getNumberOfPointsInShape()) {
+                computeShape();
+            }
+
+            invalidate();
+        }
+
+        return mShapePoints.size() < getNumberOfPointsInShape();
+    }
 
     protected void initializePointRadiusRange() {
         mPointRadiusMaxLimit = Math.max(this.getMeasuredWidth(), this.getMeasuredHeight()) / 6;
@@ -107,8 +230,8 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             // capturar el evento.
             float eX = e.getX();
             float eY = e.getY();
-            for (int i = 0; i < mMappedPoints.size(); i++) {
-                PointF point = mMappedPoints.get(i);
+            for (int i = 0; i < mMappedShapePoints.size(); i++) {
+                PointF point = mMappedShapePoints.get(i);
                 if (MathUtils.distanceBetweenPoints(eX, eY, point.x, point.y) <= mPointRadius) {
                     mSelectedPointIndex = i;
                     return true;
@@ -124,7 +247,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             // Si un punto está seleccionado, desplazarlo según el scroll detectado.
             if (mSelectedPointIndex != null) {
-                mPoints.get(mSelectedPointIndex).offset(-distanceX / mCurrentZoom,
+                mShapePoints.get(mSelectedPointIndex).offset(-distanceX / mCurrentZoom,
                     -distanceY / mCurrentZoom);
                 updateViewMatrix(null);
 
@@ -142,4 +265,42 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             return true;
         }
     }
+
+    //region Utilities
+    protected PointF mapPoint(Matrix matrix, PointF point) {
+        if (point == null) {
+            return null;
+        }
+
+        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
+        float[] floats = { point.x, point.y };
+
+        // Mapear el punto.
+        matrix.mapPoints(floats);
+
+        // Crear punto con el resultado del mapeo.
+        return new PointF(floats[0], floats[1]);
+    }
+
+    protected ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
+        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
+        float[] pointsArray = new float[pointsToMap.size() * 2];
+        for (int i = 0; i < pointsToMap.size(); i++) {
+            PointF point = pointsToMap.get(i);
+            pointsArray[i * 2] = point.x;
+            pointsArray[i * 2 + 1] = point.y;
+        }
+
+        // Mapear los puntos.
+        matrix.mapPoints(pointsArray);
+
+        // Crear ArrayList resultado con los puntos mapeados.
+        ArrayList<PointF> mappedPoints = new ArrayList<>();
+        for (int i = 0; i < pointsToMap.size(); i++) {
+            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
+        }
+
+        return mappedPoints;
+    }
+    //endregion
 }
