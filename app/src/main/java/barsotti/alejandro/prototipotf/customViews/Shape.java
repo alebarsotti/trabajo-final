@@ -82,6 +82,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         super(context, attrs);
         Log.d(TAG, "Constructor.");
 
+        // Inicializar pinturas utilizadas para la representanción gráfica de la figura.
         int shapeColor = getShapeColor();
         mShapePaint.setColor(shapeColor);
         mShapePaint.setStyle(Paint.Style.STROKE);
@@ -144,16 +145,72 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     protected abstract void computeShape();
     //endregion
 
-    @Override
-    public void updateViewMatrix(Matrix matrix) {
-        if (mPointRadiusMaxLimit == 0) {
-            initializePointRadiusRange();
+    //region Utilities
+    /**
+     * Mapea un punto de acuerdo a una matriz dada.
+     * @param matrix Matriz mediante la cual mapear el punto.
+     * @param point Punto a mapear.
+     * @return Punto mapeado según la matriz especificada.
+     */
+    protected PointF mapPoint(Matrix matrix, PointF point) {
+        if (point == null) {
+            return null;
         }
 
+        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
+        float[] floats = { point.x, point.y };
+
+        // Mapear el punto.
+        matrix.mapPoints(floats);
+
+        // Crear punto con el resultado del mapeo.
+        return new PointF(floats[0], floats[1]);
+    }
+
+    /**
+     * Mapea una lista de puntos de acuerdo a una matriz dada.
+     * @param matrix Matriz mediante la cual mapear los puntos.
+     * @param pointsToMap Lista de puntos a mapear.
+     * @return Lista de puntos mapeados según la matriz especificada.
+     */
+    protected ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
+        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
+        float[] pointsArray = new float[pointsToMap.size() * 2];
+        for (int i = 0; i < pointsToMap.size(); i++) {
+            PointF point = pointsToMap.get(i);
+            pointsArray[i * 2] = point.x;
+            pointsArray[i * 2 + 1] = point.y;
+        }
+
+        // Mapear los puntos.
+        matrix.mapPoints(pointsArray);
+
+        // Crear ArrayList resultado con los puntos mapeados.
+        ArrayList<PointF> mappedPoints = new ArrayList<>();
+        for (int i = 0; i < pointsToMap.size(); i++) {
+            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
+        }
+
+        return mappedPoints;
+    }
+    //endregion
+
+    @Override
+    public void updateViewMatrix(Matrix matrix) {
+        // Inicializar las variables que regulan el tamaño del radio de tolerancia a toques de los puntos.
+        if (mPointRadiusMaxLimit == 0) {
+            // El radio máximo será 1/6 de la longitud del lado más largo de la pantalla.
+            mPointRadiusMaxLimit = Math.max(this.getMeasuredWidth(), this.getMeasuredHeight()) / 6;
+            // El radio mínimo será 1/18 de la longitud del lado más largo de la pantalla.
+            mPointRadiusMinLimit = mPointRadiusMaxLimit / 3;
+        }
+
+        // Actualizar variable de la matriz actual.
         if (matrix != null) {
             mCurrentMatrix.set(matrix);
         }
 
+        // Ajustar radio de tolerancia a toques de los puntos según el zoom actual.
         float[] floats = new float[9];
         mCurrentMatrix.getValues(floats);
         mCurrentZoom = floats[Matrix.MSCALE_X];
@@ -163,39 +220,63 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         mPointRadius = mPointRadiusMinLimit + (mPointRadiusMaxLimit - mPointRadiusMinLimit) * percentage;
     }
 
+    /**
+     * Obtiene los puntos que componen la figura.
+     * @return Puntos que componen la figura.
+     */
     public ArrayList<PointF> getPointArray() {
         return mShapePoints;
     }
 
+    /**
+     * Agrega un nuevo punto a la forma.
+     * @param point Punto a agregar a la lista de puntos de la forma.
+     * @return True si la figura aún no fue completada. False en caso contrario.
+     */
     public boolean addPoint(PointF point) {
+        // Validar que sea posible agregar un nuevo punto a la figura.
         if (mShapePoints.size() < getNumberOfPointsInShape()) {
             mShapePoints.add(point);
 
+            // Calcular variables de la figura en caso de que la misma haya sido completada.
             if (mShapePoints.size() == getNumberOfPointsInShape()) {
                 computeShape();
             }
 
+            // Requerir redibujo para mostrar el nuevo punto.
             invalidate();
         }
 
         return mShapePoints.size() < getNumberOfPointsInShape();
     }
 
-    protected void initializePointRadiusRange() {
-        mPointRadiusMaxLimit = Math.max(this.getMeasuredWidth(), this.getMeasuredHeight()) / 6;
-        mPointRadiusMinLimit = mPointRadiusMaxLimit / 3;
-    }
-
+    /**
+     * Suscribe la figura a las actualizaciones de la matriz del objeto que la creó.
+     * @param shapeCreator Objeto que creó la figura.
+     */
     public void addShapeCreatorListener(IShapeCreator shapeCreator) {
+        // Obtener zoom original aplicado sobre la imagen que muestra el objeto que creó la figura.
         mOriginalZoom = shapeCreator.getOriginalZoom();
+
         shapeCreator.addOnMatrixViewChangeListener(this);
     }
 
+    /**
+     * Cambia el estado de selección de la figura.
+     * @param isSelected Determina si la figura debe seleccionarse (True) o deseleccionarse (False).
+     */
     public void selectShape(boolean isSelected) {
         mIsSelected = isSelected;
+
+        // Requerir redibujo para mostrar gráficamente el estado de la selección.
         invalidate();
     }
 
+    /**
+     * Verifica si un toque en pantalla provocó que la figura sea seleccionada.
+     * @param point Punto que representa las coordenadas del toque en pantalla.
+     * @return True si el toque generó que se seleccione la figura. False en caso contrario.
+     */
     public boolean verifyShapeTouched(PointF point) {
         selectShape(checkTouchToSelect(point));
 
@@ -209,12 +290,15 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        // Verificar si el evento debe procesarse. Solo se analizará cuando la figura esté seleccionada.
         if (!mIsSelected) {
             return false;
         }
 
+        // Procesar evento con el detector de gestos.
         boolean gestureDetectorResponse = mGestureDetector.onTouchEvent(event);
-        // Detectar si finalizó un scroll de un punto. De ser así, se debe calcular nuevamente la forma.
+
+        // Determinar si finalizó un desplazamiento de un punto para calcular nuevamente la forma.
         if (event.getAction() == MotionEvent.ACTION_UP) {
             computeShape();
             updateViewMatrix(null);
@@ -226,8 +310,8 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     private class ShapeGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDown(MotionEvent e) {
-            // Verificar que el toque haya sido cerca de uno de los puntos de la figura. De no ser así, no
-            // capturar el evento.
+            // Verificar que el toque se haya producido en las inmediaciones de uno de los puntos de la
+            // figura. De no ser así, no capturar el evento.
             float eX = e.getX();
             float eY = e.getY();
             for (int i = 0; i < mMappedShapePoints.size(); i++) {
@@ -265,42 +349,4 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             return true;
         }
     }
-
-    //region Utilities
-    protected PointF mapPoint(Matrix matrix, PointF point) {
-        if (point == null) {
-            return null;
-        }
-
-        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
-        float[] floats = { point.x, point.y };
-
-        // Mapear el punto.
-        matrix.mapPoints(floats);
-
-        // Crear punto con el resultado del mapeo.
-        return new PointF(floats[0], floats[1]);
-    }
-
-    protected ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
-        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
-        float[] pointsArray = new float[pointsToMap.size() * 2];
-        for (int i = 0; i < pointsToMap.size(); i++) {
-            PointF point = pointsToMap.get(i);
-            pointsArray[i * 2] = point.x;
-            pointsArray[i * 2 + 1] = point.y;
-        }
-
-        // Mapear los puntos.
-        matrix.mapPoints(pointsArray);
-
-        // Crear ArrayList resultado con los puntos mapeados.
-        ArrayList<PointF> mappedPoints = new ArrayList<>();
-        for (int i = 0; i < pointsToMap.size(); i++) {
-            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
-        }
-
-        return mappedPoints;
-    }
-    //endregion
 }

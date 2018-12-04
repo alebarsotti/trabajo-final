@@ -14,18 +14,30 @@ import java.util.ArrayList;
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
 public class Circle extends Shape implements ICircle {
+    // Tag utilizado con fines de debug.
     private static final String TAG = "Circle";
+    // Número que indica la cantidad de puntos que componen la circunferencia.
     private static final int NUMBER_OF_POINTS = 3;
+    // Número que indica la cantidad de puntos a utilizar para representar gráficamente la circunferencia.
     public static final int NUMBER_OF_POINTS_TO_DRAW = 360;
+    // Punto que indica las coordenadas del centro de la circunferencia.
     private PointF mCenter;
+    // Número que indica la longitud del radio de la circunferencia.
     private float mRadius;
+    // Punto que indica las coordenadas del centro de la circunferencia mapeado según la matriz actual.
     public PointF mMappedCenter;
+    // Número que indica la longitud del radio de la circunferencia mapeado según la matriz actual.
     public float mMappedRadius;
+    // Lista de puntos (en formato [x1, y1, x2, y2, ...]) utilizados para representar gráficamente la
+    // circunferencia.
     private float[] mPathPoints = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
+    // Lista de puntos (en formato [x1, y1, x2, y2, ...]) utilizados para representar gráficamente la
+    // circunferencia mapeados según la matriz actual.
     private float[] mMappedPathPoints = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
+    // Lista de suscriptores a eventos de actualización de la circunferencia.
     private ArrayList<IOnCircleCenterChangeListener> mListeners = new ArrayList<>();
 
-
+    //region Constructores
     public Circle(Context context) {
         this(context, null);
     }
@@ -36,6 +48,7 @@ public class Circle extends Shape implements ICircle {
         initializeShape();
         Log.d(TAG, "Constructor.");
     }
+    //endregion
 
     @Override
     protected void initializeShape() {
@@ -77,49 +90,20 @@ public class Circle extends Shape implements ICircle {
     @Override
     protected void computeShape() {
         MathUtils.circumferenceFromThreePoints(this);
-
-        // TODO: Determinar por qué puse esto acá.
-//        mIsSelected = true;
     }
 
     @Override
     public void updateViewMatrix(Matrix matrix) {
-//        if (mPointRadiusMaxLimit == 0) {
-//            initializePointRadiusRange();
-//        }
-//        if (matrix != null) {
-//            mCurrentMatrix.set(matrix);
-//        }
         super.updateViewMatrix(matrix);
 
+        // Mapear las variables propias de la circunferencia según la nueva matriz.
         mMappedRadius = mCurrentMatrix.mapRadius(mRadius);
         mMappedCenter = mapPoint(mCurrentMatrix, mCenter);
         mMappedShapePoints = mapPoints(mCurrentMatrix, mShapePoints);
-
-//        float[] floats = new float[9];
-//        mCurrentMatrix.getValues(floats);
-//        mCurrentZoom = floats[Matrix.MSCALE_X];
-//        float realZoom = mCurrentZoom / mOriginalZoom;
-//        // Calcular porcentaje del rango [MIN_SCALE_FACTOR, MAX_SCALE_FACTOR] al que equivale realZoom.
-//        float percentage = (realZoom - MIN_SCALE_FACTOR) / (MAX_SCALE_FACTOR - MIN_SCALE_FACTOR);
-//        mPointRadius = mPointRadiusMinLimit + (mPointRadiusMaxLimit - mPointRadiusMinLimit) * percentage;
-
         mCurrentMatrix.mapPoints(mMappedPathPoints, mPathPoints);
 
         invalidate();
     }
-
-//    @Override
-//    public boolean addPoint(PointF point) {
-//        if (mShapePoints.size() < NUMBER_OF_POINTS) {
-//            mShapePoints.add(point);
-//            computeShape();
-//
-//            invalidate();
-//        }
-//
-//        return mShapePoints.size() < NUMBER_OF_POINTS;
-//    }
 
     @Override
     public boolean checkTouchToSelect(PointF point) {
@@ -130,23 +114,30 @@ public class Circle extends Shape implements ICircle {
                 mMappedRadius + TOUCH_RADIUS);
     }
 
-//    public ArrayList<PointF> getPointArray() {
-//        return mShapePoints;
-//    }
-
+    /**
+     * Establece nuevos valores para el centro y el radio de la circunferencia.
+     * @param newCenter Nuevo valor para el centro de la circunferencia.
+     * @param newRadius Nuevo valor para el radio de la circunferencia.
+     */
     public void setCenterAndRadius(PointF newCenter, float newRadius) {
         mCenter = newCenter;
         mRadius = newRadius;
 
+        // Informar a los suscriptores sobre la actualización de los valores de centro y radio.
         for (IOnCircleCenterChangeListener listener: mListeners) {
             listener.updateCircleCenterAndRadius(mCenter, mRadius);
         }
     }
 
+    /**
+     * Establece la nueva lista de puntos que representan a la circunferencia.
+     * @param pointsArray Lista de puntos actualizada.
+     */
     public void setPathPoints(float[] pointsArray) {
         mPathPoints = pointsArray;
     }
 
+    //region Tratamiento de listeners.
     @Override
     public void addOnCircleCenterChangeListener(IOnCircleCenterChangeListener listener) {
         mListeners.add(listener);
@@ -162,42 +153,5 @@ public class Circle extends Shape implements ICircle {
             Log.d(TAG, "removeOnMatrixViewChangeListener: the object was not found in the list.");
         }
     }
-
-//    //region Utilities
-//    private PointF mapPoint(Matrix matrix, PointF point) {
-//        if (point == null) {
-//            return null;
-//        }
-//
-//        // Crear Array con el punto, estructura necesaria para utilizar mapPoints.
-//        float[] floats = { point.x, point.y };
-//
-//        // Mapear el punto.
-//        matrix.mapPoints(floats);
-//
-//        // Crear punto con el resultado del mapeo.
-//        return new PointF(floats[0], floats[1]);
-//    }
-//
-//    private ArrayList<PointF> mapPoints(Matrix matrix, ArrayList<PointF> pointsToMap) {
-//        // Crear Array con puntos, estructura necesaria para utilizar mapPoints.
-//        float[] pointsArray = new float[pointsToMap.size() * 2];
-//        for (int i = 0; i < pointsToMap.size(); i++) {
-//            PointF point = pointsToMap.get(i);
-//            pointsArray[i * 2] = point.x;
-//            pointsArray[i * 2 + 1] = point.y;
-//        }
-//
-//        // Mapear los puntos.
-//        matrix.mapPoints(pointsArray);
-//
-//        // Crear ArrayList resultado con los puntos mapeados.
-//        ArrayList<PointF> mappedPoints = new ArrayList<>();
-//        for (int i = 0; i < pointsToMap.size(); i++) {
-//            mappedPoints.add(new PointF(pointsArray[i * 2], pointsArray[i * 2 + 1]));
-//        }
-//
-//        return mappedPoints;
-//    }
-//    //endregion
+    //endregion
 }

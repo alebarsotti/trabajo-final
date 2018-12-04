@@ -11,14 +11,24 @@ import android.util.Log;
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
 public class Tangent extends Shape implements IOnCircleCenterChangeListener {
+    // Tag utilizado con fines de debug.
     private static final String TAG = "Tangent";
+    // Número que indica la cantidad de puntos que componen la tangente.
     private static final int NUMBER_OF_POINTS = 1;
+    // Punto que indica las coordenadas del centro de la circunferencia de la que depende la tangente.
     private PointF mCircleCenter;
     private float mCircleRadius;
+    // Punto que indica las coordenadas del centro de la circunferencia de la que depende la tangente
+    // mapeado según la matriz actual.
     private PointF mMappedCircleCenter;
+    // Lista de puntos utilizados para representar las líneas que componen la tangente (tangente + línea
+    // radial)
     private float[] mTangentPoints = new float[4];
+    // Lista de puntos utilizados para representar las líneas que componen la tangente (tangente + línea
+    // radial) mapeados según la matriz actual.
     private float[] mMappedTangentPoints = new float[4];
 
+    //region Constructores
     public Tangent(Context context) {
         this(context, null);
     }
@@ -29,6 +39,7 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
         initializeShape();
         Log.d(TAG, "Constructor.");
     }
+    //endregion
 
     @Override
     protected void onDraw(Canvas canvas) {
