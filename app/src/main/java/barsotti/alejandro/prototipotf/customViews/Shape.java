@@ -1,6 +1,7 @@
 package barsotti.alejandro.prototipotf.customViews;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -112,6 +113,21 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         mPointBorderPaint.setStrokeWidth(2);
     }
     //endregion
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        // Dibujar puntos solo si la figura está seleccionada.
+        if (mIsSelected) {
+            for (PointF pointToDraw: mMappedShapePoints) {
+                // Dibujar relleno del área de control del punto.
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointPaint);
+                // Dibujar borde del área de control del punto.
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointBorderPaint);
+                // Dibujar punto central del área de control del punto.
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, CENTER_POINT_RADIUS, mCenterPointPaint);
+            }
+        }
+    }
 
     //region Abstract Methods
 

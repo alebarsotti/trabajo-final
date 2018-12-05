@@ -3,6 +3,8 @@ package barsotti.alejandro.prototipotf.Utils;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.PointF;
+import android.util.Log;
+
 import java.util.ArrayList;
 import barsotti.alejandro.prototipotf.customViews.Circle;
 
@@ -208,5 +210,34 @@ public class MathUtils {
 
         // Establecer la lista de puntos.
         circle.setPathPoints(pointCoordinatesArray);
+    }
+
+    /**
+     * Calcula un ángulo a partir de una lista de tres puntos (primer extremo, vértice, segundo extremo),
+     * utilizando la Ley de los Cosenos.
+     * Referencia de fórmula y cálculos: https://www.mathsisfun.com/algebra/trig-cosine-law.html
+     * @param points Lista de puntos a partir de los cuales calcular el ángulo.
+     * @return Medida del ángulo calculado.
+     */
+    public static float angleFromThreePoints(ArrayList<PointF> points) {
+        // Obtener extremos y vértice.
+        PointF firstEnd = points.get(0);
+        PointF vertex = points.get(1);
+        PointF secondEnd = points.get(2);
+
+        // Calcular distancia entre cada par de puntos.
+        double firstEndVertexDistance = distanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
+        double secondEndVertexDistance = distanceBetweenPoints(secondEnd.x, secondEnd.y, vertex.x, vertex.y);
+        double firstEndSecondEndDistance = distanceBetweenPoints(firstEnd.x, firstEnd.y,
+            secondEnd.x, secondEnd.y);
+
+        // Aplicar Ley de los Cosenos.
+        double angle = Math.toDegrees(Math.acos((Math.pow(secondEndVertexDistance, 2)
+            + Math.pow(firstEndVertexDistance, 2) - Math.pow(firstEndSecondEndDistance, 2))
+            / 2 / secondEndVertexDistance / firstEndVertexDistance)
+        );
+
+        Log.d(TAG, "angleFromThreePoints: " + angle);
+        return (float) angle;
     }
 }

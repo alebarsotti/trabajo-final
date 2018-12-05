@@ -19,6 +19,7 @@ import com.bumptech.glide.request.target.ViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
 import barsotti.alejandro.prototipotf.R;
+import barsotti.alejandro.prototipotf.customViews.Angle;
 import barsotti.alejandro.prototipotf.customViews.Circle;
 import barsotti.alejandro.prototipotf.customViews.Tangent;
 import barsotti.alejandro.prototipotf.customViews.ZoomableImageView;
@@ -83,10 +84,14 @@ public class ImageViewerActivity extends AppCompatActivity {
                         Circle.class);
                     break;
                 }
-
                 case R.id.draw_tangent: {
                     mZoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
                         Tangent.class);
+                    break;
+                }
+                case R.id.draw_angle: {
+                    mZoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+                        Angle.class);
                     break;
                 }
             }

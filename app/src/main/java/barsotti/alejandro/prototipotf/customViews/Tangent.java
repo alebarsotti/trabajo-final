@@ -63,17 +63,18 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
             canvas.drawLines(mMappedTangentPoints, mIsSelected ? mSelectedShapePaint : mShapePaint);
         }
 
-        // Dibujar puntos solo si la figura está seleccionada.
-        if (mIsSelected) {
-            for (PointF pointToDraw: mMappedShapePoints) {
-                // Dibujar relleno del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointPaint);
-                // Dibujar borde del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointBorderPaint);
-                // Dibujar punto central del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, CENTER_POINT_RADIUS, mCenterPointPaint);
-            }
-        }
+//        // Dibujar puntos solo si la figura está seleccionada.
+//        if (mIsSelected) {
+//            for (PointF pointToDraw: mMappedShapePoints) {
+//                // Dibujar relleno del área de control del punto.
+//                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointPaint);
+//                // Dibujar borde del área de control del punto.
+//                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointBorderPaint);
+//                // Dibujar punto central del área de control del punto.
+//                canvas.drawCircle(pointToDraw.x, pointToDraw.y, CENTER_POINT_RADIUS, mCenterPointPaint);
+//            }
+//        }
+        super.onDraw(canvas);
     }
 
     @Override

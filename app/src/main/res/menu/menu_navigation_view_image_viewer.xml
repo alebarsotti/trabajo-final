@@ -18,4 +18,8 @@
         android:id="@+id/draw_tangent"
         android:icon="@drawable/ic_menu_item"
         android:title="Dibujar tangente"/>
+    <item
+        android:id="@+id/draw_angle"
+        android:icon="@drawable/ic_menu_item"
+        android:title="Dibujar ángulo"/>
 </menu>
