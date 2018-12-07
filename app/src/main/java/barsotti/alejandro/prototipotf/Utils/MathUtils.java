@@ -6,6 +6,9 @@ import android.graphics.PointF;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import barsotti.alejandro.prototipotf.customViews.Circle;
 
 public class MathUtils {
@@ -219,7 +222,7 @@ public class MathUtils {
      * @param points Lista de puntos a partir de los cuales calcular el ángulo.
      * @return Medida del ángulo calculado.
      */
-    public static float angleFromThreePoints(ArrayList<PointF> points) {
+    public static float calculateSweepAngleFromThreePoints(ArrayList<PointF> points) {
         // Obtener extremos y vértice.
         PointF firstEnd = points.get(0);
         PointF vertex = points.get(1);
@@ -237,7 +240,50 @@ public class MathUtils {
             / 2 / secondEndVertexDistance / firstEndVertexDistance)
         );
 
-        Log.d(TAG, "angleFromThreePoints: " + angle);
+        Log.d(TAG, "calculateSweepAngleFromThreePoints: " + angle);
         return (float) angle;
+    }
+
+    public static float calculateStartAngleFromThreePoints(ArrayList<PointF> points) {
+        // Obtener extremos y vértice.
+        PointF firstEnd = points.get(0);
+        PointF vertex = points.get(1);
+        PointF secondEnd = points.get(2);
+
+        PointF startPoint = new PointF(vertex.x + 1, vertex.y);
+
+        ArrayList<PointF> firstStartAnglePoints = new ArrayList<>();
+        firstStartAnglePoints.add(startPoint);
+        firstStartAnglePoints.add(vertex);
+        firstStartAnglePoints.add(firstEnd);
+
+        ArrayList<PointF> secondStartAnglePoints = new ArrayList<>();
+        secondStartAnglePoints.add(startPoint);
+        secondStartAnglePoints.add(vertex);
+        secondStartAnglePoints.add(secondEnd);
+
+        float firstStartAngle = calculateSweepAngleFromThreePoints(firstStartAnglePoints);
+        firstStartAngle = (firstEnd.y < startPoint.y ? 360 - firstStartAngle : firstStartAngle);
+        float secondStartAngle = calculateSweepAngleFromThreePoints(secondStartAnglePoints);
+        secondStartAngle = (secondEnd.y < startPoint.y ? 360 - secondStartAngle : secondStartAngle);
+
+        float diff = Math.max(firstStartAngle, secondStartAngle) - Math.min(firstStartAngle, secondStartAngle);
+
+        return diff < 180 ? Math.min(firstStartAngle, secondStartAngle) : Math.max(firstStartAngle, secondStartAngle);
+
+//        boolean firstEndIsCloser = firstStartAngle < secondStartAngle;
+//
+//        if (firstEndIsUp && secondEndIsUp) {
+//            return 360 - (firstEndIsCloser ? secondStartAngle : firstStartAngle);
+//        }
+//        else if (firstEndIsUp && !secondEndIsUp) {
+//            if (firstEndIsCloser) {
+//                return 360 - firstStartAngle;
+//            }
+//            else {
+//                return 360 - firstStartAngle;
+//            }
+//        }
+
     }
 }

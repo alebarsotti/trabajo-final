@@ -51,6 +51,12 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     protected Paint mCenterPointPaint = new Paint();
     //endregion
 
+    /**
+     * Determina si los parámetros de la figura deben calcularse constantemente al desplazar uno de los
+     * puntos que la forman.
+     */
+    protected boolean mComputeShapeConstantly = false;
+
     // Índice que indica el índice (posición en la lista) del punto de la figura que fue seleccionado.
     protected Integer mSelectedPointIndex;
     // Variable que determina si la figura se encuentra seleccionada actualmente.
@@ -349,6 +355,12 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             if (mSelectedPointIndex != null) {
                 mShapePoints.get(mSelectedPointIndex).offset(-distanceX / mCurrentZoom,
                     -distanceY / mCurrentZoom);
+
+                // Calcular parámetros de la figura si fue configurada para calcular constantemente.
+                if (mComputeShapeConstantly) {
+                    computeShape();
+                }
+
                 updateViewMatrix(null);
 
                 return true;
