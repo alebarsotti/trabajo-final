@@ -2,12 +2,14 @@ package barsotti.alejandro.prototipotf.Utils;
 
 import android.graphics.Path;
 import android.graphics.PathMeasure;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 
 import barsotti.alejandro.prototipotf.customViews.Circle;
 
@@ -362,5 +364,30 @@ public class MathUtils {
         }
 
         return pointArray;
+    }
+
+    public static PointF extendEndPointToMinimumDistance(PointF initialPoint, PointF endPoint,
+                                                         float minimumDistance) {
+        // Calcular la distancia existente entre los puntos.
+        float pointsDistance = distanceBetweenPoints(initialPoint.x, initialPoint.y, endPoint.x,
+            endPoint.y);
+
+        if (pointsDistance > minimumDistance) {
+            return endPoint;
+        }
+
+        // Calcular el vector entre el punto de inicio y el de fin.
+        PointF vector = new PointF(endPoint.x - initialPoint.x, endPoint.y - initialPoint.y);
+
+        // Normalizar el vector.
+        vector.x = vector.x / pointsDistance;
+        vector.y = vector.y / pointsDistance;
+
+        // Multiplicar el vector de longitud 1 por la distancia mínima.
+        vector.x *= minimumDistance;
+        vector.y *= minimumDistance;
+
+        // Calcular nuevo punto final sumando las coordenadas del punto inicial y el vector calculado.
+        return new PointF(initialPoint.x + vector.x, initialPoint.y + vector.y);
     }
 }

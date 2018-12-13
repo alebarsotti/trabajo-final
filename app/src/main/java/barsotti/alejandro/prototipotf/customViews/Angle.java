@@ -12,6 +12,9 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
 public class Angle extends Shape {
@@ -45,6 +48,8 @@ public class Angle extends Shape {
      * Pintura utilizada para la representación gráfica del texto que indica la medida del ángulo.
      */
     private Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    private PointF mFirstEnd = new PointF(), mSecondEnd = new PointF(), mVertex = new PointF();
 
     public Angle(Context context) {
         this(context, null);
@@ -92,24 +97,24 @@ public class Angle extends Shape {
                 mIsSelected ? mSelectedShapePaint : mShapePaint);
 
             // Dibujar borde del ángulo.
-            canvas.drawLine(mMappedShapePoints.get(0).x, mMappedShapePoints.get(0).y, // Primer extremo.
-                mMappedShapePoints.get(1).x, mMappedShapePoints.get(1).y, // Vértice.
+            canvas.drawLine(mFirstEnd.x, mFirstEnd.y, // Primer extremo.
+                mVertex.x, mVertex.y, // Vértice.
                 mIsSelected ? mSelectedShapeBorderPaint : mShapeBorderPaint);
-            canvas.drawLine(mMappedShapePoints.get(1).x, mMappedShapePoints.get(1).y, // Vértice.
-                mMappedShapePoints.get(2).x, mMappedShapePoints.get(2).y, // Segundo extremo.
+            canvas.drawLine(mVertex.x, mVertex.y, // Vértice.
+                mSecondEnd.x, mSecondEnd.y, // Segundo extremo.
                 mIsSelected ? mSelectedShapeBorderPaint : mShapeBorderPaint);
 
             // Dibujar línea principal del ángulo.
-            canvas.drawLine(mMappedShapePoints.get(0).x, mMappedShapePoints.get(0).y, // Primer extremo.
-                mMappedShapePoints.get(1).x, mMappedShapePoints.get(1).y, // Vértice.
+            canvas.drawLine(mFirstEnd.x, mFirstEnd.y, // Primer extremo.
+                mVertex.x, mVertex.y, // Vértice.
                 mIsSelected ? mSelectedShapePaint : mShapePaint);
-            canvas.drawLine(mMappedShapePoints.get(1).x, mMappedShapePoints.get(1).y, // Vértice.
-                mMappedShapePoints.get(2).x, mMappedShapePoints.get(2).y, // Segundo extremo.
+            canvas.drawLine(mVertex.x, mVertex.y, // Vértice.
+                mSecondEnd.x, mSecondEnd.y, // Segundo extremo.
                 mIsSelected ? mSelectedShapePaint : mShapePaint);
 
             // Dibujar texto que indica la medida del Ángulo.
-            canvas.drawText(String.valueOf(mSweepAngle), mMappedShapePoints.get(1).x + 25,
-                mMappedShapePoints.get(1).y + 25, mTextPaint);
+            canvas.drawText(String.format(new Locale("es", "ES"), "%.2fº", mSweepAngle), mVertex.x + 25,
+                mVertex.y + 25, mTextPaint);
         }
 
         super.onDraw(canvas);
@@ -148,9 +153,14 @@ public class Angle extends Shape {
         mMappedShapePoints = mapPoints(mCurrentMatrix, mShapePoints);
 
         if (mMappedShapePoints.size() == NUMBER_OF_POINTS) {
-            PointF vertex = mMappedShapePoints.get(1);
-            mArcOval.set(vertex.x - ARC_RADIUS, vertex.y - ARC_RADIUS, vertex.x + ARC_RADIUS,
-                vertex.y + ARC_RADIUS);
+            mVertex = mMappedShapePoints.get(1);
+            mFirstEnd = mMappedShapePoints.get(0);
+            mFirstEnd = MathUtils.extendEndPointToMinimumDistance(mVertex, mFirstEnd, ARC_RADIUS * 2);
+            mSecondEnd = mMappedShapePoints.get(2);
+            mSecondEnd = MathUtils.extendEndPointToMinimumDistance(mVertex, mSecondEnd, ARC_RADIUS * 2);
+
+            mArcOval.set(mVertex.x - ARC_RADIUS, mVertex.y - ARC_RADIUS, mVertex.x + ARC_RADIUS,
+                mVertex.y + ARC_RADIUS);
         }
 
         invalidate();
