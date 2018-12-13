@@ -3,12 +3,19 @@ package barsotti.alejandro.prototipotf.customViews;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PathDashPathEffect;
+import android.graphics.PathEffect;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
+
+import static barsotti.alejandro.prototipotf.Utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_LINE;
 
 public class Tangent extends Shape implements IOnCircleCenterChangeListener {
     // Tag utilizado con fines de debug.
@@ -27,6 +34,20 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
     // Lista de puntos utilizados para representar las líneas que componen la tangente (tangente + línea
     // radial) mapeados según la matriz actual.
     private float[] mMappedTangentPoints = new float[4];
+    /**
+     * Pintura utilizada para la representación gráfica de la recta radial que acompaña a la tangente.
+     */
+    private Paint mRadialLinePaint;
+
+    /**
+     * Pintura utilizada para la representación gráfica del borde de la recta radial que acompaña a la
+     * tangente.
+     */
+    private Paint mRadialLineBorderPaint;
+    private Paint mSelectedRadialLinePaint;
+    private Paint mSelectedRadialLineBorderPaint;
+    private float[] mPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_LINE * 2];
+    private float[] mMappedPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_LINE * 2];
 
     //region Constructores
     public Tangent(Context context) {
@@ -46,14 +67,19 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
         // Dibujar si la figura se encuentra completa.
         if (mMappedTangentPoints != null) {
             // Dibujar recta radial.
-            for (PointF pointToDraw: mMappedShapePoints) {
-                // Borde
-                canvas.drawLine(mMappedCircleCenter.x, mMappedCircleCenter.y, pointToDraw.x, pointToDraw.y,
-                    mIsSelected ? mSelectedShapeBorderPaint : mShapeBorderPaint);
-                // Línea principal.
-                canvas.drawLine(mMappedCircleCenter.x, mMappedCircleCenter.y, pointToDraw.x, pointToDraw.y,
-                    mIsSelected ? mSelectedShapePaint : mShapePaint);
-            }
+//            for (PointF pointToDraw: mMappedShapePoints) {
+//                // Borde
+//                canvas.drawLine(mMappedCircleCenter.x, mMappedCircleCenter.y, pointToDraw.x, pointToDraw.y,
+//                    mIsSelected ? mSelectedRadialLineBorderPaint : mRadialLineBorderPaint);
+//                // Línea principal.
+//                canvas.drawLine(mMappedCircleCenter.x, mMappedCircleCenter.y, pointToDraw.x, pointToDraw.y,
+//                    mIsSelected ? mSelectedRadialLinePaint : mRadialLinePaint);
+//            }
+
+            canvas.drawLines(mMappedPathPoints, mIsSelected ? mSelectedRadialLineBorderPaint : mRadialLineBorderPaint);
+            canvas.drawLines(mMappedPathPoints, mIsSelected ? mSelectedRadialLinePaint : mRadialLinePaint);
+
+
 
             // Dibujar tangente.
             // Borde.
@@ -79,6 +105,23 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
 
     @Override
     protected void initializeShape() {
+        // Establecer parámetros de la pintura a utilizar para la representación gráfica de la recta radial.
+//        DashPathEffect dashPathEffect = new DashPathEffect(new float[]{10, 20}, 0);
+        mRadialLinePaint = new Paint(mShapePaint);
+//        mRadialLinePaint.setPathEffect(dashPathEffect);
+//        mRadialLinePaint.setAlpha(mRadialLinePaint.getAlpha() / 2);
+
+        mRadialLineBorderPaint = new Paint(mShapeBorderPaint);
+//        mRadialLineBorderPaint.setPathEffect(dashPathEffect);
+//        mRadialLineBorderPaint.setAlpha(mRadialLineBorderPaint.getAlpha() / 2);
+
+        mSelectedRadialLinePaint = new Paint(mSelectedShapePaint);
+//        mSelectedRadialLinePaint.setPathEffect(dashPathEffect);
+//        mSelectedRadialLinePaint.setAlpha(mSelectedRadialLinePaint.getAlpha() / 2);
+
+        mSelectedRadialLineBorderPaint = new Paint(mSelectedShapeBorderPaint);
+//        mSelectedRadialLineBorderPaint.setPathEffect(dashPathEffect);
+//        mSelectedRadialLineBorderPaint.setAlpha(mSelectedRadialLineBorderPaint.getAlpha() / 2);
     }
 
     @Override
@@ -98,11 +141,15 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
 
             mMappedShapePoints.size() == NUMBER_OF_POINTS && // Figura completa.
 
+            // Distancia entre el punto y la recta radial.
+            (MathUtils.distanceBetweenSegmentAndPoint(point, mMappedCircleCenter, mMappedShapePoints.get(0))
+             < TOUCH_RADIUS
+                ||
+            // Distancia de punto hasta recta tangente.
             MathUtils.distanceBetweenLineAndPoint(point,
                     new PointF(mMappedTangentPoints[0], mMappedTangentPoints[1]),
                     new PointF(mMappedTangentPoints[2], mMappedTangentPoints[3])
-                ) < TOUCH_RADIUS // Distancia de punto hasta recta tangente.
-            ;
+                ) < TOUCH_RADIUS);
     }
 
     @Override
@@ -112,6 +159,7 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
                 mCircleRadius, mShapePoints.get(0));
             mShapePoints.set(0, pointInCircumference);
             mTangentPoints = MathUtils.tangentToCircumference(mCircleCenter, pointInCircumference, mCircleRadius);
+            mPathPoints = MathUtils.pointArrayFromLine(mCircleCenter, pointInCircumference);
         }
     }
 
@@ -122,6 +170,8 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
         mMappedCircleCenter = mapPoint(mCurrentMatrix, mCircleCenter);
         mCurrentMatrix.mapPoints(mMappedTangentPoints, mTangentPoints);
         mMappedShapePoints = mapPoints(mCurrentMatrix, mShapePoints);
+        mMappedPathPoints = new float[mPathPoints.length];
+        mCurrentMatrix.mapPoints(mMappedPathPoints, mPathPoints);
 
         invalidate();
     }

@@ -16,6 +16,8 @@ public class MathUtils {
     private static double TOLERANCE = 0.0001d;
     // Tag utilizado a efectos de debug.
     private static String TAG = "MathUtils";
+    private static int DEFAULT_DISTANCE_BETWEEN_POINTS_IN_LINE = 50;
+    public static int MAX_NUMBER_OF_POINTS_PER_LINE = 100;
 
     /**
      * Calcula la distancia entre dos puntos dados.
@@ -25,8 +27,8 @@ public class MathUtils {
      * @param y2 Coordenada Y del segundo punto.
      * @return Medida de la distancia entre los puntos especificados.
      */
-    public static double distanceBetweenPoints(double x1, double y1, double x2, double y2) {
-        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+    public static float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 
     /**
@@ -37,10 +39,10 @@ public class MathUtils {
      * @param linePoint2 Punto que forma parte de la recta.
      * @return Distancia entre el punto y la recta proporcionados.
      */
-    public static double distanceBetweenLineAndPoint(PointF point, PointF linePoint1, PointF linePoint2) {
+    public static float distanceBetweenLineAndPoint(PointF point, PointF linePoint1, PointF linePoint2) {
         float a, b = -1, c;
         a = (linePoint1.y - linePoint2.y) / (linePoint1.x - linePoint2.x);
-        c = a * linePoint1.x + linePoint1.y;
+        c = (-1 * a * linePoint1.x) + linePoint1.y;
 
         return (float) (Math.abs(a * point.x + b * point.y + c) /
             Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2)));
@@ -244,14 +246,24 @@ public class MathUtils {
         return (float) angle;
     }
 
+    /**
+     * Calcula el ángulo de inicio necesario para la representación gráfica de un arco dentro de ángulo
+     * formado por los tres puntos proporcionados.
+     * @param points ArrayList de los tres puntos que forman el ángulo.
+     * @return Magnitud del ángulo de inicio requerido para la representación gráfica del arco.
+     */
     public static float calculateStartAngleFromThreePoints(ArrayList<PointF> points) {
         // Obtener extremos y vértice.
         PointF firstEnd = points.get(0);
         PointF vertex = points.get(1);
         PointF secondEnd = points.get(2);
 
+        // Establecer punto de inicio de referencia. El mismo se encontrará siempre una unidad a la derecha
+        // del vértice, y a la misma altura y. Esto resultará útil para calcular el startAngle desde el
+        // origen considerado por Android (eje X positivo) hasta cada extremo.
         PointF startPoint = new PointF(vertex.x + 1, vertex.y);
 
+        // Establecer los tres puntos que forman cada ángulo.
         ArrayList<PointF> firstStartAnglePoints = new ArrayList<>();
         firstStartAnglePoints.add(startPoint);
         firstStartAnglePoints.add(vertex);
@@ -262,28 +274,93 @@ public class MathUtils {
         secondStartAnglePoints.add(vertex);
         secondStartAnglePoints.add(secondEnd);
 
+        // Calcular cada ángulo. En caso de encontrarse por encima del punto de inicio de referencia, el
+        // valor a considerar para ese ángulo será la resta entre 360º y el valor obtenido. Esto se debe a
+        // que Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario).
         float firstStartAngle = calculateSweepAngleFromThreePoints(firstStartAnglePoints);
         firstStartAngle = (firstEnd.y < startPoint.y ? 360 - firstStartAngle : firstStartAngle);
         float secondStartAngle = calculateSweepAngleFromThreePoints(secondStartAnglePoints);
         secondStartAngle = (secondEnd.y < startPoint.y ? 360 - secondStartAngle : secondStartAngle);
 
+        // TODO: Limpiar.
+        // Calcular diferencia entre los ángulos.
         float diff = Math.max(firstStartAngle, secondStartAngle) - Math.min(firstStartAngle, secondStartAngle);
+//        float diff = Math.abs(firstStartAngle - secondStartAngle);
 
+        // Si la diferencia es menor a 180º, entonces el ángulo de inicio es el ángulo que culmina en el
+        // primer extremo. En caso contrario, será el ángulo que culmina en el segundo extremo.
         return diff < 180 ? Math.min(firstStartAngle, secondStartAngle) : Math.max(firstStartAngle, secondStartAngle);
+//        return diff < 180 ? firstStartAngle : secondStartAngle;
+    }
 
-//        boolean firstEndIsCloser = firstStartAngle < secondStartAngle;
-//
-//        if (firstEndIsUp && secondEndIsUp) {
-//            return 360 - (firstEndIsCloser ? secondStartAngle : firstStartAngle);
-//        }
-//        else if (firstEndIsUp && !secondEndIsUp) {
-//            if (firstEndIsCloser) {
-//                return 360 - firstStartAngle;
-//            }
-//            else {
-//                return 360 - firstStartAngle;
-//            }
-//        }
+    /**
+     * Calcula la distancia entre un punto fijo y el segmento definido por otros dos puntos.
+     * Procedimiento:
+     *  1- Calcular ángulo formado por el punto fijo, el punto 1 y el punto 2.
+     *    Realizar el mismo cálculo para el ángulo formado por el punto fijo, el punto 2 y el punto 1.
+     *  2- Si alguno de esos ángulos es obtuso, significa que la distancia a calcular es aquella existente
+     *    entre el punto fijo y el vértice de ese ángulo.
+     *  3- En caso contrario, la distancia a calcular será aquella existente entre el punto fijo y la recta
+     *    formada por los extremos del segmento.
+     * @param point Punto fijo a partir del cual calcular la distancia.
+     * @param segmentPoint1 Primer extremo del segmento.
+     * @param segmentPoint2 Segundo extremo del segmento.
+     * @return Distancia entre el punto y el segmento proporcionados.
+     */
+    public static float distanceBetweenSegmentAndPoint(PointF point, PointF segmentPoint1,
+                                                        PointF segmentPoint2) {
+        // Establecer los tres puntos que forman cada ángulo.
+        ArrayList<PointF> firstAnglePoints = new ArrayList<>();
+        firstAnglePoints.add(point);
+        firstAnglePoints.add(segmentPoint1);
+        firstAnglePoints.add(segmentPoint2);
 
+        ArrayList<PointF> secondAnglePoints = new ArrayList<>();
+        secondAnglePoints.add(point);
+        secondAnglePoints.add(segmentPoint2);
+        secondAnglePoints.add(segmentPoint1);
+
+        // Calcular cada ángulo.
+        float firstAngle = calculateSweepAngleFromThreePoints(firstAnglePoints);
+        float secondAngle = calculateSweepAngleFromThreePoints(secondAnglePoints);
+
+        // Verificar si alguno de los ángulos es obtuso. En caso de serlo, se calculará la distancia entre
+        // el punto fijo y el vértice del ángulo obtuso.
+        if (firstAngle > 90) {
+            return distanceBetweenPoints(segmentPoint1.x, segmentPoint1.y, point.x, point.y);
+        }
+        if (secondAngle > 90) {
+            return distanceBetweenPoints(segmentPoint2.x, segmentPoint2.y, point.x, point.y);
+        }
+
+        // Calcular distancia entre el punto fijo y la recta formada por los extremos del segmento.
+        return distanceBetweenLineAndPoint(point, segmentPoint1, segmentPoint2);
+    }
+
+    public static float[] pointArrayFromLine(PointF point1, PointF point2) {
+        Path linePath = new Path();
+        linePath.moveTo(point1.x, point1.y);
+        linePath.lineTo(point2.x, point2.y);
+
+        PathMeasure pm = new PathMeasure(linePath, false);
+
+        float distance = Math.max(pm.getLength() / MAX_NUMBER_OF_POINTS_PER_LINE,
+            DEFAULT_DISTANCE_BETWEEN_POINTS_IN_LINE);
+
+        int numberOfPointsNeeded = (int) (pm.getLength() / distance) + 1;
+        float currentDistance = 0;
+        float[] pointCoordinates = new float[2];
+        float[] pointArray = new float[numberOfPointsNeeded * 2];
+
+        for (int i = 0; i < numberOfPointsNeeded; i++) {
+            pm.getPosTan(currentDistance, pointCoordinates, null);
+
+            pointArray[2 * i] = pointCoordinates[0];
+            pointArray[2 * i + 1] = pointCoordinates[1];
+
+            currentDistance += distance;
+        }
+
+        return pointArray;
     }
 }

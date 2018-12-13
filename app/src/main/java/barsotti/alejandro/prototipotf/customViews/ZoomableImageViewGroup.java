@@ -51,6 +51,9 @@ public class ZoomableImageViewGroup extends FrameLayout {
         }
         else {
             try {
+                // TODO: Verificar que no se esté dibujando ya una figura. En tal caso, debería eliminarse
+                // y eliminar todos los listeners que se hayan seteado.
+
                 checkCanDrawShape(shapeClass);
 
                 Class<?> myClassType = Class.forName(shapeClass.getName());

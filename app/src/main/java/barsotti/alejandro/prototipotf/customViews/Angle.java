@@ -118,7 +118,15 @@ public class Angle extends Shape {
     @Override
     public boolean checkTouchToSelect(PointF point) {
         // TODO: completar.
-        return false;
+
+        return
+            mMappedShapePoints.size() == NUMBER_OF_POINTS && // Figura completa.
+
+                (MathUtils.distanceBetweenSegmentAndPoint(point, mMappedShapePoints.get(0),
+                mMappedShapePoints.get(1)) < TOUCH_RADIUS
+                ||
+                MathUtils.distanceBetweenSegmentAndPoint(point, mMappedShapePoints.get(1),
+                    mMappedShapePoints.get(2)) < TOUCH_RADIUS);
     }
 
     @Override
