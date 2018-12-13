@@ -135,21 +135,24 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
     }
 
     @Override
-    public boolean checkTouchToSelect(PointF point) {
-        // Verificar que el toque se encuentre en un área cercana a algunas de las dos rectas.
-        return mMappedCircleCenter != null && // Centro de circunferencia no nulo.
+    public float computeDistanceBetweenTouchAndShape(PointF point) {
+        if (mMappedCircleCenter == null || // Centro de circunferencia no nulo.
+            mMappedShapePoints.size() != NUMBER_OF_POINTS) {// Figura completa.
+            return -1;
+        }
 
-            mMappedShapePoints.size() == NUMBER_OF_POINTS && // Figura completa.
+        // Distancia entre el punto y la recta radial.
+        float distanceFromRadialLineToPoint = MathUtils.distanceBetweenSegmentAndPoint(point,
+            mMappedCircleCenter, mMappedShapePoints.get(0));
 
-            // Distancia entre el punto y la recta radial.
-            (MathUtils.distanceBetweenSegmentAndPoint(point, mMappedCircleCenter, mMappedShapePoints.get(0))
-             < TOUCH_RADIUS
-                ||
-            // Distancia de punto hasta recta tangente.
-            MathUtils.distanceBetweenLineAndPoint(point,
+        // Distancia de punto hasta recta tangente.
+        float distanceFromTangentToPoint = MathUtils.distanceBetweenLineAndPoint(point,
                     new PointF(mMappedTangentPoints[0], mMappedTangentPoints[1]),
-                    new PointF(mMappedTangentPoints[2], mMappedTangentPoints[3])
-                ) < TOUCH_RADIUS);
+                    new PointF(mMappedTangentPoints[2], mMappedTangentPoints[3]));
+
+        float minDistance = Math.min(distanceFromRadialLineToPoint, distanceFromTangentToPoint);
+
+        return minDistance <= TOUCH_RADIUS ? minDistance : -1;
     }
 
     @Override

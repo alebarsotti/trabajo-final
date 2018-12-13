@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 
+import static barsotti.alejandro.prototipotf.customViews.Shape.TOUCH_RADIUS;
+
 public class ZoomableImageViewGroup extends FrameLayout {
     private static final String TAG = "ZoomableImageViewGroup";
     private ZoomableImageView mZoomableImageView;
@@ -160,12 +162,23 @@ public class ZoomableImageViewGroup extends FrameLayout {
     }
 
     public void checkShapeSelection(PointF point) {
+        float minDistance = TOUCH_RADIUS + 1;
+
         for (int i = mShapeList.size() - 1; i >= 0; i--) {
-            if (mShapeList.get(i).verifyShapeTouched(point)) {
+            float newDistance = mShapeList.get(i).computeDistanceBetweenTouchAndShape(point);
+            if (newDistance > 0 && newDistance < minDistance) {
+                minDistance = newDistance;
                 mCurrentlySelectedShape = mShapeList.get(i);
-                return;
             }
         }
-        mCurrentlySelectedShape = null;
+
+        if (minDistance > TOUCH_RADIUS) {
+            mCurrentlySelectedShape = null;
+        }
+
+        // Deseleccionar todas las formas excepto la seleccionada (en caso de que haya).
+        for (Shape shape: mShapeList) {
+            shape.selectShape(shape == mCurrentlySelectedShape);
+        }
     }
 }

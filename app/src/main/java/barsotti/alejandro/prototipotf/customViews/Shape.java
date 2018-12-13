@@ -155,11 +155,12 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     protected abstract int getShapeColor();
 
     /**
+     * TODO: Actualizar
      * Determina si el toque efectuado en la posición especificada provocó que la figura se seleccione.
      * @param point Punto que indica las coordenadas del toque efectuado.
      * @return True si el toque provocó la selección de la figura. False en caso contrario.
      */
-    public abstract boolean checkTouchToSelect(PointF point);
+    public abstract float computeDistanceBetweenTouchAndShape(PointF point);
 
     /**
      * Realiza los cálculos y establece los valores necesarios para representar la figura.
@@ -295,14 +296,13 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     }
 
     /**
+     *              TODO: Actualizar
      * Verifica si un toque en pantalla provocó que la figura sea seleccionada.
      * @param point Punto que representa las coordenadas del toque en pantalla.
      * @return True si el toque generó que se seleccione la figura. False en caso contrario.
      */
-    public boolean verifyShapeTouched(PointF point) {
-        selectShape(checkTouchToSelect(point));
-
-        return mIsSelected;
+    public float verifyShapeTouched(PointF point) {
+        return computeDistanceBetweenTouchAndShape(point);
     }
 
     @Override

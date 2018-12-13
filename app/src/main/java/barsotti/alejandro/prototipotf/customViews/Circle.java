@@ -107,12 +107,17 @@ public class Circle extends Shape implements ICircle {
     }
 
     @Override
-    public boolean checkTouchToSelect(PointF point) {
-        return mMappedCenter != null &&
-            MathUtils.valueWithinRange(
-                MathUtils.distanceBetweenPoints(mMappedCenter.x, mMappedCenter.y, point.x, point.y),
-                mMappedRadius - TOUCH_RADIUS,
-                mMappedRadius + TOUCH_RADIUS);
+    public float computeDistanceBetweenTouchAndShape(PointF point) {
+        if (mMappedCenter == null) {
+            return -1;
+        }
+
+        float distanceFromCenterToPoint = MathUtils.distanceBetweenPoints(mMappedCenter.x, mMappedCenter.y,
+            point.x, point.y);
+
+        float distanceFromCircleToPoint = Math.abs(mMappedRadius - distanceFromCenterToPoint);
+
+        return distanceFromCircleToPoint <= TOUCH_RADIUS ? distanceFromCircleToPoint : -1;
     }
 
     /**

@@ -116,17 +116,20 @@ public class Angle extends Shape {
     }
 
     @Override
-    public boolean checkTouchToSelect(PointF point) {
-        // TODO: completar.
+    public float computeDistanceBetweenTouchAndShape(PointF point) {
+        if (mMappedShapePoints.size() != NUMBER_OF_POINTS) {// Figura completa.
+            return -1;
+        }
 
-        return
-            mMappedShapePoints.size() == NUMBER_OF_POINTS && // Figura completa.
+        float distanceFromSegment1ToPoint = MathUtils.distanceBetweenSegmentAndPoint(point,
+            mMappedShapePoints.get(0), mMappedShapePoints.get(1));
 
-                (MathUtils.distanceBetweenSegmentAndPoint(point, mMappedShapePoints.get(0),
-                mMappedShapePoints.get(1)) < TOUCH_RADIUS
-                ||
-                MathUtils.distanceBetweenSegmentAndPoint(point, mMappedShapePoints.get(1),
-                    mMappedShapePoints.get(2)) < TOUCH_RADIUS);
+        float distanceFromSegment2ToPoint = MathUtils.distanceBetweenSegmentAndPoint(point,
+            mMappedShapePoints.get(1), mMappedShapePoints.get(2));
+
+        float minDistance = Math.min(distanceFromSegment1ToPoint, distanceFromSegment2ToPoint);
+
+        return minDistance <= TOUCH_RADIUS ? minDistance : -1;
     }
 
     @Override
