@@ -12,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 
-import java.text.NumberFormat;
 import java.util.Locale;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
@@ -50,6 +49,8 @@ public class Angle extends Shape {
     private Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private PointF mFirstEnd = new PointF(), mSecondEnd = new PointF(), mVertex = new PointF();
+    private Locale mLocale = new Locale("es", "ES");
+    private PointF mTextCoordinates;
 
     public Angle(Context context) {
         this(context, null);
@@ -113,8 +114,9 @@ public class Angle extends Shape {
                 mIsSelected ? mSelectedShapePaint : mShapePaint);
 
             // Dibujar texto que indica la medida del Ángulo.
-            canvas.drawText(String.format(new Locale("es", "ES"), "%.2fº", mSweepAngle), mVertex.x + 25,
-                mVertex.y + 25, mTextPaint);
+//            canvas.drawText(String.format(mLocale, "%.2fº", mSweepAngle), mVertex.x + 25, mVertex.y + 25, mTextPaint);
+            canvas.drawText(String.format(mLocale, "%.2fº", mSweepAngle), mTextCoordinates.x - 75,
+                mTextCoordinates.y, mTextPaint);
         }
 
         super.onDraw(canvas);
@@ -155,9 +157,11 @@ public class Angle extends Shape {
         if (mMappedShapePoints.size() == NUMBER_OF_POINTS) {
             mVertex = mMappedShapePoints.get(1);
             mFirstEnd = mMappedShapePoints.get(0);
-            mFirstEnd = MathUtils.extendEndPointToMinimumDistance(mVertex, mFirstEnd, ARC_RADIUS * 2);
+            mFirstEnd = MathUtils.extendEndPointToDistance(mVertex, mFirstEnd, ARC_RADIUS * 2, true);
             mSecondEnd = mMappedShapePoints.get(2);
-            mSecondEnd = MathUtils.extendEndPointToMinimumDistance(mVertex, mSecondEnd, ARC_RADIUS * 2);
+            mSecondEnd = MathUtils.extendEndPointToDistance(mVertex, mSecondEnd, ARC_RADIUS * 2, true);
+
+            mTextCoordinates = MathUtils.getCoordinatesForTextDrawing(mVertex, mFirstEnd, mSecondEnd);
 
             mArcOval.set(mVertex.x - ARC_RADIUS, mVertex.y - ARC_RADIUS, mVertex.x + ARC_RADIUS,
                 mVertex.y + ARC_RADIUS);

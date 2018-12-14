@@ -2,14 +2,10 @@ package barsotti.alejandro.prototipotf.Utils;
 
 import android.graphics.Path;
 import android.graphics.PathMeasure;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
 
 import barsotti.alejandro.prototipotf.customViews.Circle;
 
@@ -366,13 +362,13 @@ public class MathUtils {
         return pointArray;
     }
 
-    public static PointF extendEndPointToMinimumDistance(PointF initialPoint, PointF endPoint,
-                                                         float minimumDistance) {
+    public static PointF extendEndPointToDistance(PointF initialPoint, PointF endPoint,
+                                                  float distance, boolean minimumDistance) {
         // Calcular la distancia existente entre los puntos.
         float pointsDistance = distanceBetweenPoints(initialPoint.x, initialPoint.y, endPoint.x,
             endPoint.y);
 
-        if (pointsDistance > minimumDistance) {
+        if (minimumDistance && pointsDistance > distance) {
             return endPoint;
         }
 
@@ -383,11 +379,34 @@ public class MathUtils {
         vector.x = vector.x / pointsDistance;
         vector.y = vector.y / pointsDistance;
 
-        // Multiplicar el vector de longitud 1 por la distancia mínima.
-        vector.x *= minimumDistance;
-        vector.y *= minimumDistance;
+        // Multiplicar el vector de longitud 1 por la distancia.
+        vector.x *= distance;
+        vector.y *= distance;
 
         // Calcular nuevo punto final sumando las coordenadas del punto inicial y el vector calculado.
         return new PointF(initialPoint.x + vector.x, initialPoint.y + vector.y);
+    }
+
+    public static PointF getCoordinatesForTextDrawing(PointF vertex, PointF firstEnd, PointF secondEnd) {
+        //TODO: Normalizar antes de calcular el punto de la bisección.
+//        PointF pointInBisection = new PointF(firstEnd.x + secondEnd.x - vertex.x,
+//            firstEnd.x + secondEnd.x - vertex.x);
+
+        // Calcular el vector entre el punto de inicio y el de fin.
+        PointF firstVector = new PointF(firstEnd.x - vertex.x, firstEnd.y - vertex.y);
+        float firstVectorLength = distanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
+        PointF secondVector = new PointF(secondEnd.x - vertex.x, secondEnd.y - vertex.y);
+        float secondVectorLength = distanceBetweenPoints(secondEnd.x, secondEnd.y, vertex.x, vertex.y);
+
+        // Normalizar el vector.
+        firstVector.x /= firstVectorLength;
+        firstVector.y /= firstVectorLength;
+        secondVector.x /= secondVectorLength;
+        secondVector.y /= secondVectorLength;
+
+        PointF pointInBisection = new PointF(firstVector.x + secondVector.x + vertex.x,
+            firstVector.y + secondVector.y + vertex.y);
+
+        return extendEndPointToDistance(vertex, pointInBisection, -100, false);
     }
 }
