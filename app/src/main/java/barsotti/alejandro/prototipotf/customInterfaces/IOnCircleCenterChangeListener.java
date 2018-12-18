@@ -1,6 +1,8 @@
-package barsotti.alejandro.prototipotf.customViews;
+package barsotti.alejandro.prototipotf.customInterfaces;
 
 import android.graphics.PointF;
+
+import barsotti.alejandro.prototipotf.customViews.Circle;
 
 /**
  * Interfaz para aquellos objetos que dependen de actualizaciones de un objeto {@link Circle}.

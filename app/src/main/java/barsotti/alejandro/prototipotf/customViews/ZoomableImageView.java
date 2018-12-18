@@ -36,6 +36,8 @@ import java.util.Set;
 import barsotti.alejandro.prototipotf.Utils.ImageTile;
 import barsotti.alejandro.prototipotf.Utils.ImageTileLruCache;
 import barsotti.alejandro.prototipotf.Utils.ViewUtils;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnMatrixViewChangeListener;
+import barsotti.alejandro.prototipotf.customInterfaces.IShapeCreator;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
     implements IShapeCreator {
@@ -142,6 +144,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     public void addOnMatrixViewChangeListener(IOnMatrixViewChangeListener listener) {
         mListeners.add(listener);
+        listener.updateViewMatrix(mCurrentMatrix);
     }
 
     public void removeOnMatrixViewChangeListener(IOnMatrixViewChangeListener listener) {

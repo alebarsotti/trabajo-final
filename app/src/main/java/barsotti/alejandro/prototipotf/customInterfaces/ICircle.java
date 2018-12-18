@@ -1,4 +1,6 @@
-package barsotti.alejandro.prototipotf.customViews;
+package barsotti.alejandro.prototipotf.customInterfaces;
+
+import barsotti.alejandro.prototipotf.customViews.Circle;
 
 /**
  * Interfaz utilizada por {@link Circle} para el tratamiento de suscriptores a eventos de actualización.

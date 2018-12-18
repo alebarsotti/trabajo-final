@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
 
 import static barsotti.alejandro.prototipotf.customViews.Shape.TOUCH_RADIUS;
 
@@ -55,19 +56,26 @@ public class ZoomableImageViewGroup extends FrameLayout {
             try {
                 // TODO: Verificar que no se esté dibujando ya una figura. En tal caso, debería eliminarse
                 // y eliminar todos los listeners que se hayan seteado.
+                // Eliminar la figura que se estaba dibujando previamente, en caso de existir una.
+                if (mInProgressShape != null) {
+                    // Dar de baja la suscripción a las actualizaciones de la matriz del objeto creador.
+                    mInProgressShape.removeShapeCreatorListener(mZoomableImageView);
+
+                    // Deseleccionar todas las figuras.
+                    for (Shape shape: mShapeList) {
+                        shape.selectShape(false);
+                    }
+
+                    // Eliminar forma de la lista de formas.
+                    mShapeList.remove(mInProgressShape);
+
+                    // Eliminar view de la forma.
+                    this.removeView(mInProgressShape);
+                }
 
                 checkCanDrawShape(shapeClass);
 
                 Class<?> myClassType = Class.forName(shapeClass.getName());
-
-//                for (Shape shape: mShapeList) {
-//                    if (shape.getClass() == Circle.class) {
-//                        String message = "No es posible dibujar más de una circunferencia";
-//                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-//                        throw new InstantiationException(message);
-//                    }
-//                }
-
                 Class<?>[] types = new Class[] { Context.class };
                 Constructor<?> cons = myClassType.getConstructor(types);
                 mInProgressShape = (Shape) cons.newInstance(getContext());
@@ -78,8 +86,20 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 }
                 mShapeList.add(mInProgressShape);
                 this.addView(mInProgressShape);
+
+                if (shapeClass == Angle.class) {
+                    for (Shape shape : mShapeList) {
+                        if (shape.getClass() == Tangent.class) {
+                            ((Tangent)shape).addOnTangentPointChangeListener(
+                                (IOnTangentPointChangeListener) mInProgressShape);
+                            break;
+                        }
+                    }
+
+                    return;
+                }
             } catch (Exception e) {
-                Log.d(TAG, "setZoomableImageViewDrawingInProgress:");
+                Log.e(TAG, "setZoomableImageViewDrawingInProgress:");
                 e.printStackTrace();
                 drawingInProgress = false;
             }
@@ -101,6 +121,22 @@ public class ZoomableImageViewGroup extends FrameLayout {
             if (!canDrawTangent) {
                 Toast.makeText(getContext(), R.string.cannot_draw_tangent_message,
                     Toast.LENGTH_SHORT).show();
+                throw new Exception();
+            }
+        }
+
+        // Caso: Ángulo. No es posible dibujar un ángulo tangente si no existe una tangente previamente.
+        if (shapeClass == Angle.class) {
+            boolean canDrawAngle = false;
+            for (Shape shape: mShapeList) {
+                if (shape.getClass() == Tangent.class) {
+                    canDrawAngle = true;
+                    break;
+                }
+            }
+
+            if (!canDrawAngle) {
+                Toast.makeText(getContext(), R.string.cannot_draw_angle_message, Toast.LENGTH_SHORT).show();
                 throw new Exception();
             }
         }
@@ -150,10 +186,6 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 setZoomableImageViewDrawingInProgress(false, null);
             }
         }
-
-//        mShapeList.add(circle);
-//        this.addView(circle);
-//        mZoomableImageView.addOnMatrixViewChangeListener(circle);
     }
 
     @Override

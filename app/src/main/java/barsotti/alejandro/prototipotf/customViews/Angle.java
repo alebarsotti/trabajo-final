@@ -15,8 +15,9 @@ import android.util.Log;
 import java.util.Locale;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
 
-public class Angle extends Shape {
+public class Angle extends Shape implements IOnTangentPointChangeListener {
     /**
      * Tag utilizado con fines de debug.
      */
@@ -30,6 +31,10 @@ public class Angle extends Shape {
      * Radio del arco del ángulo a dibujar.
      */
     private static final int ARC_RADIUS = 50;
+    /**
+     * Número que indica la longitud mínima de los segmentos que forman el ángulo.
+     */
+    private static final int ANGLE_SEGMENT_MIN_LENGTH = ARC_RADIUS * 2;
     /**
      * Medida del ángulo actual representado por la figura.
      */
@@ -157,9 +162,9 @@ public class Angle extends Shape {
         if (mMappedShapePoints.size() == NUMBER_OF_POINTS) {
             mVertex = mMappedShapePoints.get(1);
             mFirstEnd = mMappedShapePoints.get(0);
-            mFirstEnd = MathUtils.extendEndPointToDistance(mVertex, mFirstEnd, ARC_RADIUS * 2, true);
+            mFirstEnd = MathUtils.extendEndPointToDistance(mVertex, mFirstEnd, ANGLE_SEGMENT_MIN_LENGTH, true);
             mSecondEnd = mMappedShapePoints.get(2);
-            mSecondEnd = MathUtils.extendEndPointToDistance(mVertex, mSecondEnd, ARC_RADIUS * 2, true);
+            mSecondEnd = MathUtils.extendEndPointToDistance(mVertex, mSecondEnd, ANGLE_SEGMENT_MIN_LENGTH, true);
 
             mTextCoordinates = MathUtils.getCoordinatesForTextDrawing(mVertex, mFirstEnd, mSecondEnd);
 
@@ -168,5 +173,24 @@ public class Angle extends Shape {
         }
 
         invalidate();
+    }
+
+    @Override
+    public void updateTangentPoints(PointF tangentPoint, PointF linePoint, PointF circleCenterPoint) {
+        mShapePoints.clear();
+
+        // Establecer primer extremo del ángulo (ubicado sobre la línea tangente).
+        mShapePoints.add(MathUtils.extendEndPointToDistance(tangentPoint, linePoint,
+            ANGLE_SEGMENT_MIN_LENGTH, false));
+
+        // Establecer vértice del ángulo (punto tangente).
+        mShapePoints.add(new PointF(tangentPoint.x, tangentPoint.y));
+
+        // Establecer segundo extremo del ángulo (ubicado sobre la recta radial de la tangente).
+        mShapePoints.add(MathUtils.extendEndPointToDistance(tangentPoint, circleCenterPoint,
+            ANGLE_SEGMENT_MIN_LENGTH, false));
+
+        computeShape();
+        updateViewMatrix(null);
     }
 }

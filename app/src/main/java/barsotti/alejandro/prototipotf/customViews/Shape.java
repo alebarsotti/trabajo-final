@@ -17,6 +17,8 @@ import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 import barsotti.alejandro.prototipotf.Utils.ViewUtils;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnMatrixViewChangeListener;
+import barsotti.alejandro.prototipotf.customInterfaces.IShapeCreator;
 
 public abstract class Shape extends View implements IOnMatrixViewChangeListener {
     //region Constantes
@@ -285,6 +287,14 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     }
 
     /**
+     * Da de baja la suscripción de la figura a las actualizaciones de la matriz del objeto que la creó.
+     * @param shapeCreator Objeto que creó la figura.
+     */
+    public void removeShapeCreatorListener(IShapeCreator shapeCreator) {
+        shapeCreator.removeOnMatrixViewChangeListener(this);
+    }
+
+    /**
      * Cambia el estado de selección de la figura.
      * @param isSelected Determina si la figura debe seleccionarse (True) o deseleccionarse (False).
      */
@@ -322,7 +332,10 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
         // Determinar si finalizó un desplazamiento de un punto para calcular nuevamente la forma.
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            computeShape();
+            // Calcualr solo si la forma se encuentra completa.
+            if (mShapePoints.size() == getNumberOfPointsInShape()) {
+                computeShape();
+            }
             updateViewMatrix(null);
         }
 

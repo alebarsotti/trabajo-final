@@ -3,21 +3,23 @@ package barsotti.alejandro.prototipotf.customViews;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PathDashPathEffect;
-import android.graphics.PathEffect;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+
+import java.util.ArrayList;
+
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnCircleCenterChangeListener;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
+import barsotti.alejandro.prototipotf.customInterfaces.ITangent;
 
 import static barsotti.alejandro.prototipotf.Utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_LINE;
 
-public class Tangent extends Shape implements IOnCircleCenterChangeListener {
+public class Tangent extends Shape implements IOnCircleCenterChangeListener, ITangent {
     // Tag utilizado con fines de debug.
     private static final String TAG = "Tangent";
     // Número que indica la cantidad de puntos que componen la tangente.
@@ -48,6 +50,8 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
     private Paint mSelectedRadialLineBorderPaint;
     private float[] mPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_LINE * 2];
     private float[] mMappedPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_LINE * 2];
+    // Lista de suscriptores a eventos de actualización de la circunferencia.
+    private ArrayList<IOnTangentPointChangeListener> mListeners = new ArrayList<>();
 
     //region Constructores
     public Tangent(Context context) {
@@ -164,6 +168,7 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
             mTangentPoints = MathUtils.tangentToCircumference(mCircleCenter, pointInCircumference, mCircleRadius);
             mPathPoints = MathUtils.pointArrayFromLine(mCircleCenter, pointInCircumference);
         }
+        triggerOnTangentPointChangeListener();
     }
 
     @Override
@@ -184,5 +189,25 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener {
         mCircleCenter = new PointF(center.x, center.y);
         mCircleRadius = radius;
         computeShape();
+    }
+
+    @Override
+    public void addOnTangentPointChangeListener(IOnTangentPointChangeListener listener) {
+        mListeners.add(listener);
+        triggerOnTangentPointChangeListener();
+    }
+
+    private void triggerOnTangentPointChangeListener() {
+        if (mShapePoints.size() > 0) {
+            for (IOnTangentPointChangeListener listener: mListeners) {
+                listener.updateTangentPoints(mShapePoints.get(0),
+                    new PointF(mTangentPoints[0], mTangentPoints[1]), mCircleCenter);
+            }
+        }
+    }
+
+    @Override
+    public void removeOnTangentPointChangeListener(IOnTangentPointChangeListener listener) {
+        // TODO: Completar.
     }
 }

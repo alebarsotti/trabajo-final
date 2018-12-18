@@ -12,6 +12,8 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.customInterfaces.ICircle;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnCircleCenterChangeListener;
 
 public class Circle extends Shape implements ICircle {
     // Tag utilizado con fines de debug.
