@@ -38,19 +38,26 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
     //region Pinturas
     // Pintura utilizada para el trazo de la figura.
-    protected Paint mShapePaint = new Paint();
+//    protected Paint mShapePaint = new Paint();
+    protected Paint mShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Pintura utilizada para el trazo de la figura cuando la misma se encuentra seleccionada.
-    protected Paint mSelectedShapePaint = new Paint();
+//    protected Paint mSelectedShapePaint = new Paint();
+    protected Paint mSelectedShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Pintura utilizada para el borde del trazo de la figura.
-    protected Paint mShapeBorderPaint = new Paint();
+//    protected Paint mShapeBorderPaint = new Paint();
+    protected Paint mShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Pintura utilizada para el borde del trazo de la figura cuando la misma se encuentra seleccionada.
-    protected Paint mSelectedShapeBorderPaint = new Paint();
+//    protected Paint mSelectedShapeBorderPaint = new Paint();
+    protected Paint mSelectedShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Pintura utilizada para el relleno del círculo que representa un punto de la figura.
-    protected Paint mPointPaint = new Paint();
+//    protected Paint mPointPaint = new Paint();
+    protected Paint mPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Pintura utilizada para el borde del círculo que representa un punto de la figura.
-    protected Paint mPointBorderPaint = new Paint();
+//    protected Paint mPointBorderPaint = new Paint();
+    protected Paint mPointBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     // Pintura utilizada para el punto central del círculo que representa un punto de la figura.
-    protected Paint mCenterPointPaint = new Paint();
+//    protected Paint mCenterPointPaint = new Paint();
+    protected Paint mCenterPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     //endregion
 
     /**
@@ -79,6 +86,8 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     protected float mPointRadiusMinLimit = 0;
     // Límite superior para el valor del radio de dibujo del círculo que representa un punto de la figura.
     protected float mPointRadiusMaxLimit = 0;
+    protected float mViewWidth;
+    protected float mViewHeight;
     // Detector de gestos utilizado para detectar movimientos, selección.
     private GestureDetector mGestureDetector = new GestureDetector(getContext(), new ShapeGestureListener());
 
@@ -225,7 +234,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         // Inicializar las variables que regulan el tamaño del radio de tolerancia a toques de los puntos.
         if (mPointRadiusMaxLimit == 0) {
             // El radio máximo será 1/6 de la longitud del lado más largo de la pantalla.
-            mPointRadiusMaxLimit = Math.max(this.getMeasuredWidth(), this.getMeasuredHeight()) / 6;
+            mPointRadiusMaxLimit = Math.max(mViewWidth, mViewHeight) / 6;
             // El radio mínimo será 1/18 de la longitud del lado más largo de la pantalla.
             mPointRadiusMinLimit = mPointRadiusMaxLimit / 3;
         }
@@ -243,6 +252,12 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         // Calcular porcentaje del rango [MIN_SCALE_FACTOR, MAX_SCALE_FACTOR] al que equivale realZoom.
         float percentage = (realZoom - MIN_SCALE_FACTOR) / (MAX_SCALE_FACTOR - MIN_SCALE_FACTOR);
         mPointRadius = mPointRadiusMinLimit + (mPointRadiusMaxLimit - mPointRadiusMinLimit) * percentage;
+    }
+
+    @Override
+    public void setViewMeasures(float width, float height) {
+        mViewWidth = width;
+        mViewHeight = height;
     }
 
     /**

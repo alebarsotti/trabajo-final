@@ -144,7 +144,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
     public void addOnMatrixViewChangeListener(IOnMatrixViewChangeListener listener) {
         mListeners.add(listener);
-        listener.updateViewMatrix(mCurrentMatrix);
+        listener.setViewMeasures(getMeasuredWidth(), getMeasuredHeight());
+        listener.updateViewMatrix(mCanvasMatrix);
     }
 
     public void removeOnMatrixViewChangeListener(IOnMatrixViewChangeListener listener) {

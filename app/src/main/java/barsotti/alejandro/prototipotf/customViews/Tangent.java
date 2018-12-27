@@ -194,7 +194,11 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener, ITa
     @Override
     public void addOnTangentPointChangeListener(IOnTangentPointChangeListener listener) {
         mListeners.add(listener);
-        triggerOnTangentPointChangeListener();
+//        triggerOnTangentPointChangeListener();
+        if (mShapePoints.size() > 0) {
+            listener.updateTangentPoints(mShapePoints.get(0),
+                new PointF(mTangentPoints[0], mTangentPoints[1]), mCircleCenter);
+        }
     }
 
     private void triggerOnTangentPointChangeListener() {
@@ -208,6 +212,7 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener, ITa
 
     @Override
     public void removeOnTangentPointChangeListener(IOnTangentPointChangeListener listener) {
-        // TODO: Completar.
+        mListeners.remove(listener);
+//        triggerOnTangentPointChangeListener();
     }
 }

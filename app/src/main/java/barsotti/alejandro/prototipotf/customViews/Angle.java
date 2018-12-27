@@ -34,7 +34,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     /**
      * Número que indica la longitud mínima de los segmentos que forman el ángulo.
      */
-    private static final int ANGLE_SEGMENT_MIN_LENGTH = ARC_RADIUS * 2;
+    private static final int ANGLE_SEGMENT_MIN_LENGTH = ARC_RADIUS * 3;
     /**
      * Medida del ángulo actual representado por la figura.
      */
@@ -134,10 +134,10 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
         }
 
         float distanceFromSegment1ToPoint = MathUtils.distanceBetweenSegmentAndPoint(point,
-            mMappedShapePoints.get(0), mMappedShapePoints.get(1));
+            mFirstEnd, mVertex);
 
         float distanceFromSegment2ToPoint = MathUtils.distanceBetweenSegmentAndPoint(point,
-            mMappedShapePoints.get(1), mMappedShapePoints.get(2));
+            mVertex, mSecondEnd);
 
         float minDistance = Math.min(distanceFromSegment1ToPoint, distanceFromSegment2ToPoint);
 
@@ -158,6 +158,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
 
         // Mapear las variables propias del ángulo según la nueva matriz.
         mMappedShapePoints = mapPoints(mCurrentMatrix, mShapePoints);
+
 
         if (mMappedShapePoints.size() == NUMBER_OF_POINTS) {
             mVertex = mMappedShapePoints.get(1);
@@ -181,14 +182,14 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
 
         // Establecer primer extremo del ángulo (ubicado sobre la línea tangente).
         mShapePoints.add(MathUtils.extendEndPointToDistance(tangentPoint, linePoint,
-            ANGLE_SEGMENT_MIN_LENGTH, false));
+            Math.max(mPointRadius * 3 / mCurrentZoom, ANGLE_SEGMENT_MIN_LENGTH), false));
 
         // Establecer vértice del ángulo (punto tangente).
         mShapePoints.add(new PointF(tangentPoint.x, tangentPoint.y));
 
         // Establecer segundo extremo del ángulo (ubicado sobre la recta radial de la tangente).
         mShapePoints.add(MathUtils.extendEndPointToDistance(tangentPoint, circleCenterPoint,
-            ANGLE_SEGMENT_MIN_LENGTH, false));
+            Math.max(mPointRadius * 3 / mCurrentZoom, ANGLE_SEGMENT_MIN_LENGTH), false));
 
         computeShape();
         updateViewMatrix(null);

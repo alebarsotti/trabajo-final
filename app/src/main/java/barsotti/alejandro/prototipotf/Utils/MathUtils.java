@@ -240,7 +240,6 @@ public class MathUtils {
             / 2 / secondEndVertexDistance / firstEndVertexDistance)
         );
 
-        Log.d(TAG, "calculateSweepAngleFromThreePoints: " + angle);
         return (float) angle;
     }
 
@@ -280,15 +279,12 @@ public class MathUtils {
         float secondStartAngle = calculateSweepAngleFromThreePoints(secondStartAnglePoints);
         secondStartAngle = (secondEnd.y < startPoint.y ? 360 - secondStartAngle : secondStartAngle);
 
-        // TODO: Limpiar.
         // Calcular diferencia entre los ángulos.
         float diff = Math.max(firstStartAngle, secondStartAngle) - Math.min(firstStartAngle, secondStartAngle);
-//        float diff = Math.abs(firstStartAngle - secondStartAngle);
 
         // Si la diferencia es menor a 180º, entonces el ángulo de inicio es el ángulo que culmina en el
         // primer extremo. En caso contrario, será el ángulo que culmina en el segundo extremo.
         return diff < 180 ? Math.min(firstStartAngle, secondStartAngle) : Math.max(firstStartAngle, secondStartAngle);
-//        return diff < 180 ? firstStartAngle : secondStartAngle;
     }
 
     /**
@@ -388,10 +384,6 @@ public class MathUtils {
     }
 
     public static PointF getCoordinatesForTextDrawing(PointF vertex, PointF firstEnd, PointF secondEnd) {
-        //TODO: Normalizar antes de calcular el punto de la bisección.
-//        PointF pointInBisection = new PointF(firstEnd.x + secondEnd.x - vertex.x,
-//            firstEnd.x + secondEnd.x - vertex.x);
-
         // Calcular el vector entre el punto de inicio y el de fin.
         PointF firstVector = new PointF(firstEnd.x - vertex.x, firstEnd.y - vertex.y);
         float firstVectorLength = distanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);

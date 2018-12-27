@@ -9,4 +9,6 @@ public interface IOnMatrixViewChangeListener {
      * @param matrix Nueva matriz de representación utilizada por el objeto observable.
      */
     void updateViewMatrix(Matrix matrix);
+
+    void setViewMeasures(float width, float height);
 }

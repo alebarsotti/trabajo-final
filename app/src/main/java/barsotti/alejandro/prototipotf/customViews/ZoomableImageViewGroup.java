@@ -54,8 +54,6 @@ public class ZoomableImageViewGroup extends FrameLayout {
         }
         else {
             try {
-                // TODO: Verificar que no se esté dibujando ya una figura. En tal caso, debería eliminarse
-                // y eliminar todos los listeners que se hayan seteado.
                 // Eliminar la figura que se estaba dibujando previamente, en caso de existir una.
                 if (mInProgressShape != null) {
                     // Dar de baja la suscripción a las actualizaciones de la matriz del objeto creador.
@@ -96,7 +94,14 @@ public class ZoomableImageViewGroup extends FrameLayout {
                         }
                     }
 
-                    return;
+//                    return;
+
+//                    mInProgressShape = null;
+//                    mZoomableImageView.setDrawingInProgress(false);
+
+//                    setZoomableImageViewDrawingInProgress(false, null);
+                    addPointToInProgressShape(new PointF(0, 0));
+                    drawingInProgress = false;
                 }
             } catch (Exception e) {
                 Log.e(TAG, "setZoomableImageViewDrawingInProgress:");
@@ -195,10 +200,16 @@ public class ZoomableImageViewGroup extends FrameLayout {
 
     public void checkShapeSelection(PointF point) {
         float minDistance = TOUCH_RADIUS + 1;
+        boolean minDistanceShapeIsAngle = false;
 
         for (int i = mShapeList.size() - 1; i >= 0; i--) {
+            boolean newShapeIsAngle = mShapeList.get(i).getClass() == Angle.class;
             float newDistance = mShapeList.get(i).computeDistanceBetweenTouchAndShape(point);
-            if (newDistance > 0 && newDistance < minDistance) {
+            if (newDistance > 0 && (
+                    (!minDistanceShapeIsAngle && (newShapeIsAngle || newDistance < minDistance)) ||
+                    (minDistanceShapeIsAngle && newShapeIsAngle && newDistance < minDistance))
+                ) {
+                minDistanceShapeIsAngle = newShapeIsAngle;
                 minDistance = newDistance;
                 mCurrentlySelectedShape = mShapeList.get(i);
             }
