@@ -3,11 +3,10 @@ package barsotti.alejandro.prototipotf.Utils;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.PointF;
-import android.util.Log;
 
 import java.util.ArrayList;
 
-import barsotti.alejandro.prototipotf.customViews.Circle;
+import barsotti.alejandro.prototipotf.customViews.Circumference;
 
 public class MathUtils {
     // Valor de tolerancia utilizado para la realización de cálculos precisos.
@@ -127,11 +126,11 @@ public class MathUtils {
     /**
      * Calcula centro y radio de la circunferencia a partir de tres puntos dados. Asimismo, establece
      * la lista de N puntos que conforman la circunferencia, siendo N =
-     * {@link Circle#NUMBER_OF_POINTS_TO_DRAW}
-     * @param circle La instancia de circunferencia para la cual realizar los cálculos.
+     * {@link Circumference#NUMBER_OF_POINTS_TO_DRAW}
+     * @param circumference La instancia de circunferencia para la cual realizar los cálculos.
      */
-    public static void circumferenceFromThreePoints(Circle circle) {
-        ArrayList<PointF> points = circle.getPointArray();
+    public static void circumferenceFromThreePoints(Circumference circumference) {
+        ArrayList<PointF> points = circumference.getPointArray();
 
         float point1X, point1Y, point2X, point2Y, point3X, point3Y, delta1, delta2, point12X, point12Y,
             point23X, point23Y, x, y, radius;
@@ -151,7 +150,7 @@ public class MathUtils {
         // Controlar delta2 - delta1 != 0. De lo contrario, no se podría calcular la circunferencia.
         if (Math.abs(delta2 - delta1) < TOLERANCE) {
             // El cálculo no se puede realizar. Devolver circunferencia por defecto.
-            circle.setCenterAndRadius(new PointF(0, 0), 0);
+            circumference.setCenterAndRadius(new PointF(0, 0), 0);
 
             return;
         }
@@ -173,7 +172,7 @@ public class MathUtils {
         radius = (float) Math.sqrt(Math.pow(x - point1X, 2) + Math.pow(y - point1Y, 2));
 
         // Establecer centro y radio de la circunferencia.
-        circle.setCenterAndRadius(new PointF(x, y), radius);
+        circumference.setCenterAndRadius(new PointF(x, y), radius);
 
         // Crear path que representa la circunferencia mediante curvas Bézier.
         float bezierCurveConstant = 0.551915024494f;
@@ -187,7 +186,7 @@ public class MathUtils {
         newPath.close();
 
         // Calcular coordenadas de los puntos que forman la circunferencia.
-        int numberOfPoints = Circle.NUMBER_OF_POINTS_TO_DRAW;
+        int numberOfPoints = Circumference.NUMBER_OF_POINTS_TO_DRAW;
         PathMeasure pm = new PathMeasure(newPath, false);
         float distance = 0f;
         float deltaDistance = pm.getLength() / numberOfPoints;
@@ -212,7 +211,7 @@ public class MathUtils {
         }
 
         // Establecer la lista de puntos.
-        circle.setPathPoints(pointCoordinatesArray);
+        circumference.setPathPoints(pointCoordinatesArray);
     }
 
     /**

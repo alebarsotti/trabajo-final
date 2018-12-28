@@ -8,7 +8,7 @@ import barsotti.alejandro.prototipotf.customViews.Tangent;
  */
 public interface IOnTangentPointChangeListener {
     /**
-     * Actualiza el valor de los puntos del objeto {@link Tangent} para los suscriptores.
+     * Actualiza los valores de los puntos del objeto {@link Tangent} para los suscriptores.
      * @param tangentPoint Nuevo valor del punto de la tangente del objeto {@link Tangent}.
      * @param linePoint Nuevo valor del punto de la línea tangente del objeto {@link Tangent}.
      * @param circleCenterPoint Nuevo valor del punto del centro de la circunferencia de referencia.

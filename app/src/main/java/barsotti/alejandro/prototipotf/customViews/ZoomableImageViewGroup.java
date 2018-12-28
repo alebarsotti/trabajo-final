@@ -117,7 +117,7 @@ public class ZoomableImageViewGroup extends FrameLayout {
         if (shapeClass == Tangent.class) {
             boolean canDrawTangent = false;
             for (Shape shape: mShapeList) {
-                if (shape.getClass() == Circle.class) {
+                if (shape.getClass() == Circumference.class) {
                     canDrawTangent = true;
                     break;
                 }
@@ -165,22 +165,22 @@ public class ZoomableImageViewGroup extends FrameLayout {
         if (mInProgressShape != null) {
             // Caso: Tangente. Determinar a qué circunferencia corresponde asociar la tangente.
             if (mInProgressShape.getClass() == Tangent.class) {
-                Circle closestCircle = null;
+                Circumference closestCircumference = null;
                 double distance = -1;
                 for (Shape shape : mShapeList) {
-                    if (shape.getClass() == Circle.class) {
-                        PointF circleCenter = ((Circle) shape).mMappedCenter;
+                    if (shape.getClass() == Circumference.class) {
+                        PointF circleCenter = ((Circumference) shape).mMappedCenter;
                         double newDistance = Math.abs(MathUtils.distanceBetweenPoints(point.x, point.y,
-                            circleCenter.x, circleCenter.y) - ((Circle) shape).mMappedRadius);
+                            circleCenter.x, circleCenter.y) - ((Circumference) shape).mMappedRadius);
                         if (distance < 0 || newDistance < distance) {
                             distance = newDistance;
-                            closestCircle = (Circle) shape;
+                            closestCircumference = (Circumference) shape;
                         }
                     }
                 }
 
-                if (closestCircle != null) {
-                    closestCircle.addOnCircleCenterChangeListener((Tangent) mInProgressShape);
+                if (closestCircumference != null) {
+                    closestCircumference.addOnCircumferenceCenterChangeListener((Tangent) mInProgressShape);
                 }
             }
 

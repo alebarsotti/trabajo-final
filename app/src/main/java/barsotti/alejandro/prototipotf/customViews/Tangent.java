@@ -13,13 +13,13 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
-import barsotti.alejandro.prototipotf.customInterfaces.IOnCircleCenterChangeListener;
+import barsotti.alejandro.prototipotf.customInterfaces.IOnCircumferenceCenterChangeListener;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
 import barsotti.alejandro.prototipotf.customInterfaces.ITangent;
 
 import static barsotti.alejandro.prototipotf.Utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_LINE;
 
-public class Tangent extends Shape implements IOnCircleCenterChangeListener, ITangent {
+public class Tangent extends Shape implements IOnCircumferenceCenterChangeListener, ITangent {
     // Tag utilizado con fines de debug.
     private static final String TAG = "Tangent";
     // Número que indica la cantidad de puntos que componen la tangente.
@@ -185,7 +185,7 @@ public class Tangent extends Shape implements IOnCircleCenterChangeListener, ITa
     }
 
     @Override
-    public void updateCircleCenterAndRadius(PointF center, float radius) {
+    public void updateCircumferenceCenterAndRadius(PointF center, float radius) {
         mCircleCenter = new PointF(center.x, center.y);
         mCircleRadius = radius;
         computeShape();

@@ -1,20 +1,20 @@
 package barsotti.alejandro.prototipotf.customInterfaces;
 
-import barsotti.alejandro.prototipotf.customViews.Circle;
+import barsotti.alejandro.prototipotf.customViews.Circumference;
 
 /**
- * Interfaz utilizada por {@link Circle} para el tratamiento de suscriptores a eventos de actualización.
+ * Interfaz utilizada por {@link Circumference} para el tratamiento de suscriptores a eventos de actualización.
  */
-public interface ICircle {
+public interface ICircumference {
     /**
      * Agrega un nuevo listener de los eventos de actualización del objeto.
      * @param listener Nuevo objeto suscriptor a agregar a la lista de suscriptores.
      */
-    void addOnCircleCenterChangeListener(IOnCircleCenterChangeListener listener);
+    void addOnCircumferenceCenterChangeListener(IOnCircumferenceCenterChangeListener listener);
 
     /**
      * Elimina un listener de los eventos de actualización del objeto.
      * @param listener Objeto suscriptor a eliminar de la lista de suscriptores.
      */
-    void removeOnCircleCenterChangeListener(IOnCircleCenterChangeListener listener);
+    void removeOnCircumferenceCenterChangeListener(IOnCircumferenceCenterChangeListener listener);
 }
