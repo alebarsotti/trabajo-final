@@ -11,10 +11,10 @@ public interface IOnMatrixViewChangeListener {
     void updateViewMatrix(Matrix matrix);
 
     /**
-     * Establece los valores de ancho y alto del espacio ocupado por el objeto observable. Esto sirve para
-     * que el observador pueda ajustar diversos parámetros de su representación en función.
-     * @param width Ancho del espacio ocupado por el objeto observable.
-     * @param height Alto del espacio ocupado por el objeto observable.
+     * Establece los valores de anchura y altura del espacio ocupado por el objeto observable. Esto resulta
+     * de utilidad para que el observador pueda ajustar diversos parámetros de su representación en función.
+     * @param width Anchura del espacio ocupado por el objeto observable.
+     * @param height Altura del espacio ocupado por el objeto observable.
      */
     void setViewMeasures(float width, float height);
 }

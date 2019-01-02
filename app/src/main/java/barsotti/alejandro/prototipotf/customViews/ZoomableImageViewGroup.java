@@ -21,7 +21,7 @@ import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.Utils.MathUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
 
-import static barsotti.alejandro.prototipotf.customViews.Shape.TOUCH_RADIUS;
+import static barsotti.alejandro.prototipotf.customViews.Shape.TOUCH_TOLERANCE;
 
 public class ZoomableImageViewGroup extends FrameLayout {
     private static final String TAG = "ZoomableImageViewGroup";
@@ -199,7 +199,7 @@ public class ZoomableImageViewGroup extends FrameLayout {
     }
 
     public void checkShapeSelection(PointF point) {
-        float minDistance = TOUCH_RADIUS + 1;
+        float minDistance = TOUCH_TOLERANCE + 1;
         boolean minDistanceShapeIsAngle = false;
 
         for (int i = mShapeList.size() - 1; i >= 0; i--) {
@@ -215,7 +215,7 @@ public class ZoomableImageViewGroup extends FrameLayout {
             }
         }
 
-        if (minDistance > TOUCH_RADIUS) {
+        if (minDistance > TOUCH_TOLERANCE) {
             mCurrentlySelectedShape = null;
         }
 

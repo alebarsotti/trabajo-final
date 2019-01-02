@@ -22,74 +22,123 @@ import barsotti.alejandro.prototipotf.customInterfaces.IShapeCreator;
 
 public abstract class Shape extends View implements IOnMatrixViewChangeListener {
     //region Constantes
-    // Mínimo factor de escala permitido para la matriz de la View a la que pertenece la figura.
-    protected static final int MIN_SCALE_FACTOR = ViewUtils.MIN_SCALE_FACTOR;
-    // Máximo factor de escala permitido para la matriz de la View a la que pertenece la figura.
-    protected static final int MAX_SCALE_FACTOR = ViewUtils.MAX_SCALE_FACTOR;
-    // Radio del círculo que representa el centro de un punto de la figura.
-    protected static final int CENTER_POINT_RADIUS = 2;
-    // Radio de tolerancia de distancia para determinar si se realizó un toque sobre un elemento.
-    protected static final float TOUCH_RADIUS = 75;
-    // Valor inicial para el radio de dibujo del círculo que representa un punto de la figura.
-    protected static final float POINT_RADIUS = 30;
-    // Tag utilizado a efectos de debug.
+    /**
+     * Tag utilizado a efectos de debug.
+     */
     private static final String TAG = "Shape";
+    /**
+     * Mínimo factor de escala permitido para la matriz de la View a la que pertenece la figura.
+     */
+    protected static final int MIN_SCALE_FACTOR = ViewUtils.MIN_SCALE_FACTOR;
+    /**
+     * Máximo factor de escala permitido para la matriz de la View a la que pertenece la figura.
+     */
+    protected static final int MAX_SCALE_FACTOR = ViewUtils.MAX_SCALE_FACTOR;
+    /**
+     * Radio del círculo que representa el centro de un punto de la figura.
+     */
+    protected static final int CENTER_POINT_RADIUS = 2;
+    /**
+     * Radio de tolerancia de distancia para determinar si se realizó un toque sobre un elemento.
+     */
+    protected static final float TOUCH_TOLERANCE = 75;
+    /**
+     * Valor inicial para el radio de dibujo del círculo que representa el área de control de un punto de la
+     * figura.
+     */
+    protected static final float POINT_RADIUS = 30;
     //endregion
 
+    //region Propiedades
     //region Pinturas
-    // Pintura utilizada para el trazo de la figura.
-//    protected Paint mShapePaint = new Paint();
+    /**
+     * Pintura utilizada para el trazo de la figura.
+     */
     protected Paint mShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    // Pintura utilizada para el trazo de la figura cuando la misma se encuentra seleccionada.
-//    protected Paint mSelectedShapePaint = new Paint();
+    /**
+     * Pintura utilizada para el trazo de la figura cuando la misma se encuentra seleccionada.
+     */
     protected Paint mSelectedShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    // Pintura utilizada para el borde del trazo de la figura.
-//    protected Paint mShapeBorderPaint = new Paint();
+    /**
+     * Pintura utilizada para el borde del trazo de la figura.
+     */
     protected Paint mShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    // Pintura utilizada para el borde del trazo de la figura cuando la misma se encuentra seleccionada.
-//    protected Paint mSelectedShapeBorderPaint = new Paint();
+    /**
+     * Pintura utilizada para el borde del trazo de la figura cuando la misma se encuentra seleccionada.
+     */
     protected Paint mSelectedShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    // Pintura utilizada para el relleno del círculo que representa un punto de la figura.
-//    protected Paint mPointPaint = new Paint();
+    /**
+     * Pintura utilizada para el relleno del círculo que representa el área tocable de un punto de la figura.
+     */
     protected Paint mPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    // Pintura utilizada para el borde del círculo que representa un punto de la figura.
-//    protected Paint mPointBorderPaint = new Paint();
+    /**
+     * Pintura utilizada para el borde del círculo que representa el área tocable de un punto de la figura.
+     */
     protected Paint mPointBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    // Pintura utilizada para el punto central del círculo que representa un punto de la figura.
-//    protected Paint mCenterPointPaint = new Paint();
+    /**
+     * Pintura utilizada para el punto central del círculo que representa el área tocable de un punto de la
+     * figura.
+     */
     protected Paint mCenterPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     //endregion
-
     /**
      * Determina si los parámetros de la figura deben calcularse constantemente al desplazar uno de los
      * puntos que la forman.
      */
     protected boolean mComputeShapeConstantly = false;
-
-    // Índice que indica el índice (posición en la lista) del punto de la figura que fue seleccionado.
+    /**
+     * Número que indica el índice (posición en la lista) del punto de la figura que fue seleccionado.
+     */
     protected Integer mSelectedPointIndex;
-    // Variable que determina si la figura se encuentra seleccionada actualmente.
+    /**
+     * Variable que determina si la figura se encuentra seleccionada actualmente.
+     */
     protected boolean mIsSelected = false;
-    // Array de puntos de la figura.
+    /**
+     * Lista de puntos de la figura.
+     */
     protected ArrayList<PointF> mShapePoints = new ArrayList<>();
-    // Array de puntos de la figura mapeados según la matriz de desplazamiento actual (mCurrentZoom).
+    /**
+     * Lista de puntos de la figura mapeados según la matriz de desplazamiento actual (mCurrentMatrix).
+     */
     protected ArrayList<PointF> mMappedShapePoints = new ArrayList<>();
-    // Matriz de desplazamiento actual.
+    /**
+     * Matriz de desplazamiento actual.
+     */
     protected Matrix mCurrentMatrix = new Matrix();
-    // Zoom actual de la imagen.
+    /**
+     * Zoom actual de la imagen.
+     */
     protected float mCurrentZoom = 0;
-    // Zoom aplicado sobre la imagen original al ajustarla a la pantalla.
+    /**
+     * Zoom aplicado sobre la imagen original al ajustarla al espacio disponible en la pantalla.
+     */
     protected float mOriginalZoom = 0;
-    // Radio de dibujo del círculo que representa un punto de la figura.
+    /**
+     * Radio de dibujo del círculo que representa un punto de la figura.
+     */
     protected float mPointRadius = POINT_RADIUS;
-    // Límite inferior para el valor del radio de dibujo del círculo que representa un punto de la figura.
+    /**
+     * Límite inferior para el valor del radio de dibujo del círculo que representa un punto de la figura.
+     */
     protected float mPointRadiusMinLimit = 0;
-    // Límite superior para el valor del radio de dibujo del círculo que representa un punto de la figura.
+    /**
+     * Límite superior para el valor del radio de dibujo del círculo que representa un punto de la figura.
+     */
     protected float mPointRadiusMaxLimit = 0;
+    /**
+     * Número que indica la anchura del espacio destinado para la View, expresado en píxeles.
+     */
     protected float mViewWidth;
+    /**
+     * Número que indica la altura del espacio destinado para la View, expresado en píxeles.
+     */
     protected float mViewHeight;
-    // Detector de gestos utilizado para detectar movimientos, selección.
+    /**
+     * Detector de gestos utilizado para detectar toques, scroll, etc.
+     */
     private GestureDetector mGestureDetector = new GestureDetector(getContext(), new ShapeGestureListener());
+    //endregion
 
     //region Constructors
     public Shape(Context context) {
@@ -131,21 +180,6 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     }
     //endregion
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        // Dibujar puntos solo si la figura está seleccionada.
-        if (mIsSelected) {
-            for (PointF pointToDraw: mMappedShapePoints) {
-                // Dibujar relleno del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointPaint);
-                // Dibujar borde del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointBorderPaint);
-                // Dibujar punto central del área de control del punto.
-                canvas.drawCircle(pointToDraw.x, pointToDraw.y, CENTER_POINT_RADIUS, mCenterPointPaint);
-            }
-        }
-    }
-
     //region Abstract Methods
 
     /**
@@ -166,10 +200,11 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     protected abstract int getShapeColor();
 
     /**
-     * TODO: Actualizar
-     * Determina si el toque efectuado en la posición especificada provocó que la figura se seleccione.
+     * Calcula la distancia entre un toque en pantalla (expresado por coordenadas de un punto) y la figura.
      * @param point Punto que indica las coordenadas del toque efectuado.
-     * @return True si el toque provocó la selección de la figura. False en caso contrario.
+     * @return -1 en caso de que la figura no se encuentre completa o la distancia sea mayor a la
+     * tolerancia definida (TOUCH_TOLERANCE). En caso contrario, retorna la distancia calculada entre el
+     * punto y la figura.
      */
     public abstract float computeDistanceBetweenTouchAndShape(PointF point);
 
@@ -230,12 +265,27 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     //endregion
 
     @Override
+    protected void onDraw(Canvas canvas) {
+        // Dibujar puntos solo si la figura está seleccionada.
+        if (mIsSelected) {
+            for (PointF pointToDraw: mMappedShapePoints) {
+                // Dibujar relleno del área de control del punto.
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointPaint);
+                // Dibujar borde del área de control del punto.
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, mPointRadius, mPointBorderPaint);
+                // Dibujar punto central del área de control del punto.
+                canvas.drawCircle(pointToDraw.x, pointToDraw.y, CENTER_POINT_RADIUS, mCenterPointPaint);
+            }
+        }
+    }
+
+    @Override
     public void updateViewMatrix(Matrix matrix) {
         // Inicializar las variables que regulan el tamaño del radio de tolerancia a toques de los puntos.
         if (mPointRadiusMaxLimit == 0) {
-            // El radio máximo será 1/6 de la longitud del lado más largo de la pantalla.
+            // Radio máximo: 1/6 de la longitud del lado más largo del espacio disponible en pantalla.
             mPointRadiusMaxLimit = Math.max(mViewWidth, mViewHeight) / 6;
-            // El radio mínimo será 1/18 de la longitud del lado más largo de la pantalla.
+            // Radio mínimo: 1/18 de la longitud del lado más largo del espacio disponible en pantalla.
             mPointRadiusMinLimit = mPointRadiusMaxLimit / 3;
         }
 
@@ -291,25 +341,6 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     }
 
     /**
-     * Suscribe la figura a las actualizaciones de la matriz del objeto que la creó.
-     * @param shapeCreator Objeto que creó la figura.
-     */
-    public void addShapeCreatorListener(IShapeCreator shapeCreator) {
-        // Obtener zoom original aplicado sobre la imagen que muestra el objeto que creó la figura.
-        mOriginalZoom = shapeCreator.getOriginalZoom();
-
-        shapeCreator.addOnMatrixViewChangeListener(this);
-    }
-
-    /**
-     * Da de baja la suscripción de la figura a las actualizaciones de la matriz del objeto que la creó.
-     * @param shapeCreator Objeto que creó la figura.
-     */
-    public void removeShapeCreatorListener(IShapeCreator shapeCreator) {
-        shapeCreator.removeOnMatrixViewChangeListener(this);
-    }
-
-    /**
      * Cambia el estado de selección de la figura.
      * @param isSelected Determina si la figura debe seleccionarse (True) o deseleccionarse (False).
      */
@@ -318,16 +349,6 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
         // Requerir redibujo para mostrar gráficamente el estado de la selección.
         invalidate();
-    }
-
-    /**
-     *              TODO: Actualizar
-     * Verifica si un toque en pantalla provocó que la figura sea seleccionada.
-     * @param point Punto que representa las coordenadas del toque en pantalla.
-     * @return True si el toque generó que se seleccione la figura. False en caso contrario.
-     */
-    public float verifyShapeTouched(PointF point) {
-        return computeDistanceBetweenTouchAndShape(point);
     }
 
     @Override
@@ -345,9 +366,9 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         // Procesar evento con el detector de gestos.
         boolean gestureDetectorResponse = mGestureDetector.onTouchEvent(event);
 
-        // Determinar si finalizó un desplazamiento de un punto para calcular nuevamente la forma.
+        // Determinar si finalizó el desplazamiento de un punto para calcular nuevamente la forma.
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            // Calcualr solo si la forma se encuentra completa.
+            // Calcular solo si la forma se encuentra completa.
             if (mShapePoints.size() == getNumberOfPointsInShape()) {
                 computeShape();
             }
@@ -357,11 +378,16 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         return gestureDetectorResponse;
     }
 
+    /**
+     * Clase que define el comportamiento del objeto ante los gestos definidos.
+     */
     private class ShapeGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDown(MotionEvent e) {
-            // Verificar que el toque se haya producido en las inmediaciones de uno de los puntos de la
-            // figura. De no ser así, no capturar el evento.
+            /*
+            Verificar que el toque se haya producido en las inmediaciones de uno de los puntos de la figura.
+            De no ser así, no capturar el evento.
+             */
             float eX = e.getX();
             float eY = e.getY();
             for (int i = 0; i < mMappedShapePoints.size(); i++) {
@@ -396,13 +422,26 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
 
             return false;
         }
-
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            // Verificar si la figura fue tocada. De no ser así, deseleccionarla.
-            verifyShapeTouched(new PointF(e.getX(), e.getY()));
-
-            return true;
-        }
     }
+
+    //region Administración de suscripciones
+    /**
+     * Suscribe la figura a las actualizaciones de la matriz del objeto que la creó.
+     * @param shapeCreator Objeto que creó la figura.
+     */
+    public void addShapeCreatorListener(IShapeCreator shapeCreator) {
+        // Obtener zoom original aplicado sobre la imagen que muestra el objeto que creó la figura.
+        mOriginalZoom = shapeCreator.getOriginalZoom();
+
+        shapeCreator.addOnMatrixViewChangeListener(this);
+    }
+
+    /**
+     * Da de baja la suscripción de la figura a las actualizaciones de la matriz del objeto que la creó.
+     * @param shapeCreator Objeto que creó la figura.
+     */
+    public void removeShapeCreatorListener(IShapeCreator shapeCreator) {
+        shapeCreator.removeOnMatrixViewChangeListener(this);
+    }
+    //endregion
 }

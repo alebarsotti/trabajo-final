@@ -178,7 +178,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
         float minDistance = Math.min(distanceFromSegment1ToPoint, distanceFromSegment2ToPoint);
 
         // Devolver un valor solo si la mínima distancia se encuentra dentro de la tolerancia definida.
-        return minDistance <= TOUCH_RADIUS ? minDistance : -1;
+        return minDistance <= TOUCH_TOLERANCE ? minDistance : -1;
     }
 
     @Override

@@ -156,13 +156,13 @@ public class Circumference extends Shape implements ICircumference {
         float distanceFromCenterToPoint = MathUtils.distanceBetweenPoints(mMappedCenter.x, mMappedCenter.y,
             point.x, point.y);
 
-        // La distancia del toque estará dada por el valor absoluto de la diferencia entre el radio de la
-        // circunferencia y la distancia medida entre el punto y el centro de la misma, dado que la
-        // distancia relevante es la existente entre su borde y el punto.
+        /* La distancia del toque estará dada por el valor absoluto de la diferencia entre el radio de la
+        circunferencia y la distancia medida entre el punto y el centro de la misma, dado que la
+        distancia relevante es la existente entre su borde y el punto. */
         float distanceFromCircumferenceToPoint = Math.abs(mMappedRadius - distanceFromCenterToPoint);
 
         // Devolver la distancia medida si la misma se encuentra dentro de la tolerancia definida.
-        return distanceFromCircumferenceToPoint <= TOUCH_RADIUS ? distanceFromCircumferenceToPoint : -1;
+        return distanceFromCircumferenceToPoint <= TOUCH_TOLERANCE ? distanceFromCircumferenceToPoint : -1;
     }
 
     /**
