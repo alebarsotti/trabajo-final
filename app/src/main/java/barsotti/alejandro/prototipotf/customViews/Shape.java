@@ -15,8 +15,8 @@ import android.view.View;
 
 import java.util.ArrayList;
 
-import barsotti.alejandro.prototipotf.Utils.MathUtils;
-import barsotti.alejandro.prototipotf.Utils.ViewUtils;
+import barsotti.alejandro.prototipotf.utils.MathUtils;
+import barsotti.alejandro.prototipotf.utils.ViewUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnMatrixViewChangeListener;
 import barsotti.alejandro.prototipotf.customInterfaces.IShapeCreator;
 

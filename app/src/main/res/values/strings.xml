@@ -25,4 +25,6 @@
     <string name="detect_edges_progress_text">Detectando bordes...</string>
     <string name="cannot_draw_tangent_message">No es posible dibujar una tangente si no se ha dibujado una circunferencia previamente.</string>
     <string name="cannot_draw_angle_message">No es posible dibujar un ángulo si no se ha dibujado una tangente previamente.</string>
+    <string name="listener_not_found_error">no se ha encontrado el objeto especificado en la lista.</string>
+    <string name="constructor_log_message">Constructor.</string>
 </resources>

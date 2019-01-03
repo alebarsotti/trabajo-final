@@ -14,7 +14,7 @@ import android.util.Log;
 
 import java.util.Locale;
 
-import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.utils.MathUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
 
 public class Angle extends Shape implements IOnTangentPointChangeListener {
@@ -156,7 +156,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
                 mIsSelected ? mSelectedShapePaint : mShapePaint);
 
             // Dibujar texto que indica la medida del Ángulo.
-            canvas.drawText(String.format(mLocale, "%.2fº", mSweepAngle), mTextCoordinates.x - 75,
+            canvas.drawText(String.format(mLocale, "%.2fº", mSweepAngle), mTextCoordinates.x,
                 mTextCoordinates.y, mTextPaint);
         }
 

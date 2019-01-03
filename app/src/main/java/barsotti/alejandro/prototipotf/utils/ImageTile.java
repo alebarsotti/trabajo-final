@@ -1,4 +1,4 @@
-package barsotti.alejandro.prototipotf.Utils;
+package barsotti.alejandro.prototipotf.utils;
 
 import android.graphics.Rect;
 

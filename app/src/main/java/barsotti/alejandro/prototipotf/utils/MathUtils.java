@@ -1,4 +1,4 @@
-package barsotti.alejandro.prototipotf.Utils;
+package barsotti.alejandro.prototipotf.utils;
 
 import android.graphics.Path;
 import android.graphics.PathMeasure;
@@ -10,11 +10,12 @@ import barsotti.alejandro.prototipotf.customViews.Circumference;
 
 public class MathUtils {
     // Valor de tolerancia utilizado para la realización de cálculos precisos.
-    private static double TOLERANCE = 0.0001d;
-    // Tag utilizado a efectos de debug.
-    private static String TAG = "MathUtils";
-    private static int DEFAULT_DISTANCE_BETWEEN_POINTS_IN_LINE = 50;
-    public static int MAX_NUMBER_OF_POINTS_PER_LINE = 100;
+    private static final double TOLERANCE = 0.0001d;
+    private static final int DEFAULT_DISTANCE_BETWEEN_POINTS_IN_SEGMENT = 50;
+    // Tag utilizado a fines de debug.
+    private static final String TAG = "MathUtils";
+
+    public static final int MAX_NUMBER_OF_POINTS_PER_SEGMENT = 100;
 
     /**
      * Calcula la distancia entre dos puntos dados.
@@ -155,8 +156,10 @@ public class MathUtils {
             return;
         }
 
-        // Calcular punto intermedio entre los puntos 1 y 2, y entre los puntos 2 y 3. Estos puntos indican
-        // la ubicación de los bisectores perpendiculares de las líneas que unen cada par de puntos.
+        /*
+        Calcular punto intermedio entre los puntos 1 y 2, y entre los puntos 2 y 3. Estos puntos indican la
+        ubicación de los bisectores perpendiculares de las líneas que unen cada par de puntos.
+         */
         point12X = (point1X + point2X) / 2;
         point12Y = (point1Y + point2Y) / 2;
         point23X = (point2X + point3X) / 2;
@@ -254,9 +257,11 @@ public class MathUtils {
         PointF vertex = points.get(1);
         PointF secondEnd = points.get(2);
 
-        // Establecer punto de inicio de referencia. El mismo se encontrará siempre una unidad a la derecha
-        // del vértice, y a la misma altura y. Esto resultará útil para calcular el startAngle desde el
-        // origen considerado por Android (eje X positivo) hasta cada extremo.
+        /*
+        Establecer punto de inicio de referencia. El mismo se encontrará siempre una unidad a la derecha del
+        vértice, y a la misma altura y. Esto resultará útil para calcular el startAngle desde el origen
+        considerado por Android (eje X positivo) hasta cada extremo.
+         */
         PointF startPoint = new PointF(vertex.x + 1, vertex.y);
 
         // Establecer los tres puntos que forman cada ángulo.
@@ -270,9 +275,11 @@ public class MathUtils {
         secondStartAnglePoints.add(vertex);
         secondStartAnglePoints.add(secondEnd);
 
-        // Calcular cada ángulo. En caso de encontrarse por encima del punto de inicio de referencia, el
-        // valor a considerar para ese ángulo será la resta entre 360º y el valor obtenido. Esto se debe a
-        // que Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario).
+        /*
+        Calcular cada ángulo. En caso de encontrarse por encima del punto de inicio de referencia, el valor
+        a considerar para ese ángulo será la resta entre 360º y el valor obtenido. Esto se debe a que
+        Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario).
+         */
         float firstStartAngle = calculateSweepAngleFromThreePoints(firstStartAnglePoints);
         firstStartAngle = (firstEnd.y < startPoint.y ? 360 - firstStartAngle : firstStartAngle);
         float secondStartAngle = calculateSweepAngleFromThreePoints(secondStartAnglePoints);
@@ -281,8 +288,10 @@ public class MathUtils {
         // Calcular diferencia entre los ángulos.
         float diff = Math.max(firstStartAngle, secondStartAngle) - Math.min(firstStartAngle, secondStartAngle);
 
-        // Si la diferencia es menor a 180º, entonces el ángulo de inicio es el ángulo que culmina en el
-        // primer extremo. En caso contrario, será el ángulo que culmina en el segundo extremo.
+        /*
+        Si la diferencia es menor a 180º, entonces el ángulo de inicio es el ángulo que culmina en el primer
+        extremo. En caso contrario, será el ángulo que culmina en el segundo extremo.
+         */
         return diff < 180 ? Math.min(firstStartAngle, secondStartAngle) : Math.max(firstStartAngle, secondStartAngle);
     }
 
@@ -317,8 +326,10 @@ public class MathUtils {
         float firstAngle = calculateSweepAngleFromThreePoints(firstAnglePoints);
         float secondAngle = calculateSweepAngleFromThreePoints(secondAnglePoints);
 
-        // Verificar si alguno de los ángulos es obtuso. En caso de serlo, se calculará la distancia entre
-        // el punto fijo y el vértice del ángulo obtuso.
+        /*
+        Verificar si alguno de los ángulos es obtuso. En caso de serlo, se calculará la distancia entre el
+        punto fijo y el vértice del ángulo obtuso.
+         */
         if (firstAngle > 90) {
             return distanceBetweenPoints(segmentPoint1.x, segmentPoint1.y, point.x, point.y);
         }
@@ -330,16 +341,23 @@ public class MathUtils {
         return distanceBetweenLineAndPoint(point, segmentPoint1, segmentPoint2);
     }
 
+    /**
+     * Genera una lista de puntos pertenecientes a un segmento determinado por los puntos proporcionados como
+     * parámetros, con el fin de representar al mismo como una línea segmentada.
+     * @param point1 Punto inicial del segmento.
+     * @param point2 Punto final del segmento.
+     * @return Lista de puntos que representan al segmento.
+     */
     public static float[] pointArrayFromLine(PointF point1, PointF point2) {
+        // Determinar la longitud de cada segmento de la línea segmentada definida por los puntos indicados.
         Path linePath = new Path();
         linePath.moveTo(point1.x, point1.y);
         linePath.lineTo(point2.x, point2.y);
-
         PathMeasure pm = new PathMeasure(linePath, false);
+        float distance = Math.max(pm.getLength() / MAX_NUMBER_OF_POINTS_PER_SEGMENT,
+            DEFAULT_DISTANCE_BETWEEN_POINTS_IN_SEGMENT);
 
-        float distance = Math.max(pm.getLength() / MAX_NUMBER_OF_POINTS_PER_LINE,
-            DEFAULT_DISTANCE_BETWEEN_POINTS_IN_LINE);
-
+        // Generar los puntos necesarios.
         int numberOfPointsNeeded = (int) (pm.getLength() / distance) + 1;
         float currentDistance = 0;
         float[] pointCoordinates = new float[2];
@@ -357,6 +375,17 @@ public class MathUtils {
         return pointArray;
     }
 
+    /**
+     * Traslada un punto final a lo largo de la dirección de la línea formada por este y el punto inicial,
+     * hasta que se encuentre a la distancia especificada del punto inicial.
+     * @param initialPoint Punto inicial.
+     * @param endPoint Punto final que será trasladado.
+     * @param distance Distancia a la que debe ser trasladado el punto final.
+     * @param minimumDistance Cuando se especifica en True, este parámetro determina que el punto final no
+     *                        será trasladado en caso de que la distancia entre los puntos proporcionados
+     *                        sea mayor a la distancia indicada como parámetro.
+     * @return El nuevo punto final trasladado según los requerimientos.
+     */
     public static PointF extendEndPointToDistance(PointF initialPoint, PointF endPoint,
                                                   float distance, boolean minimumDistance) {
         // Calcular la distancia existente entre los puntos.
@@ -382,6 +411,15 @@ public class MathUtils {
         return new PointF(initialPoint.x + vector.x, initialPoint.y + vector.y);
     }
 
+    /**
+     * Calcula las coordenadas en las cuales debe realizarse la representación gráfica de la medida del
+     * ángulo de un objeto Angle de forma tal de que la misma no interfiera ni se solape con los segmentos
+     * de la figura en cuestión.
+     * @param vertex Vértice del ángulo.
+     * @param firstEnd Primer extremo del ángulo.
+     * @param secondEnd Segundo extremo del ángulo.
+     * @return Punto que almacena las coordenadas en las cuales debe representarse la medida del ángulo.
+     */
     public static PointF getCoordinatesForTextDrawing(PointF vertex, PointF firstEnd, PointF secondEnd) {
         // Calcular el vector entre el punto de inicio y el de fin.
         PointF firstVector = new PointF(firstEnd.x - vertex.x, firstEnd.y - vertex.y);
@@ -395,9 +433,14 @@ public class MathUtils {
         secondVector.x /= secondVectorLength;
         secondVector.y /= secondVectorLength;
 
+
         PointF pointInBisection = new PointF(firstVector.x + secondVector.x + vertex.x,
             firstVector.y + secondVector.y + vertex.y);
 
-        return extendEndPointToDistance(vertex, pointInBisection, -100, false);
+        PointF coordinates = extendEndPointToDistance(vertex, pointInBisection, -100,
+            false);
+        coordinates.x -= 75;
+
+        return coordinates;
     }
 }

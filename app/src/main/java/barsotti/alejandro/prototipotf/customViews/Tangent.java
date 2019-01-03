@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -12,12 +11,12 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.utils.MathUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnCircumferenceCenterChangeListener;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
 import barsotti.alejandro.prototipotf.customInterfaces.ITangent;
 
-import static barsotti.alejandro.prototipotf.Utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_LINE;
+import static barsotti.alejandro.prototipotf.utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_SEGMENT;
 
 public class Tangent extends Shape implements IOnCircumferenceCenterChangeListener, ITangent {
     //region Constantes
@@ -56,12 +55,12 @@ public class Tangent extends Shape implements IOnCircumferenceCenterChangeListen
     /**
      * Lista de puntos utilizados para representar la recta radial que acompaña a la tangente.
      */
-    private float[] mPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_LINE * 2];
+    private float[] mPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_SEGMENT * 2];
     /**
      * Lista de puntos utilizados para representar la recta radial que acompaña a la tangente mapeados según
      * la matriz actual.
      */
-    private float[] mMappedPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_LINE * 2];
+    private float[] mMappedPathPoints = new float[MAX_NUMBER_OF_POINTS_PER_SEGMENT * 2];
     /**
      * Lista de suscriptores a eventos de actualización de la circunferencia.
      */

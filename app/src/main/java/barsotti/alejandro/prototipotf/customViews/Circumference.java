@@ -11,7 +11,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-import barsotti.alejandro.prototipotf.Utils.MathUtils;
+import barsotti.alejandro.prototipotf.utils.MathUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.ICircumference;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnCircumferenceCenterChangeListener;
 

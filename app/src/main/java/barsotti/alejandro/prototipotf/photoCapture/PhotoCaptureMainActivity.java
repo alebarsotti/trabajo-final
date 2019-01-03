@@ -29,7 +29,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import barsotti.alejandro.prototipotf.R;
-import barsotti.alejandro.prototipotf.Utils.ContentProvidersUtils;
+import barsotti.alejandro.prototipotf.utils.ContentProvidersUtils;
 
 public class PhotoCaptureMainActivity extends AppCompatActivity {
 

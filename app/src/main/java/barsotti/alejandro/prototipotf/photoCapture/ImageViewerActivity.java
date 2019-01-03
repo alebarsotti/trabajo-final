@@ -30,10 +30,8 @@ public class ImageViewerActivity extends AppCompatActivity {
     public static final String BITMAP_EDGES_URI_EXTRA = "bitmapEdgesUri";
 
     private Point mScreenSize = new Point();
-
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
-//    private ZoomableImageView mZoomableImageView;
     private ZoomableImageViewGroup mZoomableImageViewGroup;
     private Uri mBitmapUri;
     private Uri mBitmapEdgesUri;
@@ -47,7 +45,6 @@ public class ImageViewerActivity extends AppCompatActivity {
         mNavigationView = findViewById(R.id.navigation_view);
         mNavigationView.setNavigationItemSelectedListener(new ItemSelectedLister());
 
-//        mZoomableImageView = findViewById(R.id.zoomable_image_view);
         mZoomableImageViewGroup = findViewById(R.id.zoomable_image_view_group);
 
         Intent intent = getIntent();
@@ -69,13 +66,13 @@ public class ImageViewerActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.detected_edges: {
                     setBitmap(true);
-                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.State.None);
+                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.ViewState.None);
                     item.setChecked(true);
                     break;
                 }
                 case R.id.original_image: {
                     setBitmap(false);
-                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.State.None);
+                    mZoomableImageViewGroup.setZoomableImageViewState(ZoomableImageView.ViewState.None);
                     item.setChecked(true);
                     break;
                 }
