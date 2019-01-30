@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -14,6 +16,8 @@ import java.util.ArrayList;
 import barsotti.alejandro.prototipotf.utils.MathUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.ICircumference;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnCircumferenceCenterChangeListener;
+
+import static barsotti.alejandro.prototipotf.utils.MathUtils.TOLERANCE;
 
 public class Circumference extends Shape implements ICircumference {
     //region Constantes
@@ -33,6 +37,10 @@ public class Circumference extends Shape implements ICircumference {
      * Color utilizado para la representación gráfica de la circunferencia.
      */
     private static final int SHAPE_COLOR = Color.RED;
+    /**
+     * Número utilizado para los cálculos de curvas de Bezier.
+     */
+    public static final float BEZIER_CURVE_CONSTANT = 0.551915024494f;
     //endregion
 
     //region Propiedades
@@ -128,8 +136,18 @@ public class Circumference extends Shape implements ICircumference {
 
     @Override
     protected void computeShape() {
-        // Determinar parámetros de la circunferencia según los tres puntos proporcionados.
-        MathUtils.circumferenceFromThreePoints(this);
+        if (mShapePoints.size() == NUMBER_OF_POINTS) {
+            // Calcular centro y radio de la circunferencia a partir de tres puntos dados.
+            computeCenterAndRadius();
+
+            // Establecer la lista de N puntos que conforman la circunferencia. N = NUMBER_OF_POINTS_TO_DRAW.
+            computePathPoints();
+        }
+
+        // Informar a los suscriptores sobre la actualización de los valores de centro y radio.
+        for (IOnCircumferenceCenterChangeListener listener: mListeners) {
+            listener.updateCircumferenceCenterAndRadius(mCenter, mRadius);
+        }
     }
 
     @Override
@@ -153,7 +171,7 @@ public class Circumference extends Shape implements ICircumference {
         }
 
         // Determinar la distancia entre el punto y el centro de la circunferencia.
-        float distanceFromCenterToPoint = MathUtils.distanceBetweenPoints(mMappedCenter.x, mMappedCenter.y,
+        float distanceFromCenterToPoint = MathUtils.computeDistanceBetweenPoints(mMappedCenter.x, mMappedCenter.y,
             point.x, point.y);
 
         /* La distancia del toque estará dada por el valor absoluto de la diferencia entre el radio de la
@@ -166,25 +184,92 @@ public class Circumference extends Shape implements ICircumference {
     }
 
     /**
-     * Establece nuevos valores para el centro y el radio de la circunferencia.
-     * @param newCenter Nuevo valor para el centro de la circunferencia.
-     * @param newRadius Nuevo valor para el radio de la circunferencia.
+     * Calcula y establece nuevos valores para el centro y el radio de la circunferencia.
      */
-    public void setCenterAndRadius(PointF newCenter, float newRadius) {
-        mCenter = newCenter;
-        mRadius = newRadius;
+    public void computeCenterAndRadius() {
+        float point1X, point1Y, point2X, point2Y, point3X, point3Y, delta1, delta2, point12X, point12Y,
+            point23X, point23Y, x, y;
 
-        // Informar a los suscriptores sobre la actualización de los valores de centro y radio.
-        for (IOnCircumferenceCenterChangeListener listener: mListeners) {
-            listener.updateCircumferenceCenterAndRadius(mCenter, mRadius);
+        // Separar coordenadas de los puntos de la circunferencia con el fin de utilizarlos fácilmente.
+        point1X = mShapePoints.get(0).x;
+        point1Y = mShapePoints.get(0).y;
+        point2X = mShapePoints.get(1).x;
+        point2Y = mShapePoints.get(1).y;
+        point3X = mShapePoints.get(2).x;
+        point3Y = mShapePoints.get(2).y;
+
+        // Calcular deltas entre puntos.
+        delta1 = (point2X - point1X) / (point2Y - point1Y);
+        delta2 = (point3X - point2X) / (point3Y - point2Y);
+
+        // Controlar delta2 - delta1 != 0. De lo contrario, no se podría calcular la circunferencia.
+        if (Math.abs(delta2 - delta1) < TOLERANCE) {
+            // El cálculo no se puede realizar. Devolver circunferencia por defecto.
+            mCenter = new PointF(0, 0);
+            mRadius = 0;
+
+            return;
         }
+
+        /*
+        Calcular punto intermedio entre los puntos 1 y 2, y entre los puntos 2 y 3. Estos puntos indican la
+        ubicación de los bisectores perpendiculares de las líneas que unen cada par de puntos.
+         */
+        point12X = (point1X + point2X) / 2;
+        point12Y = (point1Y + point2Y) / 2;
+        point23X = (point2X + point3X) / 2;
+        point23Y = (point2Y + point3Y) / 2;
+
+        // Calcular coordenadas del centro de la circunferencia.
+        x = (point23Y + point23X * delta2 - point12Y - point12X * delta1) / (delta2 - delta1);
+        y = -1 * x * delta1 + point12Y + point12X * delta1;
+        mCenter = new PointF(x, y);
+
+        // Calcular radio.
+        mRadius = (float) Math.sqrt(Math.pow(x - point1X, 2) + Math.pow(y - point1Y, 2));
     }
 
     /**
      * Establece la nueva lista de puntos que representan a la circunferencia.
-     * @param pointsArray Lista de puntos actualizada.
      */
-    public void setPathPoints(float[] pointsArray) {
-        mPathPoints = pointsArray;
+    public void computePathPoints() {
+        // Crear path que representa la circunferencia mediante curvas Bézier.
+        float deltaM = BEZIER_CURVE_CONSTANT * mRadius;
+        float x = mCenter.x;
+        float y = mCenter.y;
+        Path newPath = new Path();
+        newPath.moveTo(x, y + mRadius);
+        newPath.cubicTo(x + deltaM, y + mRadius, x + mRadius, y + deltaM, x + mRadius, y);
+        newPath.cubicTo(x + mRadius, y - deltaM, x + deltaM, y - mRadius, x, y - mRadius);
+        newPath.cubicTo(x - deltaM, y - mRadius, x - mRadius, y - deltaM, x - mRadius, y);
+        newPath.cubicTo(x - mRadius, y + deltaM, x - deltaM, y + mRadius, x, y + mRadius);
+        newPath.close();
+
+        // Calcular coordenadas de los puntos que forman la circunferencia.
+        int numberOfPoints = Circumference.NUMBER_OF_POINTS_TO_DRAW;
+        PathMeasure pathMeasure = new PathMeasure(newPath, false);
+        float distance = 0f;
+        float deltaDistance = pathMeasure.getLength() / numberOfPoints;
+        int index = 0;
+        float[] coordinatesComputedForPoint = new float[2];
+        float[] pointCoordinates = new float[numberOfPoints * 4];
+
+        for (int counter = 0; counter < numberOfPoints; counter++) {
+            pathMeasure.getPosTan(distance, coordinatesComputedForPoint, null);
+            pointCoordinates[index++] = coordinatesComputedForPoint[0];
+            pointCoordinates[index++] = coordinatesComputedForPoint[1];
+            if (counter != 0) {
+                pointCoordinates[index++] = coordinatesComputedForPoint[0];
+                pointCoordinates[index++] = coordinatesComputedForPoint[1];
+            }
+            else {
+                pointCoordinates[pointCoordinates.length - 2] = coordinatesComputedForPoint[0];
+                pointCoordinates[pointCoordinates.length - 1] = coordinatesComputedForPoint[1];
+            }
+
+            distance = distance + deltaDistance;
+        }
+        
+        mPathPoints = pointCoordinates;
     }
 }

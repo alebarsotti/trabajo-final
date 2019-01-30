@@ -17,6 +17,7 @@ import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeList
 import barsotti.alejandro.prototipotf.customInterfaces.ITangent;
 
 import static barsotti.alejandro.prototipotf.utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_SEGMENT;
+import static barsotti.alejandro.prototipotf.utils.MathUtils.TOLERANCE;
 
 public class Tangent extends Shape implements IOnCircumferenceCenterChangeListener, ITangent {
     //region Constantes
@@ -139,11 +140,11 @@ public class Tangent extends Shape implements IOnCircumferenceCenterChangeListen
     protected void computeShape() {
         if (mShapePoints.size() == NUMBER_OF_POINTS) {
             // Trasladar el punto marcado hasta la circunferencia.
-            PointF pointInCircumference = MathUtils.translatePointToCircumference(mCircumferenceCenter,
+            PointF pointInCircumference = translatePointToCircumference(mCircumferenceCenter,
                 mCircumferenceRadius, mShapePoints.get(0));
             mShapePoints.set(0, pointInCircumference);
             // Calcular dos puntos que definen la tangente.
-            mTangentPoints = MathUtils.tangentToCircumference(mCircumferenceCenter, pointInCircumference,
+            mTangentPoints = tangentToCircumference(mCircumferenceCenter, pointInCircumference,
                 mCircumferenceRadius);
             // Calcular puntos utilizados para representar la recta radial.
             mPathPoints = MathUtils.pointArrayFromLine(mCircumferenceCenter, pointInCircumference);
@@ -198,4 +199,71 @@ public class Tangent extends Shape implements IOnCircumferenceCenterChangeListen
         mListeners.remove(listener);
     }
     //endregion
+
+    /**
+     * A partir de datos de una circunferencia y un punto 'P', calcula el punto 'Q' más cercano a P que se
+     * encuentra sobre la circunferencia.
+     * @param center Centro de la circunferencia.
+     * @param radius Radio de la circunferencia.
+     * @param point Punto a trasladar.
+     * @return Punto más cercano a P que se encuentra sobre la circunferencia indicada.
+     */
+    public static PointF translatePointToCircumference(PointF center, double radius, PointF point) {
+        // Calcular coordenada X del punto de la circunferencia a encontrar.
+        double tx = (radius * (point.x - center.x)) /
+            Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2))
+            + center.x;
+
+        // Calcular coordenada Y del punto de la circunferencia a encontrar.
+        double ty = (radius * (point.y - center.y)) /
+            Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2))
+            + center.y;
+
+        return new PointF((float) tx, (float) ty);
+    }
+
+    /**
+     * Calcula la tangente a una circunferencia en un punto dado.
+     * @param center Punto que representa el centro de la circunferencia.
+     * @param pointInCircumference Punto perteneciente a la circunferencia a partir del cual se calculará
+     *                             la tangente.
+     * @param circumferenceRadius Radio de la circunferencia.
+     * @return Array con dos puntos ([x1, y1, x2, y2]) que, al unirse mediante una recta, representan la
+     * tangente calculada.
+     */
+    public static float[] tangentToCircumference(PointF center, PointF pointInCircumference,
+                                                 float circumferenceRadius) {
+        ArrayList<PointF> tangentPointsList = new ArrayList<>();
+
+        // Determinar si la diferencia en la coordenada "y" de los puntos es cero (caso especial).
+        double tangentPointDistance = 2 * circumferenceRadius;
+        if (Math.abs(pointInCircumference.y - center.y) < TOLERANCE) {
+            tangentPointsList.add(new PointF(pointInCircumference.x,
+                (float) (pointInCircumference.y + tangentPointDistance)));
+            tangentPointsList.add(new PointF(pointInCircumference.x,
+                (float) (pointInCircumference.y - tangentPointDistance)));
+        }
+        else {
+            // Los nombres de variables "a" y "b" hacen referencia a la fórmula de la recta: y = a * x + b.
+            double a = -1 * (pointInCircumference.x - center.x) / (pointInCircumference.y - center.y);
+            double b = pointInCircumference.y - pointInCircumference.x * a;
+
+            double firstPointX = pointInCircumference.x - tangentPointDistance;
+            double firstPointY = a * firstPointX + b;
+            double secondPointX = pointInCircumference.x + tangentPointDistance;
+            double secondPointY = a * secondPointX + b;
+
+            tangentPointsList.add(new PointF((float) firstPointX, (float) firstPointY));
+            tangentPointsList.add(new PointF((float) secondPointX, (float) secondPointY));
+        }
+
+        float[] tangentPointsArray = new float[4];
+        int index = 0;
+        for (PointF point: tangentPointsList) {
+            tangentPointsArray[index++] = point.x;
+            tangentPointsArray[index++] = point.y;
+        }
+
+        return tangentPointsArray;
+    }
 }

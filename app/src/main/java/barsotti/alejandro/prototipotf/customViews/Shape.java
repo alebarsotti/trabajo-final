@@ -311,14 +311,6 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     }
 
     /**
-     * Obtiene los puntos que componen la figura.
-     * @return Puntos que componen la figura.
-     */
-    public ArrayList<PointF> getPointArray() {
-        return mShapePoints;
-    }
-
-    /**
      * Agrega un nuevo punto a la forma.
      * @param point Punto a agregar a la lista de puntos de la forma.
      * @return True si la figura aún no fue completada. False en caso contrario.
@@ -392,7 +384,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             float eY = e.getY();
             for (int i = 0; i < mMappedShapePoints.size(); i++) {
                 PointF point = mMappedShapePoints.get(i);
-                if (MathUtils.distanceBetweenPoints(eX, eY, point.x, point.y) <= mPointRadius) {
+                if (MathUtils.computeDistanceBetweenPoints(eX, eY, point.x, point.y) <= mPointRadius) {
                     mSelectedPointIndex = i;
                     return true;
                 }

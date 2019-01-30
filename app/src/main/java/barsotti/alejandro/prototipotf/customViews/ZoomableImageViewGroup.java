@@ -208,7 +208,7 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 for (Shape shape : mShapeList) {
                     if (shape.getClass() == Circumference.class) {
                         PointF circleCenter = ((Circumference) shape).mMappedCenter;
-                        double newDistance = Math.abs(MathUtils.distanceBetweenPoints(point.x, point.y,
+                        double newDistance = Math.abs(MathUtils.computeDistanceBetweenPoints(point.x, point.y,
                             circleCenter.x, circleCenter.y) - ((Circumference) shape).mMappedRadius);
                         if (distance < 0 || newDistance < distance) {
                             distance = newDistance;

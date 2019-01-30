@@ -3,18 +3,17 @@ package barsotti.alejandro.prototipotf.utils;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.PointF;
-
 import java.util.ArrayList;
 
-import barsotti.alejandro.prototipotf.customViews.Circumference;
-
 public class MathUtils {
-    // Valor de tolerancia utilizado para la realización de cálculos precisos.
-    private static final double TOLERANCE = 0.0001d;
     private static final int DEFAULT_DISTANCE_BETWEEN_POINTS_IN_SEGMENT = 50;
     // Tag utilizado a fines de debug.
-    private static final String TAG = "MathUtils";
+    private static final String DEBUG_TAG = "MathUtils";
 
+    /**
+     * Valor de tolerancia utilizado para la realización de cálculos precisos.
+     **/
+    public static final double TOLERANCE = 0.0001d;
     public static final int MAX_NUMBER_OF_POINTS_PER_SEGMENT = 100;
 
     /**
@@ -25,7 +24,7 @@ public class MathUtils {
      * @param y2 Coordenada Y del segundo punto.
      * @return Medida de la distancia entre los puntos especificados.
      */
-    public static float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
+    public static float computeDistanceBetweenPoints(float x1, float y1, float x2, float y2) {
         return (float) Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 
@@ -47,177 +46,6 @@ public class MathUtils {
     }
 
     /**
-     * Determina si el valor proporcionado se encuentra dentro de los límites establecidos.
-     * @param value Valor a controlar.
-     * @param lowerLimit Límite inferior (inclusivo).
-     * @param upperLimit Límite superior (inclusivo).
-     * @return True si el valor se encuentra dentro del intervalo. False en caso contrario.
-     */
-    public static boolean valueWithinRange(double value, double lowerLimit, double upperLimit) {
-        return value >= lowerLimit && value <= upperLimit;
-    }
-
-    /**
-     * A partir de datos de una circunferencia y un punto 'P', calcula el punto 'Q' más cercano a P que se
-     * encuentra sobre la circunferencia.
-     * @param center Centro de la circunferencia.
-     * @param radius Radio de la circunferencia.
-     * @param point Punto a trasladar.
-     * @return Punto más cercano a P que se encuentra sobre la circunferencia indicada.
-     */
-    public static PointF translatePointToCircumference(PointF center, double radius, PointF point) {
-        // Calcular coordenada X del punto de la circunferencia a encontrar.
-        double tx = (radius * (point.x - center.x)) /
-            Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2))
-            + center.x;
-
-        // Calcular coordenada Y del punto de la circunferencia a encontrar.
-        double ty = (radius * (point.y - center.y)) /
-            Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2))
-            + center.y;
-
-        return new PointF((float) tx, (float) ty);
-    }
-
-    /**
-     * Calcula la tangente a una circunferencia en un punto dado.
-     * @param center Punto que representa el centro de la circunferencia.
-     * @param pointInCircumference Punto perteneciente a la circunferencia a partir del cual se calculará
-     *                             la tangente.
-     * @param circumferenceRadius Radio de la circunferencia.
-     * @return Array con dos puntos ([x1, y1, x2, y2]) que, al unirse mediante una recta, representan la
-     * tangente calculada.
-     */
-    public static float[] tangentToCircumference(PointF center, PointF pointInCircumference,
-                                                 float circumferenceRadius) {
-        ArrayList<PointF> tangentPointsList = new ArrayList<>();
-
-        // Determinar si la diferencia en la coordenada "y" de los puntos es cero (caso especial).
-        double tangentPointDistance = 2 * circumferenceRadius;
-        if (Math.abs(pointInCircumference.y - center.y) < TOLERANCE) {
-            tangentPointsList.add(new PointF(pointInCircumference.x,
-                (float) (pointInCircumference.y + tangentPointDistance)));
-            tangentPointsList.add(new PointF(pointInCircumference.x,
-                (float) (pointInCircumference.y - tangentPointDistance)));
-        }
-        else {
-            // Los nombres de variables "a" y "b" hacen referencia a la fórmula de la recta: y = a * x + b.
-            double a = -1 * (pointInCircumference.x - center.x) / (pointInCircumference.y - center.y);
-            double b = pointInCircumference.y - pointInCircumference.x * a;
-
-            double firstPointX = pointInCircumference.x - tangentPointDistance;
-            double firstPointY = a * firstPointX + b;
-            double secondPointX = pointInCircumference.x + tangentPointDistance;
-            double secondPointY = a * secondPointX + b;
-
-            tangentPointsList.add(new PointF((float) firstPointX, (float) firstPointY));
-            tangentPointsList.add(new PointF((float) secondPointX, (float) secondPointY));
-        }
-
-        float[] tangentPointsArray = new float[4];
-        int index = 0;
-        for (PointF point: tangentPointsList) {
-            tangentPointsArray[index++] = point.x;
-            tangentPointsArray[index++] = point.y;
-        }
-
-        return tangentPointsArray;
-    }
-
-    /**
-     * Calcula centro y radio de la circunferencia a partir de tres puntos dados. Asimismo, establece
-     * la lista de N puntos que conforman la circunferencia, siendo N =
-     * {@link Circumference#NUMBER_OF_POINTS_TO_DRAW}
-     * @param circumference La instancia de circunferencia para la cual realizar los cálculos.
-     */
-    public static void circumferenceFromThreePoints(Circumference circumference) {
-        ArrayList<PointF> points = circumference.getPointArray();
-
-        float point1X, point1Y, point2X, point2Y, point3X, point3Y, delta1, delta2, point12X, point12Y,
-            point23X, point23Y, x, y, radius;
-
-        // Separar coordenadas de los puntos de la circunferencia con el fin de utilizarlos fácilmente.
-        point1X = points.get(0).x;
-        point1Y = points.get(0).y;
-        point2X = points.get(1).x;
-        point2Y = points.get(1).y;
-        point3X = points.get(2).x;
-        point3Y = points.get(2).y;
-
-        // Calcular deltas entre puntos.
-        delta1 = (point2X - point1X) / (point2Y - point1Y);
-        delta2 = (point3X - point2X) / (point3Y - point2Y);
-
-        // Controlar delta2 - delta1 != 0. De lo contrario, no se podría calcular la circunferencia.
-        if (Math.abs(delta2 - delta1) < TOLERANCE) {
-            // El cálculo no se puede realizar. Devolver circunferencia por defecto.
-            circumference.setCenterAndRadius(new PointF(0, 0), 0);
-
-            return;
-        }
-
-        /*
-        Calcular punto intermedio entre los puntos 1 y 2, y entre los puntos 2 y 3. Estos puntos indican la
-        ubicación de los bisectores perpendiculares de las líneas que unen cada par de puntos.
-         */
-        point12X = (point1X + point2X) / 2;
-        point12Y = (point1Y + point2Y) / 2;
-        point23X = (point2X + point3X) / 2;
-        point23Y = (point2Y + point3Y) / 2;
-
-        // Calcular coordenada X del centro de la circunferencia.
-        x = (point23Y + point23X * delta2 - point12Y - point12X * delta1) / (delta2 - delta1);
-
-        // Calcular coordenada Y del centro de la circunferencia.
-        y = -1 * x * delta1 + point12Y + point12X * delta1;
-
-        // Calcular radio.
-        radius = (float) Math.sqrt(Math.pow(x - point1X, 2) + Math.pow(y - point1Y, 2));
-
-        // Establecer centro y radio de la circunferencia.
-        circumference.setCenterAndRadius(new PointF(x, y), radius);
-
-        // Crear path que representa la circunferencia mediante curvas Bézier.
-        float bezierCurveConstant = 0.551915024494f;
-        float deltaM = bezierCurveConstant * radius;
-        Path newPath = new Path();
-        newPath.moveTo(x, y + radius);
-        newPath.cubicTo(x + deltaM, y + radius, x + radius, y + deltaM, x + radius, y);
-        newPath.cubicTo(x + radius, y - deltaM, x + deltaM, y - radius, x, y - radius);
-        newPath.cubicTo(x - deltaM, y - radius, x - radius, y - deltaM, x - radius, y);
-        newPath.cubicTo(x - radius, y + deltaM, x - deltaM, y + radius, x, y + radius);
-        newPath.close();
-
-        // Calcular coordenadas de los puntos que forman la circunferencia.
-        int numberOfPoints = Circumference.NUMBER_OF_POINTS_TO_DRAW;
-        PathMeasure pm = new PathMeasure(newPath, false);
-        float distance = 0f;
-        float deltaDistance = pm.getLength() / numberOfPoints;
-        int pointArrayPosition = 0;
-        float[] pointCoordinates = new float[2];
-        float[] pointCoordinatesArray = new float[numberOfPoints * 4];
-
-        for (int counter = 0; counter < numberOfPoints; counter++) {
-            pm.getPosTan(distance, pointCoordinates, null);
-            pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[0];
-            pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[1];
-            if (counter != 0) {
-                pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[0];
-                pointCoordinatesArray[pointArrayPosition++] = pointCoordinates[1];
-            }
-            else {
-                pointCoordinatesArray[pointCoordinatesArray.length - 2] = pointCoordinates[0];
-                pointCoordinatesArray[pointCoordinatesArray.length - 1] = pointCoordinates[1];
-            }
-
-            distance = distance + deltaDistance;
-        }
-
-        // Establecer la lista de puntos.
-        circumference.setPathPoints(pointCoordinatesArray);
-    }
-
-    /**
      * Calcula un ángulo a partir de una lista de tres puntos (primer extremo, vértice, segundo extremo),
      * utilizando la Ley de los Cosenos.
      * Referencia de fórmula y cálculos: https://www.mathsisfun.com/algebra/trig-cosine-law.html
@@ -231,9 +59,11 @@ public class MathUtils {
         PointF secondEnd = points.get(2);
 
         // Calcular distancia entre cada par de puntos.
-        double firstEndVertexDistance = distanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
-        double secondEndVertexDistance = distanceBetweenPoints(secondEnd.x, secondEnd.y, vertex.x, vertex.y);
-        double firstEndSecondEndDistance = distanceBetweenPoints(firstEnd.x, firstEnd.y,
+        double firstEndVertexDistance = computeDistanceBetweenPoints(firstEnd.x, firstEnd.y,
+            vertex.x, vertex.y);
+        double secondEndVertexDistance = computeDistanceBetweenPoints(secondEnd.x, secondEnd.y,
+            vertex.x, vertex.y);
+        double firstEndSecondEndDistance = computeDistanceBetweenPoints(firstEnd.x, firstEnd.y,
             secondEnd.x, secondEnd.y);
 
         // Aplicar Ley de los Cosenos.
@@ -243,56 +73,6 @@ public class MathUtils {
         );
 
         return (float) angle;
-    }
-
-    /**
-     * Calcula el ángulo de inicio necesario para la representación gráfica de un arco dentro de ángulo
-     * formado por los tres puntos proporcionados.
-     * @param points ArrayList de los tres puntos que forman el ángulo.
-     * @return Magnitud del ángulo de inicio requerido para la representación gráfica del arco.
-     */
-    public static float calculateStartAngleFromThreePoints(ArrayList<PointF> points) {
-        // Obtener extremos y vértice.
-        PointF firstEnd = points.get(0);
-        PointF vertex = points.get(1);
-        PointF secondEnd = points.get(2);
-
-        /*
-        Establecer punto de inicio de referencia. El mismo se encontrará siempre una unidad a la derecha del
-        vértice, y a la misma altura y. Esto resultará útil para calcular el startAngle desde el origen
-        considerado por Android (eje X positivo) hasta cada extremo.
-         */
-        PointF startPoint = new PointF(vertex.x + 1, vertex.y);
-
-        // Establecer los tres puntos que forman cada ángulo.
-        ArrayList<PointF> firstStartAnglePoints = new ArrayList<>();
-        firstStartAnglePoints.add(startPoint);
-        firstStartAnglePoints.add(vertex);
-        firstStartAnglePoints.add(firstEnd);
-
-        ArrayList<PointF> secondStartAnglePoints = new ArrayList<>();
-        secondStartAnglePoints.add(startPoint);
-        secondStartAnglePoints.add(vertex);
-        secondStartAnglePoints.add(secondEnd);
-
-        /*
-        Calcular cada ángulo. En caso de encontrarse por encima del punto de inicio de referencia, el valor
-        a considerar para ese ángulo será la resta entre 360º y el valor obtenido. Esto se debe a que
-        Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario).
-         */
-        float firstStartAngle = calculateSweepAngleFromThreePoints(firstStartAnglePoints);
-        firstStartAngle = (firstEnd.y < startPoint.y ? 360 - firstStartAngle : firstStartAngle);
-        float secondStartAngle = calculateSweepAngleFromThreePoints(secondStartAnglePoints);
-        secondStartAngle = (secondEnd.y < startPoint.y ? 360 - secondStartAngle : secondStartAngle);
-
-        // Calcular diferencia entre los ángulos.
-        float diff = Math.max(firstStartAngle, secondStartAngle) - Math.min(firstStartAngle, secondStartAngle);
-
-        /*
-        Si la diferencia es menor a 180º, entonces el ángulo de inicio es el ángulo que culmina en el primer
-        extremo. En caso contrario, será el ángulo que culmina en el segundo extremo.
-         */
-        return diff < 180 ? Math.min(firstStartAngle, secondStartAngle) : Math.max(firstStartAngle, secondStartAngle);
     }
 
     /**
@@ -331,10 +111,10 @@ public class MathUtils {
         punto fijo y el vértice del ángulo obtuso.
          */
         if (firstAngle > 90) {
-            return distanceBetweenPoints(segmentPoint1.x, segmentPoint1.y, point.x, point.y);
+            return computeDistanceBetweenPoints(segmentPoint1.x, segmentPoint1.y, point.x, point.y);
         }
         if (secondAngle > 90) {
-            return distanceBetweenPoints(segmentPoint2.x, segmentPoint2.y, point.x, point.y);
+            return computeDistanceBetweenPoints(segmentPoint2.x, segmentPoint2.y, point.x, point.y);
         }
 
         // Calcular distancia entre el punto fijo y la recta formada por los extremos del segmento.
@@ -389,7 +169,7 @@ public class MathUtils {
     public static PointF extendEndPointToDistance(PointF initialPoint, PointF endPoint,
                                                   float distance, boolean minimumDistance) {
         // Calcular la distancia existente entre los puntos.
-        float pointsDistance = distanceBetweenPoints(initialPoint.x, initialPoint.y, endPoint.x,
+        float pointsDistance = computeDistanceBetweenPoints(initialPoint.x, initialPoint.y, endPoint.x,
             endPoint.y);
 
         if (minimumDistance && pointsDistance > distance) {
@@ -409,38 +189,5 @@ public class MathUtils {
 
         // Calcular nuevo punto final sumando las coordenadas del punto inicial y el vector calculado.
         return new PointF(initialPoint.x + vector.x, initialPoint.y + vector.y);
-    }
-
-    /**
-     * Calcula las coordenadas en las cuales debe realizarse la representación gráfica de la medida del
-     * ángulo de un objeto Angle de forma tal de que la misma no interfiera ni se solape con los segmentos
-     * de la figura en cuestión.
-     * @param vertex Vértice del ángulo.
-     * @param firstEnd Primer extremo del ángulo.
-     * @param secondEnd Segundo extremo del ángulo.
-     * @return Punto que almacena las coordenadas en las cuales debe representarse la medida del ángulo.
-     */
-    public static PointF getCoordinatesForTextDrawing(PointF vertex, PointF firstEnd, PointF secondEnd) {
-        // Calcular el vector entre el punto de inicio y el de fin.
-        PointF firstVector = new PointF(firstEnd.x - vertex.x, firstEnd.y - vertex.y);
-        float firstVectorLength = distanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
-        PointF secondVector = new PointF(secondEnd.x - vertex.x, secondEnd.y - vertex.y);
-        float secondVectorLength = distanceBetweenPoints(secondEnd.x, secondEnd.y, vertex.x, vertex.y);
-
-        // Normalizar el vector.
-        firstVector.x /= firstVectorLength;
-        firstVector.y /= firstVectorLength;
-        secondVector.x /= secondVectorLength;
-        secondVector.y /= secondVectorLength;
-
-
-        PointF pointInBisection = new PointF(firstVector.x + secondVector.x + vertex.x,
-            firstVector.y + secondVector.y + vertex.y);
-
-        PointF coordinates = extendEndPointToDistance(vertex, pointInBisection, -100,
-            false);
-        coordinates.x -= 75;
-
-        return coordinates;
     }
 }

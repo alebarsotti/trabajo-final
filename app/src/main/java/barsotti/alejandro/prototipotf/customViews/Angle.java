@@ -12,10 +12,15 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 import barsotti.alejandro.prototipotf.utils.MathUtils;
 import barsotti.alejandro.prototipotf.customInterfaces.IOnTangentPointChangeListener;
+
+import static barsotti.alejandro.prototipotf.utils.MathUtils.calculateSweepAngleFromThreePoints;
+import static barsotti.alejandro.prototipotf.utils.MathUtils.computeDistanceBetweenPoints;
+import static barsotti.alejandro.prototipotf.utils.MathUtils.extendEndPointToDistance;
 
 public class Angle extends Shape implements IOnTangentPointChangeListener {
     //region Constantes
@@ -103,6 +108,94 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     }
     //endregion
 
+    //region Utils
+    /**
+     * Calcula las coordenadas en las cuales debe realizarse la representación gráfica de la medida del
+     * ángulo de un objeto Angle de forma tal de que la misma no interfiera ni se solape con los segmentos
+     * de la figura en cuestión.
+     * @param vertex Vértice del ángulo.
+     * @param firstEnd Primer extremo del ángulo.
+     * @param secondEnd Segundo extremo del ángulo.
+     * @return Punto que almacena las coordenadas en las cuales debe representarse la medida del ángulo.
+     */
+    private static PointF getCoordinatesForTextDrawing(PointF vertex, PointF firstEnd, PointF secondEnd) {
+        // Calcular el vector entre el punto de inicio y el de fin.
+        PointF firstVector = new PointF(firstEnd.x - vertex.x, firstEnd.y - vertex.y);
+        float firstVectorLength = computeDistanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
+        PointF secondVector = new PointF(secondEnd.x - vertex.x, secondEnd.y - vertex.y);
+        float secondVectorLength = computeDistanceBetweenPoints(secondEnd.x, secondEnd.y,
+            vertex.x, vertex.y);
+
+        // Normalizar el vector.
+        firstVector.x /= firstVectorLength;
+        firstVector.y /= firstVectorLength;
+        secondVector.x /= secondVectorLength;
+        secondVector.y /= secondVectorLength;
+
+
+        PointF pointInBisection = new PointF(firstVector.x + secondVector.x + vertex.x,
+            firstVector.y + secondVector.y + vertex.y);
+
+        PointF coordinates = extendEndPointToDistance(vertex, pointInBisection, -100,
+            false);
+        coordinates.x -= 75;
+
+        return coordinates;
+    }
+
+    /**
+     * Calcula el ángulo de inicio necesario para la representación gráfica de un arco dentro de ángulo
+     * formado por los tres puntos proporcionados.
+     * @param points ArrayList de los tres puntos que forman el ángulo.
+     * @return Magnitud del ángulo de inicio requerido para la representación gráfica del arco.
+     */
+    private static float calculateStartAngleFromThreePoints(ArrayList<PointF> points) {
+        // Obtener extremos y vértice.
+        PointF firstEnd = points.get(0);
+        PointF vertex = points.get(1);
+        PointF secondEnd = points.get(2);
+
+        /*
+        Establecer punto de inicio de referencia. El mismo se encontrará siempre una unidad a la derecha del
+        vértice, y a la misma altura y. Esto resultará útil para calcular el startAngle desde el origen
+        considerado por Android (eje X positivo) hasta cada extremo.
+         */
+        PointF startPoint = new PointF(vertex.x + 1, vertex.y);
+
+        // Establecer los tres puntos que forman cada ángulo.
+        ArrayList<PointF> firstStartAnglePoints = new ArrayList<>();
+        firstStartAnglePoints.add(startPoint);
+        firstStartAnglePoints.add(vertex);
+        firstStartAnglePoints.add(firstEnd);
+
+        ArrayList<PointF> secondStartAnglePoints = new ArrayList<>();
+        secondStartAnglePoints.add(startPoint);
+        secondStartAnglePoints.add(vertex);
+        secondStartAnglePoints.add(secondEnd);
+
+        /*
+        Calcular cada ángulo. En caso de encontrarse por encima del punto de inicio de referencia, el valor
+        a considerar para ese ángulo será la resta entre 360º y el valor obtenido. Esto se debe a que
+        Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario).
+         */
+        float firstStartAngle = calculateSweepAngleFromThreePoints(firstStartAnglePoints);
+        firstStartAngle = (firstEnd.y < startPoint.y ? 360 - firstStartAngle : firstStartAngle);
+        float secondStartAngle = calculateSweepAngleFromThreePoints(secondStartAnglePoints);
+        secondStartAngle = (secondEnd.y < startPoint.y ? 360 - secondStartAngle : secondStartAngle);
+
+        // Calcular diferencia entre los ángulos.
+        float diff = Math.max(firstStartAngle, secondStartAngle)
+            - Math.min(firstStartAngle, secondStartAngle);
+
+        /*
+        Si la diferencia es menor a 180º, entonces el ángulo de inicio es el ángulo que culmina en el primer
+        extremo. En caso contrario, será el ángulo que culmina en el segundo extremo.
+         */
+        return diff < 180 ? Math.min(firstStartAngle, secondStartAngle)
+            : Math.max(firstStartAngle, secondStartAngle);
+    }
+    //endregion
+
     @Override
     protected void initializeShape() {
         // Establecer marca que determina que los parámetros de la figura se calculen constantemente.
@@ -185,8 +278,8 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     protected void computeShape() {
         // Si la figura se encuentra completa, calcular ángulo representado y ángulo de inicio.
         if (mShapePoints.size() == NUMBER_OF_POINTS) {
-            mSweepAngle = MathUtils.calculateSweepAngleFromThreePoints(mShapePoints);
-            mStartAngle = MathUtils.calculateStartAngleFromThreePoints(mShapePoints);
+            mSweepAngle = calculateSweepAngleFromThreePoints(mShapePoints);
+            mStartAngle = calculateStartAngleFromThreePoints(mShapePoints);
         }
     }
 
@@ -199,11 +292,11 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
 
         if (mMappedShapePoints.size() == NUMBER_OF_POINTS) {
             mVertex = mMappedShapePoints.get(1);
-            mFirstEnd = MathUtils.extendEndPointToDistance(mVertex, mMappedShapePoints.get(0),
+            mFirstEnd = extendEndPointToDistance(mVertex, mMappedShapePoints.get(0),
                 SEGMENT_MIN_LENGTH, true);
-            mSecondEnd = MathUtils.extendEndPointToDistance(mVertex, mMappedShapePoints.get(2),
+            mSecondEnd = extendEndPointToDistance(mVertex, mMappedShapePoints.get(2),
                 SEGMENT_MIN_LENGTH, true);
-            mTextCoordinates = MathUtils.getCoordinatesForTextDrawing(mVertex, mFirstEnd, mSecondEnd);
+            mTextCoordinates = getCoordinatesForTextDrawing(mVertex, mFirstEnd, mSecondEnd);
 
             mArcOval.set(mVertex.x - ARC_RADIUS, mVertex.y - ARC_RADIUS,
                 mVertex.x + ARC_RADIUS, mVertex.y + ARC_RADIUS);
@@ -219,7 +312,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
         mShapePoints.clear();
 
         // Establecer primer extremo del ángulo (ubicado sobre la línea tangente).
-        mShapePoints.add(MathUtils.extendEndPointToDistance(tangentPoint, linePoint,
+        mShapePoints.add(extendEndPointToDistance(tangentPoint, linePoint,
             Math.max(mPointRadius * DEFAULT_SEGMENT_LENGTH_MULTIPLIER / mCurrentZoom, SEGMENT_MIN_LENGTH),
             false));
 
@@ -227,7 +320,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
         mShapePoints.add(new PointF(tangentPoint.x, tangentPoint.y));
 
         // Establecer segundo extremo del ángulo (ubicado sobre la recta radial de la tangente).
-        mShapePoints.add(MathUtils.extendEndPointToDistance(tangentPoint, circleCenterPoint,
+        mShapePoints.add(extendEndPointToDistance(tangentPoint, circleCenterPoint,
             Math.max(mPointRadius * DEFAULT_SEGMENT_LENGTH_MULTIPLIER / mCurrentZoom, SEGMENT_MIN_LENGTH),
             false));
 
