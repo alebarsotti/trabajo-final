@@ -203,7 +203,7 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
 
         // Establecer parámetros de la pintura a utilizar para la representación gráfica de la medida del
         // ángulo.
-        mTextPaint.setStyle(Paint.Style.STROKE);
+        mTextPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mTextPaint.setColor(mShapePaint.getColor());
         mTextPaint.setTypeface(Typeface.SANS_SERIF);
         mTextPaint.setShadowLayer(5, 0, 0, Color.BLACK);

@@ -22,4 +22,16 @@
         android:id="@+id/draw_angle"
         android:icon="@drawable/ic_menu_item"
         android:title="Dibujar ángulo"/>
+    <item
+        android:id="@+id/share_screenshot"
+        android:icon="@drawable/ic_menu_item"
+        android:title="Compartir captura de pantalla"/>
+    <item
+        android:id="@+id/send_email"
+        android:icon="@drawable/ic_menu_item"
+        android:title="Enviar e-mail"/>
+    <item
+        android:id="@+id/send_email_with_screenshot"
+        android:icon="@drawable/ic_menu_item"
+        android:title="Enviar e-mail con captura de pantalla"/>
 </menu>

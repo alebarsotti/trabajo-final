@@ -27,4 +27,9 @@
     <string name="cannot_draw_angle_message">No es posible dibujar un ángulo si no se ha dibujado una tangente previamente.</string>
     <string name="listener_not_found_error">no se ha encontrado el objeto especificado en la lista.</string>
     <string name="constructor_log_message">Constructor.</string>
+    <string name="sendEmail_error_message">No se encontró ninguna aplicación de envío de mails instalada.</string>
+    <string name="storeScreenshot_error_message">Error al almacenar la captura de pantalla.</string>
+    <string name="default_mail_subject">Información sobre medición</string>
+    <string name="default_mail_with_attachment_subject">Información sobre medición con imagen adjunta</string>
+    <string name="share_screenshot_message">Compartir captura de pantalla mediante...</string>
 </resources>
