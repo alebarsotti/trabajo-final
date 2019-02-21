@@ -19,7 +19,10 @@ import barsotti.alejandro.prototipotf.customInterfaces.ITangent;
 import static barsotti.alejandro.prototipotf.utils.MathUtils.MAX_NUMBER_OF_POINTS_PER_SEGMENT;
 import static barsotti.alejandro.prototipotf.utils.MathUtils.TOLERANCE;
 
+
 public class Tangent extends Shape implements IOnCircumferenceCenterChangeListener, ITangent {
+// TODO: La recta radial debería tener un inicio con linea dibujada (la mitad de un segmento, mínimamente).
+
     //region Constantes
     /**
      * Tag utilizado con fines de debug.

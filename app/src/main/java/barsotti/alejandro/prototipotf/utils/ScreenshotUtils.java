@@ -48,8 +48,16 @@ public class ScreenshotUtils {
     }
 
     private static File storeScreenshot(Bitmap bitmap, String filename) throws IOException {
-        String path = Environment.getExternalStorageDirectory().toString() + "/" + filename;
-        File imageFile = new File(path);
+        String basePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            .toString();
+//         getExternalFilesDirs
+//        context.getExternalFilesDir()
+
+        File imageFile = new File(String.format("%s/%s", basePath, filename));
+
+
+//        String path = Environment.getExternalStorageDirectory().toString() + "/" + filename;
+//        File imageFile = new File(path);
 
         OutputStream out = new FileOutputStream(imageFile);
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
