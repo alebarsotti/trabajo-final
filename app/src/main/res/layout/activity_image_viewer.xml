@@ -1,23 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout
+<android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
-    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     >
-    <!--Contenido original de la actividad-->
+
     <barsotti.alejandro.prototipotf.customViews.ZoomableImageViewGroup
         android:id="@+id/zoomable_image_view_group"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!--Menú de la actividad-->
-    <android.support.design.widget.NavigationView
-        android:id="@+id/navigation_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        app:headerLayout="@layout/header_navigation_view_image_viewer"
-        app:menu="@menu/menu_navigation_view_image_viewer" />
-</android.support.v4.widget.DrawerLayout>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/menu_fab"
+        style="@style/ImageViewerFloatingActionButton"
+        android:layout_marginBottom="12dp"
+        android:layout_marginEnd="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:fabSize="normal"
+        android:src="@drawable/ic_add_white"
+        android:onClick="toggleMenu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/circumference_fab"
+        android:src="@drawable/ic_circle_outline"
+        style="@style/MiniImageViewerFloatingActionButton"
+        app:layout_constraintBottom_toTopOf="@id/menu_fab"
+        app:layout_constraintEnd_toEndOf="@id/menu_fab"
+        app:layout_constraintStart_toStartOf="@id/menu_fab"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/tangent_fab"
+        android:src="@drawable/ic_tangent"
+        style="@style/MiniImageViewerFloatingActionButton"
+        app:layout_constraintBottom_toTopOf="@id/circumference_fab"
+        app:layout_constraintEnd_toEndOf="@id/circumference_fab"
+        app:layout_constraintStart_toStartOf="@id/circumference_fab"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/angle_fab"
+        android:src="@drawable/ic_angle_acute"
+        style="@style/MiniImageViewerFloatingActionButton"
+        app:layout_constraintBottom_toTopOf="@id/tangent_fab"
+        app:layout_constraintEnd_toEndOf="@id/tangent_fab"
+        app:layout_constraintStart_toStartOf="@id/tangent_fab"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/save_image_fab"
+        android:src="@drawable/ic_image_white_24dp"
+        style="@style/MiniImageViewerFloatingActionButton"
+        app:layout_constraintBottom_toTopOf="@id/angle_fab"
+        app:layout_constraintEnd_toEndOf="@id/angle_fab"
+        app:layout_constraintStart_toStartOf="@id/angle_fab"/>
+
+</android.support.constraint.ConstraintLayout>

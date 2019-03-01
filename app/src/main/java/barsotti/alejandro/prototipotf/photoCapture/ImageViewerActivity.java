@@ -1,18 +1,26 @@
 package barsotti.alejandro.prototipotf.photoCapture;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.NavigationView;
-import android.support.v4.widget.DrawerLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.ScaleAnimation;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -20,6 +28,7 @@ import com.bumptech.glide.request.target.ViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.customViews.Angle;
@@ -32,74 +41,293 @@ import barsotti.alejandro.prototipotf.utils.ScreenshotUtils;
 public class ImageViewerActivity extends AppCompatActivity {
     public static final String BITMAP_URI_EXTRA = "bitmapUri";
     private static final String TAG = "ImageViewerActivity";
+    public static final int OFFSET_BETWEEN_ANIMATIONS_IN_MILLIS = 50;
+    public static final long ANIMATION_DURATION_IN_MILLIS = 300L;
 
-    private Point mScreenSize = new Point();
-    private DrawerLayout mDrawerLayout;
-    private ZoomableImageViewGroup mZoomableImageViewGroup;
-    private Uri mBitmapUri;
+    private Point screenSize = new Point();
+    private ZoomableImageViewGroup zoomableImageViewGroup;
+    private Uri bitmapUri;
+    private FloatingActionButton menuFab;
+    private FloatingActionButton circumferenceFab;
+    private FloatingActionButton tangentFab;
+    private FloatingActionButton angleFab;
+    private FloatingActionButton saveImageFab;
+    private ArrayList<FloatingActionButton> floatingActionButtonsInMenu = new ArrayList<>();
+    private boolean showingMenu = false;
+
+    public int floatingActionButtonDefaultColor;
+
+    private Animation rotateFloatingActionButtonForward;
+    private Animation rotateFloatingActionButtonBackward;
+    private int cancelFloatingActionButtonColor = Color.rgb(239, 83, 80);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         setContentView(R.layout.activity_image_viewer);
 
-        mDrawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView mNavigationView = findViewById(R.id.navigation_view);
-        mNavigationView.setNavigationItemSelectedListener(new ItemSelectedLister());
+        zoomableImageViewGroup = findViewById(R.id.zoomable_image_view_group);
 
-        mZoomableImageViewGroup = findViewById(R.id.zoomable_image_view_group);
+        menuFab = findViewById(R.id.menu_fab);
+        angleFab = findViewById(R.id.angle_fab);
+        tangentFab = findViewById(R.id.tangent_fab);
+        circumferenceFab = findViewById(R.id.circumference_fab);
+        saveImageFab = findViewById(R.id.save_image_fab);
+
+        floatingActionButtonsInMenu.add(circumferenceFab);
+        floatingActionButtonsInMenu.add(tangentFab);
+        floatingActionButtonsInMenu.add(angleFab);
+        floatingActionButtonsInMenu.add(saveImageFab);
+
+        floatingActionButtonDefaultColor = ContextCompat.getColor(this, R.color.colorAccent);
+
+        rotateFloatingActionButtonForward = AnimationUtils.loadAnimation(this, R.anim.rotate_fab_forward);
+        rotateFloatingActionButtonBackward = AnimationUtils.loadAnimation(this, R.anim.rotate_fab_backward);
 
         Intent intent = getIntent();
-        mBitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
+        bitmapUri = intent.getParcelableExtra(BITMAP_URI_EXTRA);
 
         setBitmap();
+
+        setupFloatingActionButtons();
 
         super.onCreate(savedInstanceState);
     }
 
-    private class ItemSelectedLister implements NavigationView.OnNavigationItemSelectedListener {
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            mDrawerLayout.closeDrawers();
+    private void setupFloatingActionButtons() {
+        setupSaveImageButton();
+        setupCircumferenceButton();
+        setupTangentButton();
+        setupAngleButton();
+    }
 
-            switch (item.getItemId()) {
-                case R.id.draw_circumference: {
-                    mZoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
-                        Circumference.class);
-                    break;
-                }
-                case R.id.draw_tangent: {
-                    mZoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
-                        Tangent.class);
-                    break;
-                }
-                case R.id.draw_angle: {
-                    mZoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
-                        Angle.class);
-                    break;
-                }
-                case R.id.share_screenshot: {
-                    shareScreenshot();
-                    break;
-                }
-                case R.id.send_email: {
-                    sendEmail();
-                    break;
-                }
-                case R.id.send_email_with_screenshot: {
-                    sendEmailWithScreenshot();
-                    break;
-                }
+    private void setupCircumferenceButton() {
+        circumferenceFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+                zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+                    Circumference.class);
             }
+        });
 
-            return true;
+        circumferenceFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.draw_circumference_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
+    private void setupTangentButton() {
+        tangentFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+                zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+                    Tangent.class);
+            }
+        });
+
+        tangentFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.draw_tangent_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
+    private void setupAngleButton() {
+        angleFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+                zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+                    Angle.class);
+            }
+        });
+
+        angleFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.draw_angle_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
+    private void setupSaveImageButton() {
+        saveImageFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+                shareScreenshot();
+            }
+        });
+
+        saveImageFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.save_image_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
+    public void toggleMenu(View view) {
+        if (showingMenu) {
+            hideMenu();
+        }
+        else {
+            showMenu();
         }
     }
+
+    private void showMenu() {
+        menuFab.startAnimation(rotateFloatingActionButtonForward);
+
+
+
+        ValueAnimator valueAnimator = ValueAnimator
+            .ofArgb(floatingActionButtonDefaultColor, cancelFloatingActionButtonColor);
+        valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        valueAnimator.setDuration(300L);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                int animatedValue = (int) valueAnimator.getAnimatedValue();
+                menuFab.setBackgroundTintList(ColorStateList.valueOf(animatedValue));
+            }
+        });
+        valueAnimator.start();
+
+
+
+
+
+
+        int index = 0;
+        for (FloatingActionButton fab: floatingActionButtonsInMenu) {
+            showFloatingActionButton(fab, index++);
+        }
+
+        showingMenu = true;
+    }
+
+    private void hideMenu() {
+        menuFab.startAnimation(rotateFloatingActionButtonBackward);
+
+        ValueAnimator valueAnimator = ValueAnimator
+            .ofArgb(cancelFloatingActionButtonColor, floatingActionButtonDefaultColor);
+        valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        valueAnimator.setDuration(300L);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                int animatedValue = (int) valueAnimator.getAnimatedValue();
+                menuFab.setBackgroundTintList(ColorStateList.valueOf(animatedValue));
+            }
+        });
+        valueAnimator.start();
+
+
+
+
+
+
+//        int index = 0;
+//        for (FloatingActionButton fab: floatingActionButtonsInMenu) {
+//            hideFloatingActionButton(fab, index++);
+//        }
+        int index = 0;
+        for (int i = floatingActionButtonsInMenu.size() - 1; i >= 0; i--) {
+            hideFloatingActionButton(floatingActionButtonsInMenu.get(i), index++);
+        }
+
+
+        showingMenu = false;
+    }
+
+    private void showFloatingActionButton(FloatingActionButton fab, int index) {
+        fab.setVisibility(View.VISIBLE);
+//        showFloatingActionButtonInMenu.setStartOffset(index * OFFSET_BETWEEN_ANIMATIONS_IN_MILLIS * 10);
+//        fab.startAnimation(showFloatingActionButtonInMenu);
+//        showFloatingActionButtonInMenu.setStartOffset(0);
+
+        ScaleAnimation scaleAnimation = new ScaleAnimation(0, 1, 0, 1,
+            Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        scaleAnimation.setFillAfter(true);
+        scaleAnimation.setDuration(ANIMATION_DURATION_IN_MILLIS);
+        scaleAnimation.setStartOffset(index * OFFSET_BETWEEN_ANIMATIONS_IN_MILLIS);
+        fab.startAnimation(scaleAnimation);
+
+
+        fab.setClickable(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            fab.setFocusable(View.FOCUSABLE);
+        }
+    }
+
+    private void hideFloatingActionButton(FloatingActionButton fab, int index) {
+        fab.setVisibility(View.INVISIBLE);
+//        hideFloatingActionButtonInMenu.setStartOffset(index * OFFSET_BETWEEN_ANIMATIONS_IN_MILLIS * 10);
+//        fab.startAnimation(hideFloatingActionButtonInMenu);
+//        hideFloatingActionButtonInMenu.setStartOffset(0);
+
+        ScaleAnimation scaleAnimation = new ScaleAnimation(1, 0, 1, 0,
+            Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        scaleAnimation.setFillAfter(true);
+        scaleAnimation.setDuration(ANIMATION_DURATION_IN_MILLIS);
+        scaleAnimation.setStartOffset(index * OFFSET_BETWEEN_ANIMATIONS_IN_MILLIS);
+        fab.startAnimation(scaleAnimation);
+
+        fab.setClickable(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            fab.setFocusable(View.NOT_FOCUSABLE);
+        }
+    }
+
+
+//    switch (item.getItemId()) {
+//        case R.id.draw_circumference: {
+//            zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+//                Circumference.class);
+//            break;
+//        }
+//        case R.id.draw_tangent: {
+//            zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+//                Tangent.class);
+//            break;
+//        }
+//        case R.id.draw_angle: {
+//            zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+//                Angle.class);
+//            break;
+//        }
+//        case R.id.share_screenshot: {
+//            shareScreenshot();
+//            break;
+//        }
+//        case R.id.send_email: {
+//            sendEmail();
+//            break;
+//        }
+//        case R.id.send_email_with_screenshot: {
+//            sendEmailWithScreenshot();
+//            break;
+//        }
+//    }
 
     private void shareScreenshot() {
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
-        File screenshotFile = ScreenshotUtils.takeAndStoreScreenshot(mZoomableImageViewGroup);
+        File screenshotFile = ScreenshotUtils.takeAndStoreScreenshot(zoomableImageViewGroup);
         Uri screenshotUri = Uri.fromFile(screenshotFile);
         shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
         shareIntent.setType("image/jpeg");
@@ -121,7 +349,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private void sendEmailWithScreenshot() {
         String[] addresses = {};
         String subject = getString(R.string.default_mail_with_attachment_subject);
-        File screenshotFile = ScreenshotUtils.takeAndStoreScreenshot(mZoomableImageViewGroup);
+        File screenshotFile = ScreenshotUtils.takeAndStoreScreenshot(zoomableImageViewGroup);
         Uri screenshotUri = Uri.fromFile(screenshotFile);
         Intent mailIntent = MailUtils.composeEmailWithAttachment(addresses, subject, screenshotUri);
         if (mailIntent.resolveActivity(getPackageManager()) != null) {
@@ -133,21 +361,21 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void setBitmap() {
-        getWindowManager().getDefaultDisplay().getRealSize(mScreenSize);
+        getWindowManager().getDefaultDisplay().getRealSize(screenSize);
 
         RequestOptions glideOptions = new RequestOptions()
             .fitCenter()
-            .override(mScreenSize.x, mScreenSize.y);
+            .override(screenSize.x, screenSize.y);
 
         Glide.with(this)
-            .load(mBitmapUri)
+            .load(bitmapUri)
             .apply(glideOptions)
-            .into(new ViewTarget<ZoomableImageViewGroup, Drawable>(mZoomableImageViewGroup) {
+            .into(new ViewTarget<ZoomableImageViewGroup, Drawable>(zoomableImageViewGroup) {
                 @Override
                 public void onResourceReady(@NonNull Drawable resource,
                                             @Nullable Transition<? super Drawable> transition) {
-                    mZoomableImageViewGroup.setupZoomableImageView(mScreenSize.x, mScreenSize.y,
-                        mBitmapUri, resource);
+                    zoomableImageViewGroup.setupZoomableImageView(screenSize.x, screenSize.y,
+                        bitmapUri, resource);
                 }
             });
     }

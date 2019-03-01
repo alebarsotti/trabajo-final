@@ -54,32 +54,32 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     /**
      * Pintura utilizada para el trazo de la figura.
      */
-    protected Paint mShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mShapePaint = new Paint();
     /**
      * Pintura utilizada para el trazo de la figura cuando la misma se encuentra seleccionada.
      */
-    protected Paint mSelectedShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mSelectedShapePaint = new Paint();
     /**
      * Pintura utilizada para el borde del trazo de la figura.
      */
-    protected Paint mShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mShapeBorderPaint = new Paint();
     /**
      * Pintura utilizada para el borde del trazo de la figura cuando la misma se encuentra seleccionada.
      */
-    protected Paint mSelectedShapeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mSelectedShapeBorderPaint = new Paint();
     /**
      * Pintura utilizada para el relleno del círculo que representa el área tocable de un punto de la figura.
      */
-    protected Paint mPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mPointPaint = new Paint();
     /**
      * Pintura utilizada para el borde del círculo que representa el área tocable de un punto de la figura.
      */
-    protected Paint mPointBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mPointBorderPaint = new Paint();
     /**
      * Pintura utilizada para el punto central del círculo que representa el área tocable de un punto de la
      * figura.
      */
-    protected Paint mCenterPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected Paint mCenterPointPaint = new Paint();
     //endregion
     /**
      * Determina si los parámetros de la figura deben calcularse constantemente al desplazar uno de los

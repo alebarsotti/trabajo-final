@@ -1,5 +1,4 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
@@ -27,6 +26,20 @@
     <style name="ProgressBarLarge" parent="AppTheme">
         <item name="android:layout_width">64dp</item>
         <item name="android:layout_height">64dp</item>
+    </style>
+    <style name="ImageViewerFloatingActionButton" parent="AppTheme">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="rippleColor">@color/colorAccentRipple</item>
+        <item name="backgroundTint">@color/colorAccent</item>
+        <item name="android:elevation">2dp</item>
+    </style>
+    <style name="MiniImageViewerFloatingActionButton" parent="ImageViewerFloatingActionButton">
+        <!--<item name="fabSize">mini</item>-->
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+        <item name="android:visibility">invisible</item>
+        <item name="android:layout_marginBottom">16dp</item>
     </style>
 
 </resources>

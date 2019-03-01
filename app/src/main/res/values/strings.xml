@@ -31,4 +31,8 @@
     <string name="default_mail_subject">Información sobre medición</string>
     <string name="default_mail_with_attachment_subject">Información sobre medición con imagen adjunta</string>
     <string name="share_screenshot_message">Compartir captura de pantalla mediante...</string>
+    <string name="draw_circumference_button_message">Dibujar circunferencia</string>
+    <string name="draw_tangent_button_message">Dibujar tangente</string>
+    <string name="draw_angle_button_message">Dibujar ángulo</string>
+    <string name="save_image_button_message">Guardar captura de pantalla</string>
 </resources>

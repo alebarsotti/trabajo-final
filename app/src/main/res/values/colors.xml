@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#1976D2</color>
     <color name="colorPrimaryLight">#BBDEFB</color>
     <color name="colorAccent">#ff9800</color>
+    <color name="colorAccentRipple">#ffb74d</color>
     <color name="textIcons">#FFFFFF</color>
     <color name="divider">#bdbdbd</color>
     <color name="secondaryText">#757575</color>
