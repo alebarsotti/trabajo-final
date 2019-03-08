@@ -19,11 +19,32 @@ import java.util.Locale;
 
 import barsotti.alejandro.prototipotf.R;
 
-public class ScreenshotUtils {
-    private static final String TAG = "ScreenshotUtils";
+public class ImageUtils {
+    private static final String TAG = "ImageUtils";
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd_hh-mm-ss",
         Locale.getDefault());
     private static MediaScannerConnection mediaScannerConnection;
+
+    public static Uri createImageFile(Context context) {
+        // Crear un nombre único para el archivo de imagen.
+        Date dateTime = new Date();
+        String photoFileName = context.getText(R.string.app_name) + dateFormat.format(dateTime);
+
+        // Obtener el directorio de salida para la imagen.
+        File outputDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
+        // Crear y devolver el archivo de imagen.
+        try {
+            File tempFile = File.createTempFile(photoFileName, context.getString(R.string.photo_file_format),
+                outputDirectory);
+
+            return Uri.fromFile(tempFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            return null;
+        }
+    }
 
     public static Uri takeAndStoreScreenshot(Context context, View view) {
         Bitmap bitmap = takeScreenshot(view);
@@ -42,7 +63,7 @@ public class ScreenshotUtils {
         }
     }
 
-    private static void addFileToMediaScannerService(Context context, final String screenshotPath) {
+    public static void addFileToMediaScannerService(Context context, final String screenshotPath) {
         mediaScannerConnection = new MediaScannerConnection(context, new MediaScannerConnectionClient() {
             public void onScanCompleted(String path, Uri uri) {
                 if (mediaScannerConnection.isConnected()) {

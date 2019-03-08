@@ -36,7 +36,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             android:onClick="takePicture"
-            app:layout_constraintTop_toBottomOf="@+id/title"/>
+            app:layout_constraintTop_toBottomOf="@id/title"/>
 
         <include
             android:id="@+id/separator"
@@ -46,7 +46,7 @@
             android:layout_marginTop="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/take_picture_button"/>
+            app:layout_constraintTop_toBottomOf="@id/take_picture_button"/>
 
         <Button
             android:id="@+id/select_from_device_button"
@@ -56,9 +56,9 @@
             android:drawableStart="@drawable/ic_image_black"
             android:text="@string/select_image_from_device"
             android:onClick="pickPicture"
-            app:layout_constraintEnd_toEndOf="@+id/separator"
-            app:layout_constraintStart_toStartOf="@+id/separator"
-            app:layout_constraintTop_toBottomOf="@+id/separator"/>
+            app:layout_constraintEnd_toEndOf="@id/separator"
+            app:layout_constraintStart_toStartOf="@id/separator"
+            app:layout_constraintTop_toBottomOf="@id/separator"/>
 
     </android.support.constraint.ConstraintLayout>
 
@@ -88,39 +88,39 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            app:layout_constraintBottom_toTopOf="@+id/cancel_action"
+            app:layout_constraintBottom_toTopOf="@id/cancel_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/image_preview_title"
+            app:layout_constraintTop_toBottomOf="@id/image_preview_title"
             android:contentDescription="@string/image_preview_CD"
             tools:layout_height="150dp"
             tools:layout_width="150dp"/>
 
         <Button
-            android:id="@+id/cancel_action"
+            android:id="@+id/cancel_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:onClick="cancelPictureSelection"
             android:text="@string/cancel_action"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/confirm_action"
+            app:layout_constraintEnd_toStartOf="@id/confirm_button"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent"
             />
 
         <Button
-            android:id="@+id/confirm_action"
+            android:id="@+id/confirm_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:onClick="confirmPictureSelection"
             android:text="@string/confirm_action"
-            app:layout_constraintBottom_toBottomOf="@+id/cancel_action"
+            app:layout_constraintBottom_toBottomOf="@id/cancel_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/cancel_action"
-            app:layout_constraintTop_toTopOf="@+id/cancel_action"/>
+            app:layout_constraintStart_toEndOf="@id/cancel_button"
+            app:layout_constraintTop_toTopOf="@id/cancel_button"/>
     </android.support.constraint.ConstraintLayout>
 </LinearLayout>

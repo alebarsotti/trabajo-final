@@ -39,7 +39,7 @@ import barsotti.alejandro.prototipotf.customViews.Circumference;
 import barsotti.alejandro.prototipotf.customViews.Tangent;
 import barsotti.alejandro.prototipotf.customViews.ZoomableImageViewGroup;
 import barsotti.alejandro.prototipotf.utils.MailUtils;
-import barsotti.alejandro.prototipotf.utils.ScreenshotUtils;
+import barsotti.alejandro.prototipotf.utils.ImageUtils;
 
 public class ImageViewerActivity extends AppCompatActivity {
     private static final String TAG = "ImageViewerActivity";
@@ -304,7 +304,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private Uri takeScreenshot() {
         playShutterSoundEffect();
 
-        return ScreenshotUtils.takeAndStoreScreenshot(this, zoomableImageViewGroup);
+        return ImageUtils.takeAndStoreScreenshot(this, zoomableImageViewGroup);
     }
 
     private void playShutterSoundEffect() {
