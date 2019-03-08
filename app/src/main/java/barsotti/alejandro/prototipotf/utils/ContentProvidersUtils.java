@@ -1,6 +1,5 @@
 package barsotti.alejandro.prototipotf.utils;
 
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -14,21 +13,23 @@ import android.provider.OpenableColumns;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import barsotti.alejandro.prototipotf.R;
 
 public class ContentProvidersUtils {
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd_hh-mm-ss",
+        Locale.getDefault());
+
     public static File createImageFile(Context context) {
         // Crear un nombre único para el archivo de imagen.
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat =
-            new SimpleDateFormat(context.getString(R.string.photo_file_name_date_format));
-        Date dateTime = Calendar.getInstance().getTime();
+        Date dateTime = new Date();
         String photoFileName = context.getText(R.string.app_name) + dateFormat.format(dateTime);
 
         // Obtener el directorio de salida para la imagen.
-        File outputDirectory = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+//        File outputDirectory = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File outputDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
         // Crear y devolver el archivo de imagen.
         try {

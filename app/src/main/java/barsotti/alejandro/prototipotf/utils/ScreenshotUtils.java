@@ -1,6 +1,10 @@
 package barsotti.alejandro.prototipotf.utils;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
@@ -19,13 +23,18 @@ public class ScreenshotUtils {
     private static final String TAG = "ScreenshotUtils";
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd_hh-mm-ss",
         Locale.getDefault());
+    private static MediaScannerConnection mediaScannerConnection;
 
-    public static File takeAndStoreScreenshot(View view) {
+    public static Uri takeAndStoreScreenshot(Context context, View view) {
         Bitmap bitmap = takeScreenshot(view);
         String filename = generateFilenameForScreenshot();
 
         try {
-            return storeScreenshot(bitmap, filename);
+            File screenshotFile = storeScreenshot(bitmap, filename);
+
+            addFileToMediaScannerService(context, screenshotFile.getPath());
+
+            return Uri.fromFile(screenshotFile);
         } catch (IOException e) {
             Log.e(TAG, "takeAndStoreScreenshot: " +
                 view.getResources().getString(R.string.storeScreenshot_error_message));
@@ -33,10 +42,24 @@ public class ScreenshotUtils {
         }
     }
 
+    private static void addFileToMediaScannerService(Context context, final String screenshotPath) {
+        mediaScannerConnection = new MediaScannerConnection(context, new MediaScannerConnectionClient() {
+            public void onScanCompleted(String path, Uri uri) {
+                if (mediaScannerConnection.isConnected()) {
+                    mediaScannerConnection.disconnect();
+                }
+            }
+            public void onMediaScannerConnected() {
+                mediaScannerConnection.scanFile(screenshotPath, null);
+            }
+        });
+        mediaScannerConnection.connect();
+    }
+
     private static String generateFilenameForScreenshot() {
         Date date = new Date();
 
-        return String.format("Measurement-Screenshot_%s.png", dateFormat.format(date));
+        return String.format("Measurement-Result-Screenshot_%s.png", dateFormat.format(date));
     }
 
     private static Bitmap takeScreenshot(View v) {
@@ -50,14 +73,8 @@ public class ScreenshotUtils {
     private static File storeScreenshot(Bitmap bitmap, String filename) throws IOException {
         String basePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             .toString();
-//         getExternalFilesDirs
-//        context.getExternalFilesDir()
 
         File imageFile = new File(String.format("%s/%s", basePath, filename));
-
-
-//        String path = Environment.getExternalStorageDirectory().toString() + "/" + filename;
-//        File imageFile = new File(path);
 
         OutputStream out = new FileOutputStream(imageFile);
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
@@ -66,5 +83,4 @@ public class ScreenshotUtils {
 
         return imageFile;
     }
-
 }

@@ -35,4 +35,6 @@
     <string name="draw_tangent_button_message">Dibujar tangente</string>
     <string name="draw_angle_button_message">Dibujar ángulo</string>
     <string name="save_image_button_message">Guardar captura de pantalla</string>
+    <string name="screenshot_saved_message">Captura de pantalla guardada</string>
+    <string name="share_screenshot_action_text">Compartir</string>
 </resources>
