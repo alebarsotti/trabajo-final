@@ -37,4 +37,5 @@
     <string name="save_image_button_message">Guardar captura de pantalla</string>
     <string name="screenshot_saved_message">Captura de pantalla guardada</string>
     <string name="share_screenshot_action_text">Compartir</string>
+    <string name="share_angle_measurements_button_message">Compartir medidas de ángulo(s)</string>
 </resources>

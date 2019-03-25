@@ -108,6 +108,12 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     }
     //endregion
 
+    //region Getters
+    public float getSweepAngleMeasure() {
+        return mSweepAngle;
+    }
+    //endregion
+
     //region Utils
     /**
      * Calcula las coordenadas en las cuales debe realizarse la representación gráfica de la medida del

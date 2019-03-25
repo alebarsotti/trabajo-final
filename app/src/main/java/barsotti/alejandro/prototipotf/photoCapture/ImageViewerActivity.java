@@ -59,6 +59,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private FloatingActionButton tangentFab;
     private FloatingActionButton angleFab;
     private FloatingActionButton saveImageFab;
+    private FloatingActionButton shareAngleMeasurementsFab;
     private ArrayList<FloatingActionButton> floatingActionButtonsInMenu = new ArrayList<>();
     private boolean menuVisible = false;
 
@@ -76,11 +77,13 @@ public class ImageViewerActivity extends AppCompatActivity {
         tangentFab = findViewById(R.id.tangent_fab);
         circumferenceFab = findViewById(R.id.circumference_fab);
         saveImageFab = findViewById(R.id.save_image_fab);
+        shareAngleMeasurementsFab = findViewById(R.id.share_angle_measurements_fab);
 
         floatingActionButtonsInMenu.add(circumferenceFab);
         floatingActionButtonsInMenu.add(tangentFab);
         floatingActionButtonsInMenu.add(angleFab);
         floatingActionButtonsInMenu.add(saveImageFab);
+        floatingActionButtonsInMenu.add(shareAngleMeasurementsFab);
 
         floatingActionButtonDefaultColor = ContextCompat.getColor(this, R.color.colorAccent);
 
@@ -99,6 +102,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         setupCircumferenceButton();
         setupTangentButton();
         setupAngleButton();
+        setupShareMeasurementButton();
     }
 
     private void setupCircumferenceButton() {
@@ -180,6 +184,40 @@ public class ImageViewerActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void setupShareMeasurementButton() {
+        shareAngleMeasurementsFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+
+                shareAngleMeasures();
+            }
+        });
+
+        shareAngleMeasurementsFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.share_angle_measurements_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
+    private void shareAngleMeasures() {
+        String angleMeasures = zoomableImageViewGroup.getAngleMeasures();
+
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, angleMeasures);
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Alejandro");
+        shareIntent.setType("text/plain");
+        startActivity(Intent.createChooser(shareIntent, "Barsotti"));
+
+
+
     }
 
     private void makeScreenshotShareSnackbar(Uri screenshotUri) {

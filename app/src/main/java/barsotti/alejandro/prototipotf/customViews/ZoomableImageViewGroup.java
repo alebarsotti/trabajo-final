@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import barsotti.alejandro.prototipotf.R;
 import barsotti.alejandro.prototipotf.utils.MathUtils;
@@ -49,6 +50,7 @@ public class ZoomableImageViewGroup extends FrameLayout {
      * Objeto figura que está seleccionado actualmente.
      */
     private Shape mCurrentlySelectedShape;
+    private Locale locale = new Locale("es", "ES");
     //endregion
 
     // region Constructors
@@ -274,5 +276,20 @@ public class ZoomableImageViewGroup extends FrameLayout {
         for (Shape shape: mShapeList) {
             shape.selectShape(shape == mCurrentlySelectedShape);
         }
+    }
+
+    public String getAngleMeasures() {
+        StringBuilder angleMeasures = new StringBuilder();
+        int angleIndex = 0;
+
+        for (Shape shape: mShapeList) {
+            if (shape.getClass() == Angle.class) {
+                float angleMeasure = ((Angle) shape).getSweepAngleMeasure();
+                angleIndex++;
+                angleMeasures.append(String.format(locale, "Ángulo %s: %.2fº\n", angleIndex, angleMeasure));
+            }
+        }
+
+        return angleMeasures.toString();
     }
 }
