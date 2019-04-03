@@ -400,8 +400,8 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
                     // Región correspondiente a la Tile.
                     Rect region = new Rect(rowIndex * mTileSize, columnIndex * mTileSize,
-                        (rowIndex + 1) * mTileSize, (columnIndex + 1) * mTileSize);
-
+                        Math.min((rowIndex + 1) * mTileSize, mOriginalImageWidth),
+                        Math.min((columnIndex + 1) * mTileSize, mOriginalImageHeight));
                     visibleTiles.add(new ImageTile(region, sampleLevel, mTileSize));
                 }
             }
