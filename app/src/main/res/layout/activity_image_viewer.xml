@@ -6,7 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <barsotti.alejandro.prototipotf.customViews.ZoomableImageViewGroup
+    <barsotti.alejandro.trabajoFinal.customViews.ZoomableImageViewGroup
         android:id="@+id/zoomable_image_view_group"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

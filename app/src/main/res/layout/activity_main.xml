@@ -1,32 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="barsotti.alejandro.prototipotf.MainActivity">
+    android:layout_height="match_parent">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/data_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+    <!--<android.support.design.widget.AppBarLayout-->
+        <!--android:id="@+id/appBarLayout"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">-->
+
+        <!--<android.support.design.widget.CollapsingToolbarLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--app:layout_scrollFlags="scroll|exitUntilCollapsed"-->
+            <!--app:contentScrim="?attr/colorPrimary">-->
+
+            <!--<ImageView-->
+                <!--android:id="@+id/stark_logo"-->
+                <!--app:layout_collapseMode="parallax"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:scaleType="fitEnd"-->
+                <!--android:layout_height="65dp"-->
+                <!--android:alpha="0.50"-->
+                <!--android:src="@drawable/ic_stark_logo_white_background"-->
+                <!--android:contentDescription="@string/stark_logo_description"/>-->
+
+            <!--<android.support.v7.widget.Toolbar-->
+                <!--android:id="@+id/toolbar"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="?attr/actionBarSize"-->
+                <!--app:layout_scrollFlags="scroll|enterAlways"-->
+                <!--app:title="@string/main_activity_title"-->
+                <!--app:layout_collapseMode="pin"-->
+                <!--app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />-->
+
+        <!--</android.support.design.widget.CollapsingToolbarLayout>-->
+
+    <!--</android.support.design.widget.AppBarLayout>-->
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/action_button"
-        android:layout_width="wrap_content"
+        android:layout_width="83dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
         android:layout_marginEnd="32dp"
+        android:layout_marginBottom="32dp"
         android:clickable="true"
-        android:focusable="true"
         android:elevation="2dp"
-        app:fabSize="normal"
-        app:rippleColor="@color/colorPrimaryLight"
-        android:src="@drawable/ic_add_white"
+        android:focusable="true"
         android:onClick="newPhotoCapture"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-</android.support.constraint.ConstraintLayout>
+        android:src="@drawable/ic_add_white"
+        app:fabSize="normal"
+        app:layout_anchor="@+id/data_list"
+        app:layout_anchorGravity="right|bottom"
+        app:rippleColor="@color/colorPrimaryLight"/>
+</android.support.design.widget.CoordinatorLayout>

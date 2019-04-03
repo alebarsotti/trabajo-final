@@ -1,8 +1,8 @@
 <resources>
-    <string name="file_provider_authority">barsotti.alejandro.prototipotf.fileprovider</string>
-    <string name="app_name">PrototipoTF</string>
+    <string name="file_provider_authority">.fileprovider</string>
+    <string name="app_name">Trabajo Final</string>
     <string name="item_image_description">Image</string>
-    <string name="address_placeholder">Roque Sáenz Peña 557</string>
+    <string name="address_placeholder">Santa Fe 789</string>
     <string name="name_placeholder">Alejandro Barsotti</string>
     <string name="date_placeholder">27/03/2018</string>
     <string name="select_image_origin">Seleccionar origen de imagen:</string>
@@ -30,7 +30,7 @@
     <string name="storeScreenshot_error_message">Error al almacenar la captura de pantalla.</string>
     <string name="default_mail_subject">Información sobre medición</string>
     <string name="default_mail_with_attachment_subject">Información sobre medición con imagen adjunta</string>
-    <string name="share_screenshot_message">Compartir captura de pantalla mediante...</string>
+    <string name="share_screenshot_message">Compartir captura de pantalla mediante…</string>
     <string name="draw_circumference_button_message">Dibujar circunferencia</string>
     <string name="draw_tangent_button_message">Dibujar tangente</string>
     <string name="draw_angle_button_message">Dibujar ángulo</string>
@@ -38,4 +38,7 @@
     <string name="screenshot_saved_message">Captura de pantalla guardada</string>
     <string name="share_screenshot_action_text">Compartir</string>
     <string name="share_angle_measurements_button_message">Compartir medidas de ángulo(s)</string>
+    <string name="main_activity_title">Trabajo Final</string>
+    <string name="stark_logo_description">Stark Logo</string>
+    <string name="permissions_denied_message">No se han otorgado los permisos requeridos para continuar.</string>
 </resources>
