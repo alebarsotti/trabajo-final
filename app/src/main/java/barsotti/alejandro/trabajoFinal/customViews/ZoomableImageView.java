@@ -568,13 +568,14 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
                 // Copiar lista de Tiles a decodificar.
                 Set<ImageTile> tilesDraw = new HashSet<>(view.mTilesDraw);
+                Bitmap bitmap = null;
                 for (ImageTile tile : tilesDraw) {
                     // Si la tarea asíncrona fue cancelada, abortar ejecución.
                     if (isCancelled()) {
                         return null;
                     }
                     // Buscar bitmap de la Tile en la memoria caché. De no encontrarse, generarlo.
-                    Bitmap bitmap = view.mImageTileCache.get(tile.Key);
+                    bitmap = view.mImageTileCache.get(tile.Key);
                     if (bitmap == null) {
                         Rect rect = new Rect(tile.Rect.left, tile.Rect.top,
                             tile.Rect.right, tile.Rect.bottom);
