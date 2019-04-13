@@ -148,7 +148,12 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
     public Shape(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         Log.d(TAG, "Constructor.");
+        setupShapePaints();
 
+
+    }
+
+    protected void setupShapePaints() {
         // Inicializar pinturas utilizadas para la representanción gráfica de la figura.
         int shapeColor = getShapeColor();
         mShapePaint.setColor(shapeColor);

@@ -33,8 +33,8 @@
         app:layout_constraintStart_toStartOf="@id/menu_fab"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/tangent_fab"
-        android:src="@drawable/ic_tangent"
+        android:id="@+id/cartesian_axes_fab"
+        android:src="@drawable/ic_cartesian_axes"
         style="@style/MiniImageViewerFloatingActionButton"
         app:layout_constraintBottom_toTopOf="@id/circumference_fab"
         app:layout_constraintEnd_toEndOf="@id/circumference_fab"
@@ -44,9 +44,9 @@
         android:id="@+id/angle_fab"
         android:src="@drawable/ic_angle_acute"
         style="@style/MiniImageViewerFloatingActionButton"
-        app:layout_constraintBottom_toTopOf="@id/tangent_fab"
-        app:layout_constraintEnd_toEndOf="@id/tangent_fab"
-        app:layout_constraintStart_toStartOf="@id/tangent_fab"/>
+        app:layout_constraintBottom_toTopOf="@id/cartesian_axes_fab"
+        app:layout_constraintEnd_toEndOf="@id/cartesian_axes_fab"
+        app:layout_constraintStart_toStartOf="@id/cartesian_axes_fab"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/save_image_fab"

@@ -1,6 +1,7 @@
 package barsotti.alejandro.trabajoFinal.customViews;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -19,8 +20,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import barsotti.alejandro.trabajoFinal.R;
-import barsotti.alejandro.trabajoFinal.utils.MathUtils;
-import barsotti.alejandro.trabajoFinal.customInterfaces.IOnTangentPointChangeListener;
+import barsotti.alejandro.trabajoFinal.customInterfaces.IOnCartesianAxesPointChangeListener;
 
 import static barsotti.alejandro.trabajoFinal.customViews.Shape.TOUCH_TOLERANCE;
 
@@ -51,6 +51,11 @@ public class ZoomableImageViewGroup extends FrameLayout {
      */
     private Shape mCurrentlySelectedShape;
     private Locale locale = new Locale("es", "ES");
+    /**
+     * Número que indica el índice de color a utilizar para el próximo ángulo a crear.
+     */
+    private int AngleColorIndex = 0;
+    private int[] AngleColorList = new int[] {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.RED, Color.BLUE};
     //endregion
 
     // region Constructors
@@ -125,15 +130,18 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 // Tratar especialmente la inicialización de la figura para el caso de los Ángulos.
                 if (shapeClass == Angle.class) {
                     for (Shape shape : mShapeList) {
-                        if (shape.getClass() == Tangent.class) {
-                            ((Tangent)shape).addOnTangentPointChangeListener(
-                                (IOnTangentPointChangeListener) mInProgressShape);
+                        if (shape.getClass() == CartesianAxes.class) {
+                            ((CartesianAxes)shape).addOnCartesianAxesPointChangeListener(
+                                (IOnCartesianAxesPointChangeListener) mInProgressShape);
                             break;
                         }
                     }
-
-                    addPointToInProgressShape(new PointF(0, 0));
-                    drawingInProgress = false;
+                    // Establecer color del ángulo.
+                    ((Angle) mInProgressShape).setShapeColor(AngleColorList[AngleColorIndex]);
+                    AngleColorIndex++;
+                    if (AngleColorIndex == AngleColorList.length) {
+                        AngleColorIndex = 0;
+                    }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "setZoomableImageViewDrawingInProgress:");
@@ -150,28 +158,11 @@ public class ZoomableImageViewGroup extends FrameLayout {
      * @throws Exception En caso de que no sea posible dibujar la figura especificada.
      */
     private void checkCanDrawShape(Class shapeClass) throws Exception {
-        // Caso: Tangente. No es posible dibujar una tangente si no existe una circunferencia previamente.
-        if (shapeClass == Tangent.class) {
-            boolean canDrawTangent = false;
-            for (Shape shape: mShapeList) {
-                if (shape.getClass() == Circumference.class) {
-                    canDrawTangent = true;
-                    break;
-                }
-            }
-
-            if (!canDrawTangent) {
-                Toast.makeText(getContext(), R.string.cannot_draw_tangent_message,
-                    Toast.LENGTH_SHORT).show();
-                throw new Exception();
-            }
-        }
-
-        // Caso: Ángulo. No es posible dibujar un ángulo si no existe una tangente previamente.
+        // Caso: Ángulo. No es posible dibujar un ángulo si no existen Ejes Cartesianos previamente.
         if (shapeClass == Angle.class) {
             boolean canDrawAngle = false;
             for (Shape shape: mShapeList) {
-                if (shape.getClass() == Tangent.class) {
+                if (shape.getClass() == CartesianAxes.class) {
                     canDrawAngle = true;
                     break;
                 }
@@ -203,27 +194,6 @@ public class ZoomableImageViewGroup extends FrameLayout {
     public void addPointToInProgressShape(PointF point) {
         // Verificar que exista una figura en proceso.
         if (mInProgressShape != null) {
-            // Caso: Tangente. Determinar a qué circunferencia corresponde asociar la tangente.
-            if (mInProgressShape.getClass() == Tangent.class) {
-                Circumference closestCircumference = null;
-                double distance = -1;
-                for (Shape shape : mShapeList) {
-                    if (shape.getClass() == Circumference.class) {
-                        PointF circleCenter = ((Circumference) shape).mMappedCenter;
-                        double newDistance = Math.abs(MathUtils.computeDistanceBetweenPoints(point.x, point.y,
-                            circleCenter.x, circleCenter.y) - ((Circumference) shape).mMappedRadius);
-                        if (distance < 0 || newDistance < distance) {
-                            distance = newDistance;
-                            closestCircumference = (Circumference) shape;
-                        }
-                    }
-                }
-
-                if (closestCircumference != null) {
-                    closestCircumference.addOnCircumferenceCenterChangeListener((Tangent) mInProgressShape);
-                }
-            }
-
             // Agregar punto a la figura y determinar si el dibujo fue finalizado.
             boolean finishedShape = !mInProgressShape.addPoint(point);
 

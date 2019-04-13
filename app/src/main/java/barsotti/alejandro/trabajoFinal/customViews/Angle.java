@@ -11,18 +11,19 @@ import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.webkit.WebStorage;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
 import barsotti.alejandro.trabajoFinal.utils.MathUtils;
-import barsotti.alejandro.trabajoFinal.customInterfaces.IOnTangentPointChangeListener;
+import barsotti.alejandro.trabajoFinal.customInterfaces.IOnCartesianAxesPointChangeListener;
 
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.calculateSweepAngleFromThreePoints;
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.computeDistanceBetweenPoints;
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.extendEndPointToDistance;
 
-public class Angle extends Shape implements IOnTangentPointChangeListener {
+public class Angle extends Shape implements IOnCartesianAxesPointChangeListener {
     //region Constantes
     /**
      * Tag utilizado con fines de debug.
@@ -45,10 +46,6 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
      * Número utilizado para calcular la longitud inicial de los segmentos del ángulo.
      */
     private static final int DEFAULT_SEGMENT_LENGTH_MULTIPLIER = 3;
-    /**
-     * Color utilizado para la representación gráfica del ángulo.
-     */
-    private static final int SHAPE_COLOR = Color.GREEN;
     //endregion
 
     //region Propiedades
@@ -93,6 +90,18 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
      * Punto que almacena las coordenadas utilizadas para la representación gráfica de la medida del ángulo.
      */
     private PointF mTextCoordinates;
+
+    /**
+     * Color utilizado para la representación gráfica del ángulo.
+     */
+    private int shapeColor = Color.GREEN;
+
+    private PointF OriginalAnglePoint;
+    private PointF CartesianAxesOrigin;
+    private PointF XCartesianAxisFirstPoint;
+    private PointF XCartesianAxisSecondPoint;
+    private PointF YCartesianAxisFirstPoint;
+    private PointF YCartesianAxisSecondPoint;
     //endregion
 
     //region Constructores
@@ -111,6 +120,23 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     //region Getters
     public float getSweepAngleMeasure() {
         return mSweepAngle;
+    }
+    @Override
+    protected int getNumberOfPointsInShape() {
+        return NUMBER_OF_POINTS;
+    }
+
+    @Override
+    protected int getShapeColor() {
+        return shapeColor;
+    }
+    //endregion
+
+    //region Setters
+    public void setShapeColor(int color) {
+        shapeColor = color;
+        setupShapePaints();
+        setupTextPaint();
     }
     //endregion
 
@@ -206,7 +232,10 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     protected void initializeShape() {
         // Establecer marca que determina que los parámetros de la figura se calculen constantemente.
         mComputeShapeConstantly = true;
+        setupTextPaint();
+    }
 
+    private void setupTextPaint() {
         // Establecer parámetros de la pintura a utilizar para la representación gráfica de la medida del
         // ángulo.
         mTextPaint.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -214,16 +243,6 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
         mTextPaint.setTypeface(Typeface.SANS_SERIF);
         mTextPaint.setShadowLayer(5, 0, 0, Color.BLACK);
         mTextPaint.setTextSize(48);
-    }
-
-    @Override
-    protected int getNumberOfPointsInShape() {
-        return NUMBER_OF_POINTS;
-    }
-
-    @Override
-    protected int getShapeColor() {
-        return SHAPE_COLOR;
     }
 
     @Override
@@ -282,11 +301,62 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
 
     @Override
     protected void computeShape() {
-        // Si la figura se encuentra completa, calcular ángulo representado y ángulo de inicio.
-        if (mShapePoints.size() == NUMBER_OF_POINTS) {
+        if (mShapePoints.size() > 0) {
+            if (mShapePoints.size() == 1) {
+                float xCartesianAxisSlope = MathUtils.getSlopeFromTwoPoints(XCartesianAxisFirstPoint,
+                    XCartesianAxisSecondPoint);
+                float yCartesianAxisSlope = MathUtils.getSlopeFromTwoPoints(YCartesianAxisFirstPoint,
+                    YCartesianAxisSecondPoint);
+                float xCartesianAxisIntercept = MathUtils.getInterceptFromSlopeAndPoint(xCartesianAxisSlope,
+                    XCartesianAxisFirstPoint);
+                float yCartesianAxisIntercept = MathUtils.getInterceptFromSlopeAndPoint(yCartesianAxisSlope,
+                    YCartesianAxisFirstPoint);
+
+                mShapePoints.clear();
+
+                float distance = Math.max(mPointRadius * DEFAULT_SEGMENT_LENGTH_MULTIPLIER / mCurrentZoom,
+                    SEGMENT_MIN_LENGTH);
+
+                // Verificar si el punto original se encuentra a la izquierda del Eje Y.
+                if (MathUtils.pointIsAboveRect(OriginalAnglePoint, yCartesianAxisSlope, yCartesianAxisIntercept)) {
+                    mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
+                        XCartesianAxisSecondPoint, distance, false));
+                    mShapePoints.add(CartesianAxesOrigin);
+                }
+                if (MathUtils.pointIsAboveRect(OriginalAnglePoint, xCartesianAxisSlope, xCartesianAxisIntercept)) {
+                    mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
+                        YCartesianAxisFirstPoint, distance, false));
+                }
+                else {
+                    mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
+                        YCartesianAxisSecondPoint, distance, false));
+                }
+                if (mShapePoints.size() < 2) {
+                    mShapePoints.add(CartesianAxesOrigin);
+                    mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
+                        XCartesianAxisFirstPoint, distance, false));
+                }
+            }
+
             mSweepAngle = calculateSweepAngleFromThreePoints(mShapePoints);
             mStartAngle = calculateStartAngleFromThreePoints(mShapePoints);
         }
+    }
+
+    @Override
+    public boolean addPoint(PointF point) {
+        // Validar que sea posible agregar un nuevo punto a la figura.
+        if (mShapePoints.size() < getNumberOfPointsInShape()) {
+            mShapePoints.add(point);
+            OriginalAnglePoint = point;
+
+            computeShape();
+
+            // Requerir redibujo para mostrar el nuevo punto.
+            invalidate();
+        }
+
+        return mShapePoints.size() < getNumberOfPointsInShape();
     }
 
     @Override
@@ -312,23 +382,17 @@ public class Angle extends Shape implements IOnTangentPointChangeListener {
     }
 
     @Override
-    public void updateTangentPoints(PointF tangentPoint, PointF linePoint, PointF circleCenterPoint) {
-        // Cuando la posición del punto de la tangente cambie, calcular nuevamente el ángulo por defecto en
-        // la nueva ubicación.
+    public void updateCartesianAxesPoints(float[] cartesianAxesPoints, PointF cartesianAxesOrigin) {
         mShapePoints.clear();
+        if (OriginalAnglePoint != null) {
+            mShapePoints.add(OriginalAnglePoint);
+        }
 
-        // Establecer primer extremo del ángulo (ubicado sobre la línea tangente).
-        mShapePoints.add(extendEndPointToDistance(tangentPoint, linePoint,
-            Math.max(mPointRadius * DEFAULT_SEGMENT_LENGTH_MULTIPLIER / mCurrentZoom, SEGMENT_MIN_LENGTH),
-            false));
-
-        // Establecer vértice del ángulo (punto tangente).
-        mShapePoints.add(new PointF(tangentPoint.x, tangentPoint.y));
-
-        // Establecer segundo extremo del ángulo (ubicado sobre la recta radial de la tangente).
-        mShapePoints.add(extendEndPointToDistance(tangentPoint, circleCenterPoint,
-            Math.max(mPointRadius * DEFAULT_SEGMENT_LENGTH_MULTIPLIER / mCurrentZoom, SEGMENT_MIN_LENGTH),
-            false));
+        XCartesianAxisFirstPoint = new PointF(cartesianAxesPoints[0], cartesianAxesPoints[1]);
+        XCartesianAxisSecondPoint = new PointF(cartesianAxesPoints[2], cartesianAxesPoints[3]);
+        YCartesianAxisFirstPoint = new PointF(cartesianAxesPoints[4], cartesianAxesPoints[5]);
+        YCartesianAxisSecondPoint = new PointF(cartesianAxesPoints[6], cartesianAxesPoints[7]);
+        CartesianAxesOrigin = cartesianAxesOrigin;
 
         // Calcular la medida del ángulo representado y el ángulo de inicio.
         computeShape();

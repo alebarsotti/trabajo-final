@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import barsotti.alejandro.trabajoFinal.R;
 import barsotti.alejandro.trabajoFinal.customViews.Angle;
 import barsotti.alejandro.trabajoFinal.customViews.Circumference;
-import barsotti.alejandro.trabajoFinal.customViews.Tangent;
+import barsotti.alejandro.trabajoFinal.customViews.CartesianAxes;
 import barsotti.alejandro.trabajoFinal.customViews.ZoomableImageViewGroup;
 import barsotti.alejandro.trabajoFinal.utils.MailUtils;
 import barsotti.alejandro.trabajoFinal.utils.ImageUtils;
@@ -74,7 +74,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         menuFab = findViewById(R.id.menu_fab);
         angleFab = findViewById(R.id.angle_fab);
-        tangentFab = findViewById(R.id.tangent_fab);
+        tangentFab = findViewById(R.id.cartesian_axes_fab);
         circumferenceFab = findViewById(R.id.circumference_fab);
         saveImageFab = findViewById(R.id.save_image_fab);
         shareAngleMeasurementsFab = findViewById(R.id.share_angle_measurements_fab);
@@ -131,7 +131,7 @@ public class ImageViewerActivity extends AppCompatActivity {
             public void onClick(View view) {
                 hideMenu();
                 zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
-                    Tangent.class);
+                    CartesianAxes.class);
             }
         });
 

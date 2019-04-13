@@ -190,4 +190,42 @@ public class MathUtils {
         // Calcular nuevo punto final sumando las coordenadas del punto inicial y el vector calculado.
         return new PointF(initialPoint.x + vector.x, initialPoint.y + vector.y);
     }
+
+    public static float[] calculateCartesianAxesFromThreePoints(PointF firstPoint, PointF secondPoint,
+                                                             PointF thirdPoint) {
+        // Calcular pendiente de la recta que atraviesa el primer y tercer punto (Eje X).
+        float xAxisSlope = getSlopeFromTwoPoints(firstPoint, thirdPoint);
+        // Calcular pendiente del Eje Y. Al ser perpendicular al Eje X, su pendiente es -1/pendienteX.
+        float yAxisSlope = -1 / xAxisSlope;
+
+        // Calcular ordenada al origen de cada recta.
+        float xAxisIntercept = getInterceptFromSlopeAndPoint(xAxisSlope, secondPoint);
+        float yAxisIntercept = getInterceptFromSlopeAndPoint(yAxisSlope, secondPoint);
+
+        int distance = 10000;
+        PointF endPointX = extendEndPointToDistance(secondPoint,
+            new PointF(secondPoint.x + 1, xAxisSlope * (secondPoint.x + 1) + xAxisIntercept),
+            distance, false);
+        PointF initialPointX = extendEndPointToDistance(secondPoint, endPointX, -distance, false);
+
+        PointF endPointY = extendEndPointToDistance(secondPoint,
+            new PointF(secondPoint.x + 1, yAxisSlope * (secondPoint.x + 1) + yAxisIntercept),
+            distance, false);
+        PointF initialPointY = extendEndPointToDistance(secondPoint, endPointY, -distance, false);
+
+        return new float[] { initialPointX.x, initialPointX.y, endPointX.x, endPointX.y,
+            initialPointY.x, initialPointY.y, endPointY.x, endPointY.y };
+    }
+
+    public static float getSlopeFromTwoPoints(PointF firstPoint, PointF secondPoint) {
+        return (secondPoint.y - firstPoint.y) / (secondPoint.x - firstPoint.x);
+    }
+
+    public static float getInterceptFromSlopeAndPoint(float slope, PointF point) {
+        return point.y - (slope * point.x);
+    }
+
+    public static boolean pointIsAboveRect(PointF point, float slope, float intercept) {
+        return point.y > slope * point.x + intercept;
+    }
 }

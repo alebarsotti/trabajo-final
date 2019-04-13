@@ -14,12 +14,10 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import barsotti.alejandro.trabajoFinal.utils.MathUtils;
-import barsotti.alejandro.trabajoFinal.customInterfaces.ICircumference;
-import barsotti.alejandro.trabajoFinal.customInterfaces.IOnCircumferenceCenterChangeListener;
 
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.TOLERANCE;
 
-public class Circumference extends Shape implements ICircumference {
+public class Circumference extends Shape {
     //region Constantes
     /**
      * Tag utilizado con fines de debug.
@@ -70,10 +68,6 @@ public class Circumference extends Shape implements ICircumference {
      * circunferencia mapeados según la matriz actual.
      */
     private float[] mMappedPathPoints = new float[NUMBER_OF_POINTS_TO_DRAW * 4];
-    /**
-     * Lista de suscriptores a eventos de actualización de la circunferencia.
-     */
-    private ArrayList<IOnCircumferenceCenterChangeListener> mListeners = new ArrayList<>();
     //endregion
 
     //region Constructores
@@ -86,24 +80,6 @@ public class Circumference extends Shape implements ICircumference {
 
         initializeShape();
         Log.d(TAG, "Constructor.");
-    }
-    //endregion
-
-    //region Administración de listeners
-    @Override
-    public void addOnCircumferenceCenterChangeListener(IOnCircumferenceCenterChangeListener listener) {
-        mListeners.add(listener);
-        listener.updateCircumferenceCenterAndRadius(mCenter, mRadius);
-    }
-
-    @Override
-    public void removeOnCircumferenceCenterChangeListener(IOnCircumferenceCenterChangeListener listener) {
-        try {
-            mListeners.remove(listener);
-        }
-        catch (Exception e) {
-            Log.d(TAG, "removeOnMatrixViewChangeListener: the object was not found in the list.");
-        }
     }
     //endregion
 
@@ -142,11 +118,6 @@ public class Circumference extends Shape implements ICircumference {
 
             // Establecer la lista de N puntos que conforman la circunferencia. N = NUMBER_OF_POINTS_TO_DRAW.
             computePathPoints();
-        }
-
-        // Informar a los suscriptores sobre la actualización de los valores de centro y radio.
-        for (IOnCircumferenceCenterChangeListener listener: mListeners) {
-            listener.updateCircumferenceCenterAndRadius(mCenter, mRadius);
         }
     }
 
