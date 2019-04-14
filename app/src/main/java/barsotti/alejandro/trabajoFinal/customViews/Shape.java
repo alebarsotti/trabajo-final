@@ -389,7 +389,7 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
             float eY = e.getY();
             for (int i = 0; i < mMappedShapePoints.size(); i++) {
                 PointF point = mMappedShapePoints.get(i);
-                if (MathUtils.computeDistanceBetweenPoints(eX, eY, point.x, point.y) <= mPointRadius) {
+                if (MathUtils.distanceBetweenPoints(eX, eY, point.x, point.y) <= mPointRadius) {
                     mSelectedPointIndex = i;
                     return true;
                 }

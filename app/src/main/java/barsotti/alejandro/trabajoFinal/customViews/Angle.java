@@ -11,7 +11,6 @@ import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.webkit.WebStorage;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -20,7 +19,7 @@ import barsotti.alejandro.trabajoFinal.utils.MathUtils;
 import barsotti.alejandro.trabajoFinal.customInterfaces.IOnCartesianAxesPointChangeListener;
 
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.calculateSweepAngleFromThreePoints;
-import static barsotti.alejandro.trabajoFinal.utils.MathUtils.computeDistanceBetweenPoints;
+import static barsotti.alejandro.trabajoFinal.utils.MathUtils.distanceBetweenPoints;
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.extendEndPointToDistance;
 
 public class Angle extends Shape implements IOnCartesianAxesPointChangeListener {
@@ -153,9 +152,9 @@ public class Angle extends Shape implements IOnCartesianAxesPointChangeListener 
     private static PointF getCoordinatesForTextDrawing(PointF vertex, PointF firstEnd, PointF secondEnd) {
         // Calcular el vector entre el punto de inicio y el de fin.
         PointF firstVector = new PointF(firstEnd.x - vertex.x, firstEnd.y - vertex.y);
-        float firstVectorLength = computeDistanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
+        float firstVectorLength = distanceBetweenPoints(firstEnd.x, firstEnd.y, vertex.x, vertex.y);
         PointF secondVector = new PointF(secondEnd.x - vertex.x, secondEnd.y - vertex.y);
-        float secondVectorLength = computeDistanceBetweenPoints(secondEnd.x, secondEnd.y,
+        float secondVectorLength = distanceBetweenPoints(secondEnd.x, secondEnd.y,
             vertex.x, vertex.y);
 
         // Normalizar el vector.
@@ -303,27 +302,32 @@ public class Angle extends Shape implements IOnCartesianAxesPointChangeListener 
     protected void computeShape() {
         if (mShapePoints.size() > 0) {
             if (mShapePoints.size() == 1) {
-                float xCartesianAxisSlope = MathUtils.getSlopeFromTwoPoints(XCartesianAxisFirstPoint,
-                    XCartesianAxisSecondPoint);
-                float yCartesianAxisSlope = MathUtils.getSlopeFromTwoPoints(YCartesianAxisFirstPoint,
-                    YCartesianAxisSecondPoint);
-                float xCartesianAxisIntercept = MathUtils.getInterceptFromSlopeAndPoint(xCartesianAxisSlope,
-                    XCartesianAxisFirstPoint);
-                float yCartesianAxisIntercept = MathUtils.getInterceptFromSlopeAndPoint(yCartesianAxisSlope,
-                    YCartesianAxisFirstPoint);
-
                 mShapePoints.clear();
 
                 float distance = Math.max(mPointRadius * DEFAULT_SEGMENT_LENGTH_MULTIPLIER / mCurrentZoom,
                     SEGMENT_MIN_LENGTH);
 
-                // Verificar si el punto original se encuentra a la izquierda del Eje Y.
-                if (MathUtils.pointIsAboveRect(OriginalAnglePoint, yCartesianAxisSlope, yCartesianAxisIntercept)) {
+                // Calcular distancia a cada punto que define los Ejes Cartesianos. Inicializar ángulo
+                // en la orientación indicada.
+                float distanceToFirstPointX = MathUtils.distanceBetweenPoints(OriginalAnglePoint.x,
+                    OriginalAnglePoint.y, XCartesianAxisFirstPoint.x, XCartesianAxisFirstPoint.y);
+                float distanceToSecondPointX = MathUtils.distanceBetweenPoints(OriginalAnglePoint.x,
+                    OriginalAnglePoint.y, XCartesianAxisSecondPoint.x, XCartesianAxisSecondPoint.y);
+                float distanceToFirstPointY = MathUtils.distanceBetweenPoints(OriginalAnglePoint.x,
+                    OriginalAnglePoint.y, YCartesianAxisFirstPoint.x, YCartesianAxisFirstPoint.y);
+                float distanceToSecondPointY = MathUtils.distanceBetweenPoints(OriginalAnglePoint.x,
+                    OriginalAnglePoint.y, YCartesianAxisSecondPoint.x, YCartesianAxisSecondPoint.y);
+
+                if (distanceToFirstPointX < distanceToSecondPointX) {
+                    mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
+                        XCartesianAxisFirstPoint, distance, false));
+                }
+                else {
                     mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
                         XCartesianAxisSecondPoint, distance, false));
-                    mShapePoints.add(CartesianAxesOrigin);
                 }
-                if (MathUtils.pointIsAboveRect(OriginalAnglePoint, xCartesianAxisSlope, xCartesianAxisIntercept)) {
+
+                if (distanceToFirstPointY < distanceToSecondPointY) {
                     mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
                         YCartesianAxisFirstPoint, distance, false));
                 }
@@ -331,11 +335,8 @@ public class Angle extends Shape implements IOnCartesianAxesPointChangeListener 
                     mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
                         YCartesianAxisSecondPoint, distance, false));
                 }
-                if (mShapePoints.size() < 2) {
-                    mShapePoints.add(CartesianAxesOrigin);
-                    mShapePoints.add(MathUtils.extendEndPointToDistance(CartesianAxesOrigin,
-                        XCartesianAxisFirstPoint, distance, false));
-                }
+
+                mShapePoints.add(1, CartesianAxesOrigin);
             }
 
             mSweepAngle = calculateSweepAngleFromThreePoints(mShapePoints);

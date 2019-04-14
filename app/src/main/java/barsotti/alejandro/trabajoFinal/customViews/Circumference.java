@@ -11,8 +11,6 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 
-import java.util.ArrayList;
-
 import barsotti.alejandro.trabajoFinal.utils.MathUtils;
 
 import static barsotti.alejandro.trabajoFinal.utils.MathUtils.TOLERANCE;
@@ -142,7 +140,7 @@ public class Circumference extends Shape {
         }
 
         // Determinar la distancia entre el punto y el centro de la circunferencia.
-        float distanceFromCenterToPoint = MathUtils.computeDistanceBetweenPoints(mMappedCenter.x, mMappedCenter.y,
+        float distanceFromCenterToPoint = MathUtils.distanceBetweenPoints(mMappedCenter.x, mMappedCenter.y,
             point.x, point.y);
 
         /* La distancia del toque estará dada por el valor absoluto de la diferencia entre el radio de la

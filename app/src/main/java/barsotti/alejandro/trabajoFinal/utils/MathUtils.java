@@ -24,7 +24,7 @@ public class MathUtils {
      * @param y2 Coordenada Y del segundo punto.
      * @return Medida de la distancia entre los puntos especificados.
      */
-    public static float computeDistanceBetweenPoints(float x1, float y1, float x2, float y2) {
+    public static float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
         return (float) Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 
@@ -59,11 +59,11 @@ public class MathUtils {
         PointF secondEnd = points.get(2);
 
         // Calcular distancia entre cada par de puntos.
-        double firstEndVertexDistance = computeDistanceBetweenPoints(firstEnd.x, firstEnd.y,
+        double firstEndVertexDistance = distanceBetweenPoints(firstEnd.x, firstEnd.y,
             vertex.x, vertex.y);
-        double secondEndVertexDistance = computeDistanceBetweenPoints(secondEnd.x, secondEnd.y,
+        double secondEndVertexDistance = distanceBetweenPoints(secondEnd.x, secondEnd.y,
             vertex.x, vertex.y);
-        double firstEndSecondEndDistance = computeDistanceBetweenPoints(firstEnd.x, firstEnd.y,
+        double firstEndSecondEndDistance = distanceBetweenPoints(firstEnd.x, firstEnd.y,
             secondEnd.x, secondEnd.y);
 
         // Aplicar Ley de los Cosenos.
@@ -111,10 +111,10 @@ public class MathUtils {
         punto fijo y el vértice del ángulo obtuso.
          */
         if (firstAngle > 90) {
-            return computeDistanceBetweenPoints(segmentPoint1.x, segmentPoint1.y, point.x, point.y);
+            return distanceBetweenPoints(segmentPoint1.x, segmentPoint1.y, point.x, point.y);
         }
         if (secondAngle > 90) {
-            return computeDistanceBetweenPoints(segmentPoint2.x, segmentPoint2.y, point.x, point.y);
+            return distanceBetweenPoints(segmentPoint2.x, segmentPoint2.y, point.x, point.y);
         }
 
         // Calcular distancia entre el punto fijo y la recta formada por los extremos del segmento.
@@ -169,7 +169,7 @@ public class MathUtils {
     public static PointF extendEndPointToDistance(PointF initialPoint, PointF endPoint,
                                                   float distance, boolean minimumDistance) {
         // Calcular la distancia existente entre los puntos.
-        float pointsDistance = computeDistanceBetweenPoints(initialPoint.x, initialPoint.y, endPoint.x,
+        float pointsDistance = distanceBetweenPoints(initialPoint.x, initialPoint.y, endPoint.x,
             endPoint.y);
 
         if (minimumDistance && pointsDistance > distance) {
@@ -217,15 +217,11 @@ public class MathUtils {
             initialPointY.x, initialPointY.y, endPointY.x, endPointY.y };
     }
 
-    public static float getSlopeFromTwoPoints(PointF firstPoint, PointF secondPoint) {
+    private static float getSlopeFromTwoPoints(PointF firstPoint, PointF secondPoint) {
         return (secondPoint.y - firstPoint.y) / (secondPoint.x - firstPoint.x);
     }
 
-    public static float getInterceptFromSlopeAndPoint(float slope, PointF point) {
+    private static float getInterceptFromSlopeAndPoint(float slope, PointF point) {
         return point.y - (slope * point.x);
-    }
-
-    public static boolean pointIsAboveRect(PointF point, float slope, float intercept) {
-        return point.y > slope * point.x + intercept;
     }
 }
