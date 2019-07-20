@@ -21,6 +21,8 @@ import java.util.Locale;
 
 import barsotti.alejandro.trabajoFinal.R;
 import barsotti.alejandro.trabajoFinal.customInterfaces.IOnCartesianAxesPointChangeListener;
+import barsotti.alejandro.trabajoFinal.customInterfaces.IOnCircumferenceCenterChangeListener;
+import barsotti.alejandro.trabajoFinal.customInterfaces.IOnToothPitchChangeListener;
 
 import static barsotti.alejandro.trabajoFinal.customViews.Shape.TOUCH_TOLERANCE;
 
@@ -55,7 +57,7 @@ public class ZoomableImageViewGroup extends FrameLayout {
      * Número que indica el índice de color a utilizar para el próximo ángulo a crear.
      */
     private int AngleColorIndex = 0;
-    private int[] AngleColorList = new int[] {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.RED, Color.BLUE};
+    private int[] AngleColorList = new int[] {Color.GREEN, Color.MAGENTA, Color.RED, Color.BLUE};
     //endregion
 
     // region Constructors
@@ -143,6 +145,23 @@ public class ZoomableImageViewGroup extends FrameLayout {
                         AngleColorIndex = 0;
                     }
                 }
+                // Tratar especialmente la inicialización de la figura para el caso de la Diferencia HZ.
+                else if (shapeClass == DifferenceHZ.class) {
+                    for (Shape shape : mShapeList) {
+                        if (shape.getClass() == Circumference.class) {
+                            ((Circumference) shape).addOnCircumferenceCenterChangeListener(
+                                (IOnCircumferenceCenterChangeListener) mInProgressShape);
+                            break;
+                        }
+                    }
+                    for (Shape shape : mShapeList) {
+                        if (shape.getClass() == ToothPitch.class) {
+                            ((ToothPitch)shape).addOnToothPitchChangeListener(
+                                (IOnToothPitchChangeListener) mInProgressShape);
+                            break;
+                        }
+                    }
+                }
             } catch (Exception e) {
                 Log.e(TAG, "setZoomableImageViewDrawingInProgress:");
                 e.printStackTrace();
@@ -174,6 +193,25 @@ public class ZoomableImageViewGroup extends FrameLayout {
                 throw new Exception();
             }
         }
+        // Caso: Diferencia HZ. No es posible dibujarla si no existe una circunferencia y un paso definido.
+        if (shapeClass == DifferenceHZ.class) {
+            boolean circumferenceExists = false;
+            boolean toothPitchExists = false;
+            for (Shape shape: mShapeList) {
+                if (shape.getClass() == Circumference.class) {
+                    circumferenceExists = true;
+                } else if (shape.getClass() == ToothPitch.class) {
+                    toothPitchExists = true;
+                }
+            }
+
+            if (!circumferenceExists || !toothPitchExists) {
+                Toast.makeText(getContext(), R.string.cannot_draw_differencehz_message,
+                    Toast.LENGTH_SHORT).show();
+                throw new Exception();
+            }
+        }
+
     }
 
     /**

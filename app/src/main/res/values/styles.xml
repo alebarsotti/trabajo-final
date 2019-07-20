@@ -42,7 +42,7 @@
         <!--<item name="fabSize">mini</item>-->
         <item name="android:clickable">false</item>
         <item name="android:focusable">false</item>
-        <item name="android:visibility">invisible</item>
+        <item name="android:visibility">gone</item>
         <item name="android:layout_marginBottom">16dp</item>
     </style>
 

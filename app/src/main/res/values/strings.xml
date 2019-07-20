@@ -41,4 +41,10 @@
     <string name="main_activity_title">Trabajo Final</string>
     <string name="stark_logo_description">Stark Logo</string>
     <string name="permissions_denied_message">No se han otorgado los permisos requeridos para continuar.</string>
+    <string name="draw_tooth_pitch_button_message">Dibujar paso entre dientes</string>
+    <string name="tooth_pitch_input_dialog_positive_button_label">Aceptar</string>
+    <string name="tooth_pitch_input_dialog_negative_button_label">Cancelar</string>
+    <string name="tooth_pitch_input_dialog_title">Ingresar paso (en mm)</string>
+    <string name="cannot_draw_differencehz_message">No es posible dibujar una h si no se ha dibujado una circunferencia o si no se ha establecido el paso.</string>
+    <string name="draw_difference_hz_button_message">Dibujar diferencia entre dientes</string>
 </resources>

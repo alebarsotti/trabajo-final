@@ -49,19 +49,27 @@
         app:layout_constraintStart_toStartOf="@id/cartesian_axes_fab"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/save_image_fab"
-        android:src="@drawable/ic_image_white_24dp"
+        android:id="@+id/tooth_pitch_fab"
+        android:src="@drawable/ic_ruler"
         style="@style/MiniImageViewerFloatingActionButton"
         app:layout_constraintBottom_toTopOf="@id/angle_fab"
         app:layout_constraintEnd_toEndOf="@id/angle_fab"
         app:layout_constraintStart_toStartOf="@id/angle_fab"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/share_angle_measurements_fab"
-        android:src="@drawable/ic_ruler"
+        android:id="@+id/difference_hz_fab"
+        android:src="@drawable/ic_difference_hz"
         style="@style/MiniImageViewerFloatingActionButton"
-        app:layout_constraintBottom_toTopOf="@id/save_image_fab"
-        app:layout_constraintEnd_toEndOf="@id/save_image_fab"
-        app:layout_constraintStart_toStartOf="@id/save_image_fab"/>
+        app:layout_constraintBottom_toTopOf="@id/tooth_pitch_fab"
+        app:layout_constraintEnd_toEndOf="@id/tooth_pitch_fab"
+        app:layout_constraintStart_toStartOf="@id/tooth_pitch_fab"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/save_image_fab"
+        android:src="@drawable/ic_image_white_24dp"
+        style="@style/MiniImageViewerFloatingActionButton"
+        app:layout_constraintBottom_toTopOf="@id/difference_hz_fab"
+        app:layout_constraintEnd_toEndOf="@id/difference_hz_fab"
+        app:layout_constraintStart_toStartOf="@id/difference_hz_fab"/>
 
 </android.support.constraint.ConstraintLayout>

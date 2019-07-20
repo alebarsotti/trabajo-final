@@ -37,6 +37,8 @@ import barsotti.alejandro.trabajoFinal.R;
 import barsotti.alejandro.trabajoFinal.customViews.Angle;
 import barsotti.alejandro.trabajoFinal.customViews.Circumference;
 import barsotti.alejandro.trabajoFinal.customViews.CartesianAxes;
+import barsotti.alejandro.trabajoFinal.customViews.DifferenceHZ;
+import barsotti.alejandro.trabajoFinal.customViews.ToothPitch;
 import barsotti.alejandro.trabajoFinal.customViews.ZoomableImageViewGroup;
 import barsotti.alejandro.trabajoFinal.utils.MailUtils;
 import barsotti.alejandro.trabajoFinal.utils.ImageUtils;
@@ -59,7 +61,8 @@ public class ImageViewerActivity extends AppCompatActivity {
     private FloatingActionButton tangentFab;
     private FloatingActionButton angleFab;
     private FloatingActionButton saveImageFab;
-    private FloatingActionButton shareAngleMeasurementsFab;
+    private FloatingActionButton toothPitchFab;
+    private FloatingActionButton differenceHzFab;
     private ArrayList<FloatingActionButton> floatingActionButtonsInMenu = new ArrayList<>();
     private boolean menuVisible = false;
 
@@ -77,13 +80,15 @@ public class ImageViewerActivity extends AppCompatActivity {
         tangentFab = findViewById(R.id.cartesian_axes_fab);
         circumferenceFab = findViewById(R.id.circumference_fab);
         saveImageFab = findViewById(R.id.save_image_fab);
-        shareAngleMeasurementsFab = findViewById(R.id.share_angle_measurements_fab);
+        toothPitchFab = findViewById(R.id.tooth_pitch_fab);
+        differenceHzFab = findViewById(R.id.difference_hz_fab);
 
         floatingActionButtonsInMenu.add(circumferenceFab);
         floatingActionButtonsInMenu.add(tangentFab);
         floatingActionButtonsInMenu.add(angleFab);
+        floatingActionButtonsInMenu.add(toothPitchFab);
+        floatingActionButtonsInMenu.add(differenceHzFab);
         floatingActionButtonsInMenu.add(saveImageFab);
-        floatingActionButtonsInMenu.add(shareAngleMeasurementsFab);
 
         floatingActionButtonDefaultColor = ContextCompat.getColor(this, R.color.colorAccent);
 
@@ -98,12 +103,14 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void setupFloatingActionButtons() {
-        setupSaveImageButton();
         setupCircumferenceButton();
         setupTangentButton();
         setupAngleButton();
-        setupShareMeasurementButton();
+        setupToothPitchButton();
+        setupDifferenceHzButton();
+        setupSaveImageButton();
     }
+
 
     private void setupCircumferenceButton() {
         circumferenceFab.setOnClickListener(new View.OnClickListener() {
@@ -165,6 +172,48 @@ public class ImageViewerActivity extends AppCompatActivity {
         });
     }
 
+    private void setupToothPitchButton() {
+        toothPitchFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+
+                zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+                    ToothPitch.class);
+            }
+        });
+
+        toothPitchFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.draw_tooth_pitch_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
+    private void setupDifferenceHzButton() {
+        differenceHzFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+
+                zoomableImageViewGroup.setZoomableImageViewDrawingInProgress(true,
+                    DifferenceHZ.class);
+            }
+        });
+
+        differenceHzFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.draw_difference_hz_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+    }
+
     private void setupSaveImageButton() {
         saveImageFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -180,26 +229,6 @@ public class ImageViewerActivity extends AppCompatActivity {
             @Override
             public boolean onLongClick(View view) {
                 Toast.makeText(ImageViewerActivity.this, R.string.save_image_button_message,
-                    Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        });
-    }
-
-    private void setupShareMeasurementButton() {
-        shareAngleMeasurementsFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                hideMenu();
-
-                shareAngleMeasures();
-            }
-        });
-
-        shareAngleMeasurementsFab.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                Toast.makeText(ImageViewerActivity.this, R.string.share_angle_measurements_button_message,
                     Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -293,7 +322,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         ScaleAnimation scaleUpAnimation = getScaleAnimation(index, 0, 1, fab);
         fab.startAnimation(scaleUpAnimation);
-        fab.setVisibility(View.VISIBLE);
+        ((View) fab).setVisibility(View.VISIBLE);
         fab.setClickable(true);
         fab.setEnabled(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -305,7 +334,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         ScaleAnimation scaleDownAnimation = getScaleAnimation(index, 1, 0, fab);
         fab.startAnimation(scaleDownAnimation);
-        fab.setVisibility(View.GONE);
+        ((View) fab).setVisibility(View.GONE);
         fab.setClickable(false);
         fab.setEnabled(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

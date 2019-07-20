@@ -149,8 +149,6 @@ public abstract class Shape extends View implements IOnMatrixViewChangeListener 
         super(context, attrs);
         Log.d(TAG, "Constructor.");
         setupShapePaints();
-
-
     }
 
     protected void setupShapePaints() {

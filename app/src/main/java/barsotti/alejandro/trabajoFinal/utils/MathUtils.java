@@ -217,6 +217,28 @@ public class MathUtils {
             initialPointY.x, initialPointY.y, endPointY.x, endPointY.y };
     }
 
+    /**
+     * A partir de datos de una circunferencia y un punto 'P', calcula el punto 'Q' más cercano a P que se
+     * encuentra sobre la circunferencia.
+     * @param center Centro de la circunferencia.
+     * @param radius Radio de la circunferencia.
+     * @param point Punto a trasladar.
+     * @return Punto más cercano a P que se encuentra sobre la circunferencia indicada.
+     */
+    public static PointF translatePointToCircumference(PointF center, float radius, PointF point) {
+        // Calcular coordenada X del punto de la circunferencia a encontrar.
+        double tx = (radius * (point.x - center.x)) /
+            Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2))
+            + center.x;
+
+        // Calcular coordenada Y del punto de la circunferencia a encontrar.
+        double ty = (radius * (point.y - center.y)) /
+            Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2))
+            + center.y;
+
+        return new PointF((float) tx, (float) ty);
+    }
+
     private static float getSlopeFromTwoPoints(PointF firstPoint, PointF secondPoint) {
         return (secondPoint.y - firstPoint.y) / (secondPoint.x - firstPoint.x);
     }
