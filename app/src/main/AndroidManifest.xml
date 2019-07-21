@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="barsotti.alejandro.trabajoFinal" >
+    package="barsotti.alejandro.tf" >
 
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
 
-    <!-- Permission that allows the application to save a new photo to the public storage -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -16,30 +15,27 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme"
+        android:supportsRtl="false"
+        android:theme="@style/AppTheme.NoActionBar"
         android:allowBackup="false">
-        <activity android:name="barsotti.alejandro.trabajoFinal.MainActivity">
-            <!--android:theme="@style/AppTheme.NoActionBar">-->
+        <activity android:name="barsotti.alejandro.tf.activities.PhotoCaptureActivity"
+                  android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-                <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="barsotti.alejandro.trabajoFinal.photoCapture.PhotoCaptureMainActivity"
-                  android:parentActivityName="barsotti.alejandro.trabajoFinal.MainActivity">
-        </activity>
         <activity
-            android:name="barsotti.alejandro.trabajoFinal.photoCapture.ImageViewerActivity"
+            android:name="barsotti.alejandro.tf.activities.ImageViewerActivity"
+            android:screenOrientation="portrait"
             android:configChanges="keyboardHidden|screenSize"
             android:label="@string/title_activity_image_viewer"
-            android:parentActivityName="barsotti.alejandro.trabajoFinal.photoCapture.PhotoCaptureMainActivity"
+            android:parentActivityName="barsotti.alejandro.tf.activities.PhotoCaptureActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="barsotti.alejandro.trabajoFinal.photoCapture.PhotoCaptureMainActivity" />
+                android:value="barsotti.alejandro.tf.activities.PhotoCaptureActivity" />
         </activity>
 
         <provider
