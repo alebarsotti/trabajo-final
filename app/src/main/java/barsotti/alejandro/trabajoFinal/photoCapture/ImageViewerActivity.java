@@ -24,10 +24,12 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.CustomViewTarget;
 import com.bumptech.glide.request.target.ViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
@@ -39,6 +41,7 @@ import barsotti.alejandro.trabajoFinal.customViews.Circumference;
 import barsotti.alejandro.trabajoFinal.customViews.CartesianAxes;
 import barsotti.alejandro.trabajoFinal.customViews.DifferenceHZ;
 import barsotti.alejandro.trabajoFinal.customViews.ToothPitch;
+import barsotti.alejandro.trabajoFinal.customViews.ZoomableImageView;
 import barsotti.alejandro.trabajoFinal.customViews.ZoomableImageViewGroup;
 import barsotti.alejandro.trabajoFinal.utils.MailUtils;
 import barsotti.alejandro.trabajoFinal.utils.ImageUtils;
@@ -425,14 +428,22 @@ public class ImageViewerActivity extends AppCompatActivity {
     private void setImage() {
         getWindowManager().getDefaultDisplay().getRealSize(screenSize);
 
-        RequestOptions glideOptions = new RequestOptions()
-            .fitCenter()
-            .override(screenSize.x, screenSize.y);
+        RequestOptions glideOptions = new RequestOptions().fitCenter();
 
         Glide.with(this)
             .load(bitmapUri)
             .apply(glideOptions)
-            .into(new ViewTarget<ZoomableImageViewGroup, Drawable>(zoomableImageViewGroup) {
+            .into(new CustomViewTarget<ZoomableImageViewGroup, Drawable>(zoomableImageViewGroup) {
+                @Override
+                protected void onResourceCleared(@Nullable Drawable placeholder) {
+                    //Do nothing
+                }
+
+                @Override
+                public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                    //Do nothing
+                }
+
                 @Override
                 public void onResourceReady(@NonNull Drawable resource,
                                             @Nullable Transition<? super Drawable> transition) {

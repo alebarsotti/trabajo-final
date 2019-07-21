@@ -11,4 +11,9 @@ public class ImageTile {
         Rect.set(tileRect);
         Key = tileRect.left + "@" + tileRect.top + "@" + tileSize + "@" + sampleLevel;
     }
+
+    @Override
+    public String toString() {
+        return "ImageTile:" + Key;
+    }
 }

@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Set;
 
 import barsotti.alejandro.trabajoFinal.R;
+import barsotti.alejandro.trabajoFinal.customInterfaces.IOnMatrixViewChangeListener;
+import barsotti.alejandro.trabajoFinal.customInterfaces.IShapeCreator;
 import barsotti.alejandro.trabajoFinal.utils.ImageTile;
 import barsotti.alejandro.trabajoFinal.utils.ImageTileLruCache;
 import barsotti.alejandro.trabajoFinal.utils.ViewUtils;
-import barsotti.alejandro.trabajoFinal.customInterfaces.IOnMatrixViewChangeListener;
-import barsotti.alejandro.trabajoFinal.customInterfaces.IShapeCreator;
 
 public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
     implements IShapeCreator {
@@ -568,7 +568,7 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
 
                 // Copiar lista de Tiles a decodificar.
                 Set<ImageTile> tilesDraw = new HashSet<>(view.mTilesDraw);
-                Bitmap bitmap = null;
+                Bitmap bitmap;
                 for (ImageTile tile : tilesDraw) {
                     // Si la tarea asíncrona fue cancelada, abortar ejecución.
                     if (isCancelled()) {
@@ -576,13 +576,12 @@ public class ZoomableImageView extends android.support.v7.widget.AppCompatImageV
                     }
                     // Buscar bitmap de la Tile en la memoria caché. De no encontrarse, generarlo.
                     bitmap = view.mImageTileCache.get(tile.Key);
-                    if (bitmap == null) {
-                        Rect rect = new Rect(tile.Rect.left, tile.Rect.top,
-                            tile.Rect.right, tile.Rect.bottom);
-                        bitmap = view.mBitmapRegionDecoder.decodeRegion(rect, view.mBitmapOptions);
-                        view.mImageTileCache.put(tile.Key, bitmap);
-                        publishProgress();
+                    if (bitmap != null) {
+                        return null;
                     }
+                    bitmap = view.mBitmapRegionDecoder.decodeRegion(tile.Rect, view.mBitmapOptions);
+                    view.mImageTileCache.put(tile.Key, bitmap);
+                    publishProgress();
                 }
             }
             catch (Exception e) {
