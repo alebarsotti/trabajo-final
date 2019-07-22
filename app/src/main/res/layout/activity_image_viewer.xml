@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/menu_fab"
         style="@style/ImageViewerFloatingActionButton"
         android:layout_marginBottom="12dp"
@@ -24,7 +24,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/circumference_fab"
         android:src="@drawable/ic_circle_outline"
         style="@style/MiniImageViewerFloatingActionButton"
@@ -32,7 +32,7 @@
         app:layout_constraintEnd_toEndOf="@id/menu_fab"
         app:layout_constraintStart_toStartOf="@id/menu_fab"/>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/cartesian_axes_fab"
         android:src="@drawable/ic_cartesian_axes"
         style="@style/MiniImageViewerFloatingActionButton"
@@ -40,7 +40,7 @@
         app:layout_constraintEnd_toEndOf="@id/circumference_fab"
         app:layout_constraintStart_toStartOf="@id/circumference_fab"/>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/angle_fab"
         android:src="@drawable/ic_angle_acute"
         style="@style/MiniImageViewerFloatingActionButton"
@@ -48,7 +48,7 @@
         app:layout_constraintEnd_toEndOf="@id/cartesian_axes_fab"
         app:layout_constraintStart_toStartOf="@id/cartesian_axes_fab"/>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/tooth_pitch_fab"
         android:src="@drawable/ic_ruler"
         style="@style/MiniImageViewerFloatingActionButton"
@@ -56,7 +56,7 @@
         app:layout_constraintEnd_toEndOf="@id/angle_fab"
         app:layout_constraintStart_toStartOf="@id/angle_fab"/>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/difference_hz_fab"
         android:src="@drawable/ic_difference_hz"
         style="@style/MiniImageViewerFloatingActionButton"
@@ -64,7 +64,7 @@
         app:layout_constraintEnd_toEndOf="@id/tooth_pitch_fab"
         app:layout_constraintStart_toStartOf="@id/tooth_pitch_fab"/>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/save_image_fab"
         android:src="@drawable/ic_image_white_24dp"
         style="@style/MiniImageViewerFloatingActionButton"
@@ -72,4 +72,4 @@
         app:layout_constraintEnd_toEndOf="@id/difference_hz_fab"
         app:layout_constraintStart_toStartOf="@id/difference_hz_fab"/>
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

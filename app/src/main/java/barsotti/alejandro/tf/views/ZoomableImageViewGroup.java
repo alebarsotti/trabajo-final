@@ -5,8 +5,8 @@ import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -97,71 +97,16 @@ public class ZoomableImageViewGroup extends FrameLayout {
         else {
             try {
                 // Eliminar la figura que se estaba dibujando previamente, en caso de existir una.
-                if (mInProgressShape != null) {
-                    // Dar de baja la suscripción a las actualizaciones de la matriz del objeto creador.
-                    mInProgressShape.removeShapeCreatorListener(mZoomableImageView);
-
-                    // Deseleccionar todas las figuras.
-                    for (Shape shape: mShapeList) {
-                        shape.selectShape(false);
-                    }
-
-                    // Eliminar forma de la lista de formas.
-                    mShapeList.remove(mInProgressShape);
-
-                    // Eliminar view de la forma.
-                    this.removeView(mInProgressShape);
-                }
+                abortPreviousDrawing();
 
                 // Verificar que la figura especificada pueda dibujarse.
                 checkCanDrawShape(shapeClass);
 
                 // Instanciar e inicializar la nueva figura.
-                Class<?> myClassType = Class.forName(shapeClass.getName());
-                Class<?>[] types = new Class[] { Context.class };
-                Constructor<?> cons = myClassType.getConstructor(types);
-                mInProgressShape = (Shape) cons.newInstance(getContext());
-                mInProgressShape.addShapeCreatorListener(mZoomableImageView);
-                mInProgressShape.selectShape(true);
-                for (Shape shape: mShapeList) {
-                    shape.selectShape(false);
-                }
-                mShapeList.add(mInProgressShape);
-                this.addView(mInProgressShape);
+                initializeFigure(shapeClass);
 
-                // Tratar especialmente la inicialización de la figura para el caso de los Ángulos.
-                if (shapeClass == Angle.class) {
-                    for (Shape shape : mShapeList) {
-                        if (shape.getClass() == CartesianAxes.class) {
-                            ((CartesianAxes)shape).addOnCartesianAxesPointChangeListener(
-                                (IOnCartesianAxesPointChangeListener) mInProgressShape);
-                            break;
-                        }
-                    }
-                    // Establecer color del ángulo.
-                    ((Angle) mInProgressShape).setShapeColor(AngleColorList[AngleColorIndex]);
-                    AngleColorIndex++;
-                    if (AngleColorIndex == AngleColorList.length) {
-                        AngleColorIndex = 0;
-                    }
-                }
-                // Tratar especialmente la inicialización de la figura para el caso de la Diferencia HZ.
-                else if (shapeClass == DifferenceHZ.class) {
-                    for (Shape shape : mShapeList) {
-                        if (shape.getClass() == Circumference.class) {
-                            ((Circumference) shape).addOnCircumferenceCenterChangeListener(
-                                (IOnCircumferenceCenterChangeListener) mInProgressShape);
-                            break;
-                        }
-                    }
-                    for (Shape shape : mShapeList) {
-                        if (shape.getClass() == ToothPitch.class) {
-                            ((ToothPitch)shape).addOnToothPitchChangeListener(
-                                (IOnToothPitchChangeListener) mInProgressShape);
-                            break;
-                        }
-                    }
-                }
+                // Verificar reglas especiales de inicialización.
+                handleSpecialInitializationRules(shapeClass);
             } catch (Exception e) {
                 Log.e(TAG, "setZoomableImageViewDrawingInProgress:");
                 e.printStackTrace();
@@ -169,6 +114,74 @@ public class ZoomableImageViewGroup extends FrameLayout {
             }
         }
         mZoomableImageView.setDrawingInProgress(drawingInProgress);
+    }
+
+    private void initializeFigure(Class shapeClass) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, java.lang.reflect.InvocationTargetException {
+        Class<?> myClassType = Class.forName(shapeClass.getName());
+        Class<?>[] types = new Class[] { Context.class };
+        Constructor<?> cons = myClassType.getConstructor(types);
+        mInProgressShape = (Shape) cons.newInstance(getContext());
+        mInProgressShape.addShapeCreatorListener(mZoomableImageView);
+        mInProgressShape.selectShape(true);
+        for (Shape shape: mShapeList) {
+            shape.selectShape(false);
+        }
+        mShapeList.add(mInProgressShape);
+        this.addView(mInProgressShape);
+    }
+
+    private void handleSpecialInitializationRules(Class shapeClass) {
+        // Tratar especialmente la inicialización de la figura para el caso de los Ángulos.
+        if (shapeClass == Angle.class) {
+            for (Shape shape : mShapeList) {
+                if (shape.getClass() == CartesianAxes.class) {
+                    ((CartesianAxes)shape).addOnCartesianAxesPointChangeListener(
+                        (IOnCartesianAxesPointChangeListener) mInProgressShape);
+                    break;
+                }
+            }
+            // Establecer color del ángulo.
+            ((Angle) mInProgressShape).setShapeColor(AngleColorList[AngleColorIndex]);
+            AngleColorIndex++;
+            if (AngleColorIndex == AngleColorList.length) {
+                AngleColorIndex = 0;
+            }
+        }
+        // Tratar especialmente la inicialización de la figura para el caso de la Diferencia HZ.
+        else if (shapeClass == DifferenceHZ.class) {
+            for (Shape shape : mShapeList) {
+                if (shape.getClass() == Circumference.class) {
+                    ((Circumference) shape).addOnCircumferenceCenterChangeListener(
+                        (IOnCircumferenceCenterChangeListener) mInProgressShape);
+                    break;
+                }
+            }
+            for (Shape shape : mShapeList) {
+                if (shape.getClass() == ToothPitch.class) {
+                    ((ToothPitch)shape).addOnToothPitchChangeListener(
+                        (IOnToothPitchChangeListener) mInProgressShape);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void abortPreviousDrawing() {
+        if (mInProgressShape != null) {
+            // Dar de baja la suscripción a las actualizaciones de la matriz del objeto creador.
+            mInProgressShape.removeShapeCreatorListener(mZoomableImageView);
+
+            // Deseleccionar todas las figuras.
+            for (Shape shape: mShapeList) {
+                shape.selectShape(false);
+            }
+
+            // Eliminar forma de la lista de formas.
+            mShapeList.remove(mInProgressShape);
+
+            // Eliminar view de la forma.
+            this.removeView(mInProgressShape);
+        }
     }
 
     /**

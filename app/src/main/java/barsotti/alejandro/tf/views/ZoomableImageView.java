@@ -16,7 +16,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v4.view.ViewCompat;
+import androidx.core.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -40,7 +40,7 @@ import barsotti.alejandro.tf.utils.ImageTile;
 import barsotti.alejandro.tf.utils.ImageTileLruCache;
 import barsotti.alejandro.tf.utils.ViewUtils;
 
-public class ZoomableImageView extends android.support.v7.widget.AppCompatImageView
+public class ZoomableImageView extends androidx.appcompat.widget.AppCompatImageView
     implements IShapeCreator {
 
     // region Constantes

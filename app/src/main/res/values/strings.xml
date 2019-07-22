@@ -1,28 +1,17 @@
 <resources>
-    <string name="file_provider_authority">.fileprovider</string>
     <string name="app_name">Stark Measurement</string>
-    <string name="item_image_description">Image</string>
-    <string name="address_placeholder">Santa Fe 789</string>
-    <string name="name_placeholder">Alejandro Barsotti</string>
-    <string name="date_placeholder">27/03/2018</string>
+    <string name="first_name_placeholder">Nombre</string>
     <string name="select_image_origin">Seleccionar origen de la imagen:</string>
     <string name="take_new_picture">Tomar una nueva fotografía</string>
     <string name="select_image_from_device">Elegir una imagen del dispositivo</string>
     <string name="separator_text">o</string>
     <string name="image_preview_title">Previsualización de la imagen:</string>
     <string name="image_preview_CD">Preview de la imagen</string>
-    <string name="pick_image_chooser_title">Seleccionar imagen</string>
     <string name="separator_CD">Separator</string>
     <string name="cancel_action">Cancelar</string>
     <string name="confirm_action">Confirmar</string>
     <string name="title_activity_image_viewer">ImageViewerActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="photo_file_name_date_format">yyyyMMddd-HHmmss</string>
     <string name="photo_file_format">.jpg</string>
-    <string name="stark_logo_CD">Stark Logo</string>
-    <string name="progress_text_placeholder">Ejecutando</string>
-    <string name="cannot_draw_tangent_message">No es posible dibujar una tangente si no se ha dibujado una circunferencia previamente.</string>
     <string name="cannot_draw_angle_message">No es posible dibujar un ángulo si no se ha dibujado un eje cartesiano previamente.</string>
     <string name="listener_not_found_error">no se ha encontrado el objeto especificado en la lista.</string>
     <string name="constructor_log_message">Constructor.</string>
@@ -37,9 +26,6 @@
     <string name="save_image_button_message">Guardar captura de pantalla</string>
     <string name="screenshot_saved_message">Captura de pantalla guardada</string>
     <string name="share_screenshot_action_text">Compartir</string>
-    <string name="share_angle_measurements_button_message">Compartir medidas de ángulo(s)</string>
-    <string name="main_activity_title">Trabajo Final</string>
-    <string name="stark_logo_description">Stark Logo</string>
     <string name="permissions_denied_message">No se han otorgado los permisos requeridos para continuar.</string>
     <string name="draw_tooth_pitch_button_message">Dibujar paso entre dientes</string>
     <string name="tooth_pitch_input_dialog_positive_button_label">Aceptar</string>
@@ -48,4 +34,11 @@
     <string name="cannot_draw_hz_message">No es posible dibujar una h si no se ha dibujado una circunferencia o si no se ha establecido el paso.</string>
     <string name="draw_difference_hz_button_message">Dibujar diferencia entre dientes</string>
     <string name="camera_icon_content_description">Camera</string>
+    <string name="last_name_placeholder">Apellido</string>
+    <string name="organization_placeholder">Organización/Empresa</string>
+    <string name="address_placeholder">Dirección</string>
+    <string name="city_placeholder">Ciudad</string>
+    <string name="email_placeholder">Email</string>
+    <string name="observations_placeholder">Observaciones</string>
+    <string name="back_action">Volver</string>
 </resources>

@@ -1,7 +1,8 @@
 package barsotti.alejandro.tf.utils;
 
 import android.graphics.Bitmap;
-import android.support.v4.util.LruCache;
+import androidx.annotation.NonNull;
+import androidx.collection.LruCache;
 
 public class ImageTileLruCache extends LruCache<String, Bitmap> {
     public ImageTileLruCache(int maxSize) {
@@ -9,7 +10,7 @@ public class ImageTileLruCache extends LruCache<String, Bitmap> {
     }
 
     @Override
-    protected int sizeOf(String key, Bitmap value) {
+    protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
         return value.getAllocationByteCount();
     }
 }

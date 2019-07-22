@@ -6,7 +6,7 @@ import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.v4.content.FileProvider;
+import androidx.core.content.FileProvider;
 import android.util.Log;
 import android.view.View;
 
@@ -40,8 +40,6 @@ public class ImageUtils {
             File tempFile = File.createTempFile(photoFileName, context.getString(R.string.photo_file_format),
                 outputDirectory);
 
-//            return Uri.fromFile(tempFile);
-
             return FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider",
                 tempFile);
         } catch (IOException e) {
@@ -60,7 +58,6 @@ public class ImageUtils {
 
             addFileToMediaScannerService(context, screenshotFile.getPath());
 
-//            return Uri.fromFile(screenshotFile);
             return FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider",
                 screenshotFile);
         } catch (IOException e) {
@@ -90,11 +87,11 @@ public class ImageUtils {
         return String.format("Measurement-Result-Screenshot_%s.png", dateFormat.format(date));
     }
 
-    private static Bitmap takeScreenshot(View v) {
-        v.setDrawingCacheEnabled(true);
-        v.buildDrawingCache(true);
-        Bitmap b = Bitmap.createBitmap(v.getDrawingCache());
-        v.setDrawingCacheEnabled(false);
+    private static Bitmap takeScreenshot(View view) {
+        view.setDrawingCacheEnabled(true);
+        view.buildDrawingCache(true);
+        Bitmap b = Bitmap.createBitmap(view.getDrawingCache());
+        view.setDrawingCacheEnabled(false);
         return b;
     }
 
