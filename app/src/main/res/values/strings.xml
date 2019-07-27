@@ -41,4 +41,10 @@
     <string name="email_placeholder">Email</string>
     <string name="observations_placeholder">Observaciones</string>
     <string name="back_action">Volver</string>
+    <string name="angle_measure_notation_format">Ángulo %s: %.2fº\n</string>
+    <string name="tooth_measure_notation_format">Diente %s: %.2f mm\n</string>
+    <string name="confirm_button_message">Confirmar medición</string>
+    <string name="title_activity_measurement_details">Detalles de medición</string>
+    <string name="tooth_measure_format">%.2f mm</string>
+    <string name="back_to_root_button_label">Volver al inicio</string>
 </resources>

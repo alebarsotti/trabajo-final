@@ -3,8 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <barsotti.alejandro.tf.views.ZoomableImageViewGroup
         android:id="@+id/zoomable_image_view_group"
@@ -23,6 +22,19 @@
         android:onClick="toggleMenu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/confirm_fab"
+        style="@style/MiniImageViewerFloatingActionButton"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="0dp"
+        android:backgroundTint="@color/confirmFab"
+        app:rippleColor="@color/confirmRippleFab"
+        android:src="@drawable/ic_check"
+        app:borderWidth="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/menu_fab"
+        app:layout_constraintEnd_toStartOf="@+id/menu_fab"
+        app:layout_constraintTop_toTopOf="@+id/menu_fab"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/circumference_fab"
@@ -65,7 +77,7 @@
         app:layout_constraintStart_toStartOf="@id/tooth_pitch_fab"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/save_image_fab"
+        android:id="@+id/take_screenshot_fab"
         android:src="@drawable/ic_image_white_24dp"
         style="@style/MiniImageViewerFloatingActionButton"
         app:layout_constraintBottom_toTopOf="@id/difference_hz_fab"

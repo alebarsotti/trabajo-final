@@ -12,13 +12,6 @@ import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
@@ -30,18 +23,23 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomViewTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import barsotti.alejandro.tf.R;
+import barsotti.alejandro.tf.utils.ImageUtils;
 import barsotti.alejandro.tf.views.Angle;
-import barsotti.alejandro.tf.views.Circumference;
 import barsotti.alejandro.tf.views.CartesianAxes;
+import barsotti.alejandro.tf.views.Circumference;
 import barsotti.alejandro.tf.views.DifferenceHZ;
 import barsotti.alejandro.tf.views.ToothPitch;
 import barsotti.alejandro.tf.views.ZoomableImageViewGroup;
-import barsotti.alejandro.tf.utils.MailUtils;
-import barsotti.alejandro.tf.utils.ImageUtils;
 
 public class ImageViewerActivity extends AppCompatActivity {
     private static final String TAG = "ImageViewerActivity";
@@ -60,11 +58,13 @@ public class ImageViewerActivity extends AppCompatActivity {
     private FloatingActionButton circumferenceFab;
     private FloatingActionButton tangentFab;
     private FloatingActionButton angleFab;
-    private FloatingActionButton saveImageFab;
+    private FloatingActionButton takeScreenshotFab;
+    private FloatingActionButton confirmFab;
     private FloatingActionButton toothPitchFab;
     private FloatingActionButton differenceHzFab;
     private ArrayList<FloatingActionButton> floatingActionButtonsInMenu = new ArrayList<>();
     private boolean menuVisible = false;
+    private ArrayList<Uri> screenshotsTaken = new ArrayList<>();
 
     public int floatingActionButtonDefaultColor;
 
@@ -79,16 +79,18 @@ public class ImageViewerActivity extends AppCompatActivity {
         angleFab = findViewById(R.id.angle_fab);
         tangentFab = findViewById(R.id.cartesian_axes_fab);
         circumferenceFab = findViewById(R.id.circumference_fab);
-        saveImageFab = findViewById(R.id.save_image_fab);
+        takeScreenshotFab = findViewById(R.id.take_screenshot_fab);
+        confirmFab = findViewById(R.id.confirm_fab);
         toothPitchFab = findViewById(R.id.tooth_pitch_fab);
         differenceHzFab = findViewById(R.id.difference_hz_fab);
 
+        floatingActionButtonsInMenu.add(confirmFab);
         floatingActionButtonsInMenu.add(circumferenceFab);
         floatingActionButtonsInMenu.add(tangentFab);
         floatingActionButtonsInMenu.add(angleFab);
         floatingActionButtonsInMenu.add(toothPitchFab);
         floatingActionButtonsInMenu.add(differenceHzFab);
-        floatingActionButtonsInMenu.add(saveImageFab);
+        floatingActionButtonsInMenu.add(takeScreenshotFab);
 
         floatingActionButtonDefaultColor = ContextCompat.getColor(this, R.color.colorAccent);
 
@@ -108,7 +110,8 @@ public class ImageViewerActivity extends AppCompatActivity {
         setupAngleButton();
         setupToothPitchButton();
         setupDifferenceHzButton();
-        setupSaveImageButton();
+        setupTakeScreenshotButton();
+        setupConfirmButton();
     }
 
 
@@ -214,8 +217,8 @@ public class ImageViewerActivity extends AppCompatActivity {
         });
     }
 
-    private void setupSaveImageButton() {
-        saveImageFab.setOnClickListener(new View.OnClickListener() {
+    private void setupTakeScreenshotButton() {
+        takeScreenshotFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 hideMenu();
@@ -225,7 +228,7 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
         });
 
-        saveImageFab.setOnLongClickListener(new View.OnLongClickListener() {
+        takeScreenshotFab.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
                 Toast.makeText(ImageViewerActivity.this, R.string.save_image_button_message,
@@ -235,18 +238,25 @@ public class ImageViewerActivity extends AppCompatActivity {
         });
     }
 
-    private void shareAngleMeasures() {
-        String angleMeasures = zoomableImageViewGroup.getAngleMeasures();
+    private void setupConfirmButton() {
+        confirmFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideMenu();
+                Intent intent = MeasurementDetailsActivity.getIntent(getBaseContext(), screenshotsTaken,
+                    zoomableImageViewGroup.getAngleMeasures(), zoomableImageViewGroup.getToothMeasures());
+                startActivity(intent);
+            }
+        });
 
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_TEXT, angleMeasures);
-        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Alejandro");
-        shareIntent.setType("text/plain");
-        startActivity(Intent.createChooser(shareIntent, "Barsotti"));
-
-
-
+        confirmFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Toast.makeText(ImageViewerActivity.this, R.string.confirm_button_message,
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
     }
 
     private void makeScreenshotShareSnackbar(Uri screenshotUri) {
@@ -370,23 +380,17 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private Uri takeScreenshot() {
         playShutterSoundEffect();
+        Uri uri = ImageUtils.takeAndStoreScreenshot(this, zoomableImageViewGroup);
+        screenshotsTaken.add(uri);
 
-        return ImageUtils.takeAndStoreScreenshot(this, zoomableImageViewGroup);
+        return uri;
     }
 
     private void playShutterSoundEffect() {
         AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (audio != null) {
-            switch(audio.getRingerMode()){
-                case AudioManager.RINGER_MODE_NORMAL:
-                    MediaActionSound sound = new MediaActionSound();
-                    sound.play(MediaActionSound.SHUTTER_CLICK);
-                    break;
-                case AudioManager.RINGER_MODE_SILENT:
-                    break;
-                case AudioManager.RINGER_MODE_VIBRATE:
-                    break;
-            }
+        if (audio != null && audio.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) {
+            MediaActionSound sound = new MediaActionSound();
+            sound.play(MediaActionSound.SHUTTER_CLICK);
         }
     }
 
@@ -396,30 +400,6 @@ public class ImageViewerActivity extends AppCompatActivity {
         shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
         shareIntent.setType("image/jpeg");
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_screenshot_message)));
-    }
-
-    private void sendEmail() {
-        String[] addresses = {};
-        String subject = getString(R.string.default_mail_subject);
-        Intent mailIntent = MailUtils.composeEmail(addresses, subject);
-        if (mailIntent.resolveActivity(getPackageManager()) != null) {
-            startActivity(mailIntent);
-        }
-        else {
-            Log.e(TAG, "sendEmail: " + getString(R.string.sendEmail_error_message));
-        }
-    }
-
-    private void sendEmailWithScreenshot(Uri screenshotUri) {
-        String[] addresses = {};
-        String subject = getString(R.string.default_mail_with_attachment_subject);
-        Intent mailIntent = MailUtils.composeEmailWithAttachment(addresses, subject, screenshotUri);
-        if (mailIntent.resolveActivity(getPackageManager()) != null) {
-            startActivity(mailIntent);
-        }
-        else {
-            Log.e(TAG, "sendEmail: " + getString(R.string.sendEmail_error_message));
-        }
     }
 
     private void setImage() {

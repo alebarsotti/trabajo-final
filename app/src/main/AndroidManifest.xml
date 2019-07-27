@@ -18,8 +18,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:theme="@style/AppTheme.NoActionBar">
-        <activity android:name=".activities.MeasurementDetailsActivity">
-        </activity>
         <activity
             android:name=".activities.PhotoCaptureActivity"
             android:screenOrientation="portrait">
@@ -40,6 +38,16 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="barsotti.alejandro.tf.activities.PhotoCaptureActivity"/>
+        </activity>
+        <activity
+            android:name=".activities.MeasurementDetailsActivity"
+            android:label="@string/title_activity_measurement_details"
+            android:parentActivityName=".activities.ImageViewerActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="barsotti.alejandro.tf.activities.ImageViewerActivity"/>
         </activity>
 
         <provider

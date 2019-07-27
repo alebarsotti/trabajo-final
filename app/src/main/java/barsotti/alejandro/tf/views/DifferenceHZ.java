@@ -13,6 +13,7 @@ import android.util.Log;
 
 import java.util.Locale;
 
+import barsotti.alejandro.tf.R;
 import barsotti.alejandro.tf.interfaces.IOnCircumferenceCenterChangeListener;
 import barsotti.alejandro.tf.interfaces.IOnToothPitchChangeListener;
 import barsotti.alejandro.tf.utils.MathUtils;
@@ -43,6 +44,11 @@ public class DifferenceHZ extends Shape implements IOnCircumferenceCenterChangeL
      * Número que indica la medida del radio de la circunferencia de la cual depende la tangente.
      */
     private float circumferenceRadius;
+
+    public float getToothMeasure() {
+        return differenceHzValueInMillimeters;
+    }
+
     private float differenceHzValueInMillimeters;
     private float millimetersPerPixel;
     private PointF pointInCircumference;
@@ -102,9 +108,9 @@ public class DifferenceHZ extends Shape implements IOnCircumferenceCenterChangeL
             // Dibujar medida de h.
             canvas.drawText(
                 differenceHzValueInMillimeters != 0 ?
-                    String.format(locale, "%.2f mm", differenceHzValueInMillimeters) : "?",
-                mMappedShapePoints.get(0).x,
-                mMappedShapePoints.get(0).y - mPointRadius, textPaint);
+                    String.format(locale, getContext().getString(R.string.tooth_measure_format),
+                        differenceHzValueInMillimeters) : "?",
+                mMappedShapePoints.get(0).x, mMappedShapePoints.get(0).y - mPointRadius, textPaint);
         }
 
         super.onDraw(canvas);

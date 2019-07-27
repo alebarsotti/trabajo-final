@@ -1,6 +1,8 @@
 package barsotti.alejandro.tf.activities;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,11 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -20,6 +18,11 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import barsotti.alejandro.tf.R;
 import barsotti.alejandro.tf.utils.ImageUtils;
 
@@ -42,7 +45,7 @@ public class PhotoCaptureActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_photo_capture_main);
+        setContentView(R.layout.activity_photo_capture);
 
         Toolbar toolbar = findViewById(R.id.customToolbar);
         setSupportActionBar(toolbar);
@@ -66,6 +69,13 @@ public class PhotoCaptureActivity extends AppCompatActivity {
         });
 
         hidePreview();
+    }
+
+    public static Intent getIntent(Context context) {
+        Intent intent = new Intent(context, PhotoCaptureActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        return intent;
     }
 
     public void requestTakePicture(View view) {

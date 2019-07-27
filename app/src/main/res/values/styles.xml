@@ -32,7 +32,6 @@
         <item name="android:elevation">2dp</item>
     </style>
     <style name="MiniImageViewerFloatingActionButton" parent="ImageViewerFloatingActionButton">
-        <!--<item name="fabSize">mini</item>-->
         <item name="android:clickable">false</item>
         <item name="android:focusable">false</item>
         <item name="android:visibility">gone</item>

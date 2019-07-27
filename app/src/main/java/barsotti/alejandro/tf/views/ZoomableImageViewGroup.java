@@ -1,5 +1,6 @@
 package barsotti.alejandro.tf.views;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PointF;
@@ -299,18 +300,39 @@ public class ZoomableImageViewGroup extends FrameLayout {
         }
     }
 
+    @SuppressLint("StringFormatMatches")
     public String getAngleMeasures() {
         StringBuilder angleMeasures = new StringBuilder();
         int angleIndex = 0;
 
         for (Shape shape: mShapeList) {
-            if (shape.getClass() == Angle.class) {
-                float angleMeasure = ((Angle) shape).getSweepAngleMeasure();
-                angleIndex++;
-                angleMeasures.append(String.format(locale, "Ángulo %s: %.2fº\n", angleIndex, angleMeasure));
+            if (shape.getClass() != Angle.class) {
+                continue;
             }
+            float angleMeasure = ((Angle) shape).getSweepAngleMeasure();
+            angleIndex++;
+            angleMeasures.append(String.format(locale,
+                getContext().getString(R.string.angle_measure_notation_format), angleIndex, angleMeasure));
         }
 
         return angleMeasures.toString();
+    }
+
+    @SuppressLint("StringFormatMatches")
+    public String getToothMeasures() {
+        StringBuilder toothMeasures = new StringBuilder();
+        int toothIndex = 0;
+
+        for (Shape shape: mShapeList) {
+            if (shape.getClass() != DifferenceHZ.class) {
+                continue;
+            }
+            float toothMeasure = ((DifferenceHZ) shape).getToothMeasure();
+            toothIndex++;
+            toothMeasures.append(String.format(locale,
+                getContext().getString(R.string.tooth_measure_notation_format), toothIndex, toothMeasure));
+        }
+
+        return toothMeasures.toString();
     }
 }
