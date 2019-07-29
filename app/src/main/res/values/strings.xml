@@ -18,7 +18,7 @@
     <string name="sendEmail_error_message">No se encontró ninguna aplicación de envío de mails instalada.</string>
     <string name="storeScreenshot_error_message">Error al almacenar la captura de pantalla.</string>
     <string name="default_mail_subject">Información sobre medición</string>
-    <string name="default_mail_with_attachment_subject">Información sobre medición con imagen adjunta</string>
+    <string name="default_mail_with_attachment_subject">Información sobre medición - %s</string>
     <string name="share_screenshot_message">Compartir captura de pantalla mediante…</string>
     <string name="draw_circumference_button_message">Dibujar circunferencia</string>
     <string name="draw_tangent_button_message">Dibujar tangente</string>

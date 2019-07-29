@@ -9,7 +9,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,10 +23,13 @@ import barsotti.alejandro.tf.utils.MailUtils;
 public class MeasurementDetailsActivity extends AppCompatActivity {
     public static final String NEWLINE_CHAR = "\n";
     public static final String SEPARATOR = ": ";
+    public static final String EMPTY_FORM_FIELD_TEXT = "-";
     private static final String TAG = MeasurementDetailsActivity.class.getName();
     private static final String SCREENSHOTS_TAKEN_EXTRA = "screenshots_taken";
     private static final String ANGLE_MEASURES_EXTRA = "angle_measures";
     private static final String TOOTH_MEASURES_EXTRA = "tooth_measures";
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy - hh:mm",
+        Locale.getDefault());
     private ArrayList<Uri> screenshotsTaken;
     private ViewGroup rootViewGroup;
     private String angleMeasures;
@@ -60,7 +66,8 @@ public class MeasurementDetailsActivity extends AppCompatActivity {
     }
 
     public void sendEmail(View view) {
-        String subject = getString(R.string.default_mail_with_attachment_subject);
+        String subject = String.format(getString(R.string.default_mail_with_attachment_subject),
+            dateFormat.format(new Date()));
         String body = buildEmailBody();
         Intent mailIntent = MailUtils.composeEmailWithMultipleAttachments(subject, body, screenshotsTaken);
         if (mailIntent.resolveActivity(getPackageManager()) != null) {
@@ -79,7 +86,7 @@ public class MeasurementDetailsActivity extends AppCompatActivity {
                 String text = ((EditText) child).getText().toString();
                 bodyBuilder.append(hint)
                     .append(SEPARATOR)
-                    .append(text)
+                    .append(!text.isEmpty() ? text : EMPTY_FORM_FIELD_TEXT)
                     .append(NEWLINE_CHAR);
             }
         }

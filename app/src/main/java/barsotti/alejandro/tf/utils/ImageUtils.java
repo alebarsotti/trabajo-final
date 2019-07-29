@@ -23,7 +23,7 @@ import barsotti.alejandro.tf.R;
 
 public class ImageUtils {
     private static final String TAG = "ImageUtils";
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd_hh-mm-ss",
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss",
         Locale.getDefault());
     private static MediaScannerConnection mediaScannerConnection;
 
