@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/separator_left"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginEnd="8dp"
@@ -19,6 +18,7 @@
 
     <TextView
         android:id="@+id/separator_text"
+        style="@style/AppFont"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/separator_text"
@@ -28,7 +28,6 @@
         app:layout_constraintTop_toTopOf="parent"/>
 
     <ImageView
-        android:id="@+id/separator_right"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginStart="8dp"
@@ -39,4 +38,4 @@
         app:layout_constraintTop_toTopOf="@+id/separator_text"
         app:srcCompat="@color/divider"/>
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

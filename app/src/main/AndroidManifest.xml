@@ -1,49 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="barsotti.alejandro.trabajoFinal" >
+          package="barsotti.alejandro.tf">
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="true" />
+        android:required="true"/>
 
-    <!-- Permission that allows the application to save a new photo to the public storage -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
-        android:largeHeap="true"
+        android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:allowBackup="false">
-        <activity android:name="barsotti.alejandro.trabajoFinal.MainActivity">
-            <!--android:theme="@style/AppTheme.NoActionBar">-->
+        android:supportsRtl="false"
+        android:theme="@style/AppTheme.NoActionBar">
+        <activity
+            android:name=".activities.PhotoCaptureActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name="barsotti.alejandro.trabajoFinal.photoCapture.PhotoCaptureMainActivity"
-                  android:parentActivityName="barsotti.alejandro.trabajoFinal.MainActivity">
-        </activity>
         <activity
-            android:name="barsotti.alejandro.trabajoFinal.photoCapture.ImageViewerActivity"
+            android:name=".activities.ImageViewerActivity"
             android:configChanges="keyboardHidden|screenSize"
             android:label="@string/title_activity_image_viewer"
-            android:parentActivityName="barsotti.alejandro.trabajoFinal.photoCapture.PhotoCaptureMainActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
+            android:parentActivityName=".activities.PhotoCaptureActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="barsotti.alejandro.trabajoFinal.photoCapture.PhotoCaptureMainActivity" />
+                android:value="barsotti.alejandro.tf.activities.PhotoCaptureActivity"/>
+        </activity>
+        <activity
+            android:name=".activities.MeasurementDetailsActivity"
+            android:label="@string/title_activity_measurement_details"
+            android:parentActivityName=".activities.ImageViewerActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="barsotti.alejandro.tf.activities.ImageViewerActivity"/>
         </activity>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">

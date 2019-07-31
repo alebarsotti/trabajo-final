@@ -10,27 +10,20 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    <style name="TextTitle">
+    <style name="AppFont">
+        <item name="android:fontFamily">@font/montserrat</item>
+    </style>
+    <style name="TextTitle" parent="AppFont">
         <item name="android:textColor">@color/primaryText</item>
         <item name="android:textSize">18sp</item>
     </style>
-
-    <style name="FullscreenTheme" parent="AppTheme">
-        <item name="android:actionBarStyle">@style/FullscreenActionBarStyle</item>
-        <item name="android:windowActionBarOverlay">true</item>
-        <item name="android:windowBackground">@null</item>
-        <item name="metaButtonBarStyle">?android:attr/buttonBarStyle</item>
-        <item name="metaButtonBarButtonStyle">?android:attr/buttonBarButtonStyle</item>
+    <style name="TextShadow" parent="AppFont">
+        <item name="android:shadowRadius">5</item>
+        <item name="android:shadowDx">2</item>
+        <item name="android:shadowDy">2</item>
+        <item name="android:shadowColor">@color/shadowColor</item>
     </style>
 
-    <style name="FullscreenActionBarStyle" parent="Widget.AppCompat.ActionBar">
-        <item name="android:background">@color/black_overlay</item>
-    </style>
-
-    <style name="ProgressBarLarge" parent="AppTheme">
-        <item name="android:layout_width">64dp</item>
-        <item name="android:layout_height">64dp</item>
-    </style>
     <style name="ImageViewerFloatingActionButton" parent="AppTheme">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -39,11 +32,28 @@
         <item name="android:elevation">2dp</item>
     </style>
     <style name="MiniImageViewerFloatingActionButton" parent="ImageViewerFloatingActionButton">
-        <!--<item name="fabSize">mini</item>-->
         <item name="android:clickable">false</item>
         <item name="android:focusable">false</item>
         <item name="android:visibility">gone</item>
         <item name="android:layout_marginBottom">16dp</item>
     </style>
+    <style name="ToolbarTheme" parent="AppTheme.NoActionBar">
+        <item name="android:fontFamily">@font/montserrat</item>
+    </style>
 
+    <style name="AppButton" parent="AppFont">
+        <item name="android:drawablePadding">4dp</item>
+        <item name="android:ems">10</item>
+    </style>
+    <style name="ButtonPrimary" parent="AppButton">
+        <item name="android:backgroundTint">@color/colorPrimary</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+    <style name="ButtonSecondary" parent="AppButton">
+        <item name="android:backgroundTint">@color/light_grey</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+    <style name="EditText" parent="AppFont">
+
+    </style>
 </resources>
