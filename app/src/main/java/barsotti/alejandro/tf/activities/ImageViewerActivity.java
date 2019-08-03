@@ -1,8 +1,10 @@
 package barsotti.alejandro.tf.activities;
 
+import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import barsotti.alejandro.tf.R;
 import barsotti.alejandro.tf.utils.ImageUtils;
@@ -48,6 +51,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     public static final int OFFSET_BETWEEN_ANIMATIONS_IN_MILLIS = 50;
     public static final long ANIMATION_DURATION_IN_MILLIS = 300L;
     public static final int FAB_ROTATE_ANIMATION_DEGREES = 135;
+    private static final int PERMISSION_REQUEST_CODE = 101;
 
     private final int FLOATING_ACTION_BUTTON_CANCEL_COLOR = Color.rgb(239, 83, 80);
 
@@ -222,9 +226,8 @@ public class ImageViewerActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 hideMenu();
-                Uri screenshotUri = takeScreenshot();
 
-                makeScreenshotShareSnackbar(screenshotUri);
+                takeScreenshotOption();
             }
         });
 
@@ -236,6 +239,39 @@ public class ImageViewerActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void takeScreenshotOption() {
+        if (checkScreenshotPermission()) {
+            Uri screenshotUri = takeScreenshot();
+
+            makeScreenshotShareSnackbar(screenshotUri);
+        }
+    }
+
+    private boolean checkScreenshotPermission() {
+        String permission = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && 
+            ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{permission}, PERMISSION_REQUEST_CODE);
+
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_REQUEST_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            takeScreenshotOption();
+        }
+        else {
+            Toast.makeText(this, R.string.permissions_denied_message, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setupConfirmButton() {
