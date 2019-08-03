@@ -47,4 +47,8 @@
     <string name="title_activity_measurement_details">Detalles de medición</string>
     <string name="tooth_measure_format">%.2f mm</string>
     <string name="back_to_root_button_label">Volver al inicio</string>
+    <string name="title_menu_content_copy">Copiar al portapapeles</string>
+    <string name="title_menu_clear_fields">Limpiar campos</string>
+    <string name="copy_fields_toast_message">Información copiada al portapapeles</string>
+    <string name="copy_fields_toast_error_message">Se produjo un error al copiar el contenido al portapapeles. Por favor, inténtelo nuevamente.</string>
 </resources>
