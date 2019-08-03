@@ -4,8 +4,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.icu.util.Measure;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +17,7 @@ import android.view.animation.Animation;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.nio.BufferUnderflowException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,9 +26,11 @@ import java.util.Locale;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import barsotti.alejandro.tf.R;
+import barsotti.alejandro.tf.interfaces.MeasurementDetailsView;
+import barsotti.alejandro.tf.presenters.MeasurementDetailsPresenter;
 import barsotti.alejandro.tf.utils.MailUtils;
 
-public class MeasurementDetailsActivity extends AppCompatActivity {
+public class MeasurementDetailsActivity extends AppCompatActivity implements MeasurementDetailsView {
     public static final String NEWLINE_CHAR = "\n";
     public static final String SEPARATOR = ": ";
     public static final String EMPTY_FORM_FIELD_TEXT = "-";
@@ -37,10 +42,12 @@ public class MeasurementDetailsActivity extends AppCompatActivity {
     public static final String MEASUREMENT_INFO_CLIPBOARD_LABEL = "measurement info";
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy - hh:mm",
         Locale.getDefault());
+
     private ArrayList<Uri> screenshotsTaken;
     private ViewGroup rootViewGroup;
     private String angleMeasures;
     private String toothMeasures;
+    private MeasurementDetailsPresenter presenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +63,15 @@ public class MeasurementDetailsActivity extends AppCompatActivity {
         toothMeasures = intent.getStringExtra(TOOTH_MEASURES_EXTRA);
 
         rootViewGroup = findViewById(R.id.root);
+
+        presenter = MeasurementDetailsPresenter.getInstance();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        restoreState();
     }
 
     @Override
@@ -116,6 +132,7 @@ public class MeasurementDetailsActivity extends AppCompatActivity {
     }
 
     public void goBack(View view) {
+        saveState();
         finish();
     }
 
@@ -161,5 +178,49 @@ public class MeasurementDetailsActivity extends AppCompatActivity {
     public void goBackToRoot(View view) {
         Intent intent = PhotoCaptureActivity.getIntent(this);
         startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        saveState();
+        super.onBackPressed();
+    }
+
+    private void saveState() {
+        presenter.saveState(buildStateBundle());
+    }
+
+    private void restoreState() {
+        Bundle state = presenter.getState();
+        if (state != null) {
+            restoreFormState(state);
+        }
+        presenter.clearState();
+    }
+
+    private Bundle buildStateBundle() {
+        Bundle bundle = new Bundle();
+        for (int i = 0; i < rootViewGroup.getChildCount(); i++) {
+            View child = rootViewGroup.getChildAt(i);
+            if (child instanceof EditText) {
+                String hint = ((EditText) child).getHint().toString();
+                String text = ((EditText) child).getText().toString();
+                bundle.putString(hint, text);
+            }
+        }
+
+        return bundle;
+    }
+
+    @Override
+    public void restoreFormState(Bundle bundle) {
+        for (int i = 0; i < rootViewGroup.getChildCount(); i++) {
+            View child = rootViewGroup.getChildAt(i);
+            if (child instanceof EditText) {
+                String hint = ((EditText) child).getHint().toString();
+                String text = bundle.getString(hint, EMPTY_STRING);
+                ((EditText) child).setText(text);
+            }
+        }
     }
 }
