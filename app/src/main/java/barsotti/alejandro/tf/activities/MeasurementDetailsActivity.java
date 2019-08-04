@@ -1,23 +1,22 @@
 package barsotti.alejandro.tf.activities;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.icu.util.Measure;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.nio.BufferUnderflowException;
+import com.google.android.material.snackbar.Snackbar;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,6 +24,7 @@ import java.util.Locale;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ShareCompat;
 import barsotti.alejandro.tf.R;
 import barsotti.alejandro.tf.interfaces.MeasurementDetailsView;
 import barsotti.alejandro.tf.presenters.MeasurementDetailsPresenter;
@@ -103,8 +103,12 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clip = ClipData.newPlainText(MEASUREMENT_INFO_CLIPBOARD_LABEL, measurementInfoSummary);
             clipboard.setPrimaryClip(clip);
-            Toast.makeText(this, getString(R.string.copy_fields_toast_message), Toast.LENGTH_SHORT)
-                .show();
+
+            Snackbar shareClipboardSnackbar = Snackbar.make(findViewById(R.id.measurement_details_layout),
+                R.string.copy_fields_toast_message, Snackbar.LENGTH_LONG);
+            shareClipboardSnackbar.setAction(R.string.share_action_text,
+                new ShareMeasurementDetailsListener(measurementInfoSummary, this));
+            shareClipboardSnackbar.show();
         } catch (Exception e) {
             Toast.makeText(this, getString(R.string.copy_fields_toast_error_message),
                 Toast.LENGTH_LONG).show();
@@ -221,6 +225,26 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
                 String text = bundle.getString(hint, EMPTY_STRING);
                 ((EditText) child).setText(text);
             }
+        }
+    }
+
+    public class ShareMeasurementDetailsListener implements View.OnClickListener {
+        private String measurementDetails;
+        private Activity context;
+
+        ShareMeasurementDetailsListener(String measurementDetails, Activity context) {
+            this.measurementDetails = measurementDetails;
+            this.context = context;
+        }
+
+        @Override
+        public void onClick(View view) {
+            ShareCompat.IntentBuilder
+                .from(context)
+                .setText(measurementDetails)
+                .setType("text/plain")
+                .setChooserTitle(R.string.share_measurement_details_message)
+                .startChooser();
         }
     }
 }

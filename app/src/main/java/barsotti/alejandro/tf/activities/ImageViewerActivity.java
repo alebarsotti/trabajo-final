@@ -298,7 +298,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private void makeScreenshotShareSnackbar(Uri screenshotUri) {
         Snackbar screenshotSavedSnackbar = Snackbar.make(zoomableImageViewGroup,
             R.string.screenshot_saved_message, Snackbar.LENGTH_LONG);
-        screenshotSavedSnackbar.setAction(R.string.share_screenshot_action_text,
+        screenshotSavedSnackbar.setAction(R.string.share_action_text,
             new ShareScreenshotListener(screenshotUri));
         screenshotSavedSnackbar.show();
     }

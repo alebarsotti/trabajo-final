@@ -20,12 +20,13 @@
     <string name="default_mail_subject">Información sobre medición</string>
     <string name="default_mail_with_attachment_subject">Información sobre medición - %s</string>
     <string name="share_screenshot_message">Compartir captura de pantalla mediante…</string>
+    <string name="share_measurement_details_message">Compartir información de medición mediante…</string>
     <string name="draw_circumference_button_message">Dibujar circunferencia</string>
     <string name="draw_tangent_button_message">Dibujar tangente</string>
     <string name="draw_angle_button_message">Dibujar ángulo</string>
     <string name="save_image_button_message">Guardar captura de pantalla</string>
     <string name="screenshot_saved_message">Captura de pantalla guardada</string>
-    <string name="share_screenshot_action_text">Compartir</string>
+    <string name="share_action_text">Compartir</string>
     <string name="permissions_denied_message">No se han otorgado los permisos requeridos para continuar.</string>
     <string name="draw_tooth_pitch_button_message">Dibujar paso entre dientes</string>
     <string name="tooth_pitch_input_dialog_positive_button_label">Aceptar</string>
