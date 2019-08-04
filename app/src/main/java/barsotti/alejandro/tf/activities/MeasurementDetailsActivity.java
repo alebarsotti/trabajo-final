@@ -180,6 +180,7 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
     }
 
     public void goBackToRoot(View view) {
+        saveState();
         Intent intent = PhotoCaptureActivity.getIntent(this);
         startActivity(intent);
     }
