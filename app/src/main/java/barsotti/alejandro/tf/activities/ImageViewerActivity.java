@@ -71,6 +71,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private ArrayList<Uri> screenshotsTaken = new ArrayList<>();
 
     public int floatingActionButtonDefaultColor;
+    private Snackbar screenshotSavedSnackbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -296,10 +297,10 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void makeScreenshotShareSnackbar(Uri screenshotUri) {
-        Snackbar screenshotSavedSnackbar = Snackbar.make(zoomableImageViewGroup,
-            R.string.screenshot_saved_message, Snackbar.LENGTH_LONG);
-        screenshotSavedSnackbar.setAction(R.string.share_action_text,
-            new ShareScreenshotListener(screenshotUri));
+        screenshotSavedSnackbar = Snackbar
+            .make(zoomableImageViewGroup, R.string.screenshot_saved_message, Snackbar.LENGTH_LONG)
+            .setAction(R.string.share_action_text, new ShareScreenshotListener(screenshotUri))
+            .setActionTextColor(getResources().getColor(R.color.colorAccent));
         screenshotSavedSnackbar.show();
     }
 
@@ -308,6 +309,9 @@ public class ImageViewerActivity extends AppCompatActivity {
             hideMenu();
         }
         else {
+            if (screenshotSavedSnackbar != null && screenshotSavedSnackbar.isShown()) {
+                screenshotSavedSnackbar.dismiss();
+            }
             showMenu();
         }
     }
