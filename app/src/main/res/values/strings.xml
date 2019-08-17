@@ -12,7 +12,7 @@
     <string name="confirm_action">Confirmar</string>
     <string name="title_activity_image_viewer">ImageViewerActivity</string>
     <string name="photo_file_format">.jpg</string>
-    <string name="cannot_draw_angle_message">No es posible dibujar un ángulo si no se ha dibujado un eje cartesiano previamente.</string>
+    <string name="cannot_draw_angle_message">No es posible dibujar un ángulo si no se han dibujado ejes cartesianos previamente.</string>
     <string name="listener_not_found_error">no se ha encontrado el objeto especificado en la lista.</string>
     <string name="constructor_log_message">Constructor.</string>
     <string name="sendEmail_error_message">No se encontró ninguna aplicación de envío de mails instalada.</string>
