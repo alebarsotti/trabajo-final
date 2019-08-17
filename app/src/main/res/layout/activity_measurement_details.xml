@@ -27,100 +27,142 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <EditText
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/first_name"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginEnd="8dp"
-                    android:hint="@string/first_name_placeholder"
-                    android:inputType="textPersonName"
                     app:layout_constraintEnd_toStartOf="@+id/last_name"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintHorizontal_chainStyle="spread"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:ignore="Autofill"/>
+                    app:layout_constraintTop_toTopOf="parent">
 
-                <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/first_name_placeholder"
+                        android:inputType="textPersonName"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/last_name"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
-                    android:hint="@string/last_name_placeholder"
-                    android:inputType="textPersonName"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/first_name"
-                    app:layout_constraintTop_toTopOf="@+id/first_name"/>
+                    app:layout_constraintTop_toTopOf="@+id/first_name">
 
-                <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/last_name_placeholder"
+                        android:inputType="textPersonName"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/organization"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:ems="10"
-                    android:hint="@string/organization_placeholder"
-                    android:inputType="textPersonName"
                     app:layout_constraintEnd_toEndOf="@+id/last_name"
                     app:layout_constraintStart_toStartOf="@+id/first_name"
-                    app:layout_constraintTop_toBottomOf="@+id/first_name"/>
+                    app:layout_constraintTop_toBottomOf="@+id/first_name">
 
-                <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ems="10"
+                        android:hint="@string/organization_placeholder"
+                        android:inputType="textPersonName"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/address"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="@string/address_placeholder"
-                    android:inputType="textPostalAddress"
                     app:layout_constraintEnd_toEndOf="@+id/organization"
                     app:layout_constraintStart_toStartOf="@+id/organization"
-                    app:layout_constraintTop_toBottomOf="@+id/organization"/>
+                    app:layout_constraintTop_toBottomOf="@+id/organization">
 
-                <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/address_placeholder"
+                        android:inputType="textPostalAddress"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/city"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="@string/city_placeholder"
-                    android:inputType="textPersonName"
                     app:layout_constraintEnd_toEndOf="@+id/address"
                     app:layout_constraintStart_toStartOf="@+id/address"
-                    app:layout_constraintTop_toBottomOf="@+id/address"/>
+                    app:layout_constraintTop_toBottomOf="@+id/address">
 
-                <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/city_placeholder"
+                        android:inputType="textPersonName"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/email"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="@string/email_placeholder"
-                    android:inputType="textEmailAddress"
                     app:layout_constraintEnd_toEndOf="@+id/city"
                     app:layout_constraintStart_toStartOf="@+id/city"
-                    app:layout_constraintTop_toBottomOf="@+id/city"/>
+                    app:layout_constraintTop_toBottomOf="@+id/city">
 
-                <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/email_placeholder"
+                        android:inputType="textEmailAddress"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/observations"
-                    style="@style/EditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="24dp"
-                    android:gravity="start"
-                    android:hint="@string/observations_placeholder"
-                    android:inputType="textMultiLine"
-                    android:minLines="3"
                     app:layout_constraintBottom_toTopOf="@+id/back_button"
                     app:layout_constraintEnd_toEndOf="@+id/email"
                     app:layout_constraintStart_toStartOf="@+id/email"
-                    app:layout_constraintTop_toBottomOf="@+id/email"/>
+                    app:layout_constraintTop_toBottomOf="@+id/email">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        style="@style/EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="start"
+                        android:hint="@string/observations_placeholder"
+                        android:inputType="textMultiLine"
+                        android:minLines="2"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <Button
                     android:id="@+id/back_button"
@@ -160,13 +202,13 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:gravity="center"
-                    android:textSize="18sp"
                     android:layout_marginBottom="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:gravity="center"
+                    android:onClick="goBackToRoot"
                     android:text="@string/back_to_root_button_label"
                     android:textColor="@color/colorPrimary"
-                    android:onClick="goBackToRoot"
+                    android:textSize="18sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="@+id/confirm_button"
                     app:layout_constraintStart_toStartOf="@+id/back_button"/>
             </androidx.constraintlayout.widget.ConstraintLayout>

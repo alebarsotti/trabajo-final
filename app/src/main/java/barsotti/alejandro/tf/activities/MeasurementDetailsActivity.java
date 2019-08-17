@@ -16,6 +16,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -119,8 +121,12 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
     private void clearFields() {
         for (int i = 0; i < rootViewGroup.getChildCount(); i++) {
             View child = rootViewGroup.getChildAt(i);
-            if (child instanceof EditText) {
-                ((EditText) child).setText(EMPTY_STRING);
+            if (child instanceof TextInputLayout) {
+                EditText editText = ((TextInputLayout) child).getEditText();
+                if (editText == null) {
+                    continue;
+                }
+                editText.setText(EMPTY_STRING);
             }
         }
     }
@@ -156,9 +162,13 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
         StringBuilder bodyBuilder = new StringBuilder();
         for (int i = 0; i < rootViewGroup.getChildCount(); i++) {
             View child = rootViewGroup.getChildAt(i);
-            if (child instanceof EditText) {
-                CharSequence hint = ((EditText) child).getHint();
-                String text = ((EditText) child).getText().toString();
+            if (child instanceof TextInputLayout) {
+                EditText editText = ((TextInputLayout) child).getEditText();
+                if (editText == null) {
+                    continue;
+                }
+                CharSequence hint = editText.getHint();
+                String text = editText.getText().toString();
                 bodyBuilder.append(hint)
                     .append(SEPARATOR)
                     .append(!text.isEmpty() ? text : EMPTY_FORM_FIELD_TEXT)
@@ -207,9 +217,13 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
         Bundle bundle = new Bundle();
         for (int i = 0; i < rootViewGroup.getChildCount(); i++) {
             View child = rootViewGroup.getChildAt(i);
-            if (child instanceof EditText) {
-                String hint = ((EditText) child).getHint().toString();
-                String text = ((EditText) child).getText().toString();
+            if (child instanceof TextInputLayout) {
+                EditText editText = ((TextInputLayout) child).getEditText();
+                if (editText == null) {
+                    continue;
+                }
+                String hint = editText.getHint().toString();
+                String text = editText.getText().toString();
                 bundle.putString(hint, text);
             }
         }
@@ -221,10 +235,14 @@ public class MeasurementDetailsActivity extends AppCompatActivity implements Mea
     public void restoreFormState(Bundle bundle) {
         for (int i = 0; i < rootViewGroup.getChildCount(); i++) {
             View child = rootViewGroup.getChildAt(i);
-            if (child instanceof EditText) {
-                String hint = ((EditText) child).getHint().toString();
+            if (child instanceof TextInputLayout) {
+                EditText editText = ((TextInputLayout) child).getEditText();
+                if (editText == null) {
+                    continue;
+                }
+                String hint = editText.getHint().toString();
                 String text = bundle.getString(hint, EMPTY_STRING);
-                ((EditText) child).setText(text);
+                editText.setText(text);
             }
         }
     }
