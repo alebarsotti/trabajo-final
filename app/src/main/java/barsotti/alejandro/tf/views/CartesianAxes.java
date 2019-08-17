@@ -110,19 +110,8 @@ public class CartesianAxes extends Shape implements ICartesianAxes {
     @Override
     protected void computeShape() {
         if (mShapePoints.size() == NUMBER_OF_POINTS) {
-//            // Trasladar el punto marcado hasta la circunferencia.
-//            PointF pointInCircumference = translatePointToCircumference(mCircumferenceCenter,
-//                mCircumferenceRadius, mShapePoints.get(0));
-//            mShapePoints.set(0, pointInCircumference);
-//            // Calcular dos puntos que definen la tangente.
-//            CartesianAxesPoints = tangentToCircumference(mCircumferenceCenter, pointInCircumference,
-//                mCircumferenceRadius);
-//            // Calcular puntos utilizados para representar la recta radial.
-//            mPathPoints = MathUtils.pointArrayFromLine(mCircumferenceCenter, pointInCircumference);
-
             CartesianAxesPoints = MathUtils.calculateCartesianAxesFromThreePoints(mShapePoints.get(0),
                 mShapePoints.get(1), mShapePoints.get(2));
-
         }
 
         // Informar a los suscriptores sobre el cambio en la figura.

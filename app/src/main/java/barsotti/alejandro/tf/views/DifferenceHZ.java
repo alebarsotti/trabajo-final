@@ -37,11 +37,11 @@ public class DifferenceHZ extends Shape implements IOnCircumferenceCenterChangeL
 
     //region Propiedades
     /**
-     * Punto que indica las coordenadas del centro de la circunferencia de la cual depende la tangente.
+     * Punto que indica las coordenadas del centro de la circunferencia de la cual depende la diferencia HZ.
      */
     private PointF circumferenceCenter;
     /**
-     * Número que indica la medida del radio de la circunferencia de la cual depende la tangente.
+     * Número que indica la medida del radio de la circunferencia de la cual depende la diferencia HZ.
      */
     private float circumferenceRadius;
 

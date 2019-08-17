@@ -22,7 +22,7 @@
     <string name="share_screenshot_message">Compartir captura de pantalla mediante…</string>
     <string name="share_measurement_details_message">Compartir información de medición mediante…</string>
     <string name="draw_circumference_button_message">Dibujar circunferencia</string>
-    <string name="draw_tangent_button_message">Dibujar tangente</string>
+    <string name="draw_cartesian_axes_button_message">Dibujar ejes cartesianos</string>
     <string name="draw_angle_button_message">Dibujar ángulo</string>
     <string name="save_image_button_message">Guardar captura de pantalla</string>
     <string name="screenshot_saved_message">Captura de pantalla guardada</string>

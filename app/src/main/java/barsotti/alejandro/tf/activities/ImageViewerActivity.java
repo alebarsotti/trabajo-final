@@ -60,7 +60,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private Uri bitmapUri;
     private FloatingActionButton menuFab;
     private FloatingActionButton circumferenceFab;
-    private FloatingActionButton tangentFab;
+    private FloatingActionButton cartesianAxesFab;
     private FloatingActionButton angleFab;
     private FloatingActionButton takeScreenshotFab;
     private FloatingActionButton confirmFab;
@@ -82,7 +82,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         menuFab = findViewById(R.id.menu_fab);
         angleFab = findViewById(R.id.angle_fab);
-        tangentFab = findViewById(R.id.cartesian_axes_fab);
+        cartesianAxesFab = findViewById(R.id.cartesian_axes_fab);
         circumferenceFab = findViewById(R.id.circumference_fab);
         takeScreenshotFab = findViewById(R.id.take_screenshot_fab);
         confirmFab = findViewById(R.id.confirm_fab);
@@ -91,7 +91,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         floatingActionButtonsInMenu.add(confirmFab);
         floatingActionButtonsInMenu.add(circumferenceFab);
-        floatingActionButtonsInMenu.add(tangentFab);
+        floatingActionButtonsInMenu.add(cartesianAxesFab);
         floatingActionButtonsInMenu.add(angleFab);
         floatingActionButtonsInMenu.add(toothPitchFab);
         floatingActionButtonsInMenu.add(differenceHzFab);
@@ -111,7 +111,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private void setupFloatingActionButtons() {
         setupCircumferenceButton();
-        setupTangentButton();
+        setupCartesianAxesButton();
         setupAngleButton();
         setupToothPitchButton();
         setupDifferenceHzButton();
@@ -140,8 +140,8 @@ public class ImageViewerActivity extends AppCompatActivity {
         });
     }
 
-    private void setupTangentButton() {
-        tangentFab.setOnClickListener(new View.OnClickListener() {
+    private void setupCartesianAxesButton() {
+        cartesianAxesFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 hideMenu();
@@ -150,10 +150,10 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
         });
 
-        tangentFab.setOnLongClickListener(new View.OnLongClickListener() {
+        cartesianAxesFab.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                Toast.makeText(ImageViewerActivity.this, R.string.draw_tangent_button_message,
+                Toast.makeText(ImageViewerActivity.this, R.string.draw_cartesian_axes_button_message,
                     Toast.LENGTH_SHORT).show();
                 return true;
             }
