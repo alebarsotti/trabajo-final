@@ -52,4 +52,5 @@
     <string name="title_menu_clear_fields">Limpiar campos</string>
     <string name="copy_fields_toast_message">Información copiada al portapapeles</string>
     <string name="copy_fields_toast_error_message">Se produjo un error al copiar el contenido al portapapeles. Por favor, inténtelo nuevamente.</string>
+    <string name="not_a_number_error_message">El número ingresado es incorrecto o posee un formato inválido.</string>
 </resources>

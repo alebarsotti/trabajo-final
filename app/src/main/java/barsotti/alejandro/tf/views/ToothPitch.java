@@ -10,10 +10,13 @@ import android.graphics.PointF;
 import android.graphics.Typeface;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+
+import android.text.Editable;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -118,12 +121,23 @@ public class ToothPitch extends Shape implements IToothPitch {
         builder.setPositiveButton(R.string.tooth_pitch_input_dialog_positive_button_label, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                toothPitchValue = Float.parseFloat(input.getText().toString());
-                computeShape();
+                try {
+                    String inputText = input.getText().toString();
+                    inputText = inputText.replace(',', '.');
+                    toothPitchValue = Float.parseFloat(inputText);
+                    computeShape();
 
-                // Informar a los suscriptores sobre la actualización del valor de la escala.
-                for (IOnToothPitchChangeListener listener: objectListeners) {
-                    listener.onToothPitchValueChange(millimetersPerPixel);
+                    // Informar a los suscriptores sobre la actualización del valor de la escala.
+                    for (IOnToothPitchChangeListener listener: objectListeners) {
+                        listener.onToothPitchValueChange(millimetersPerPixel);
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    Toast
+                        .makeText(getContext(),getContext().getString(R.string.not_a_number_error_message),
+                            Toast.LENGTH_SHORT)
+                        .show();
                 }
             }
         });
