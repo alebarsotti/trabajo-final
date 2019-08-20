@@ -199,7 +199,7 @@ public class ZoomableImageView extends androidx.appcompat.widget.AppCompatImageV
     }
     //endregion
 
-    //region Adminitración de listeners
+    //region Administración de listeners
     public void addOnMatrixViewChangeListener(IOnMatrixViewChangeListener listener) {
         mListeners.add(listener);
         listener.setViewMeasures(getMeasuredWidth(), getMeasuredHeight());

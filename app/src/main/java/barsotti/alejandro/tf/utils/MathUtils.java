@@ -1,20 +1,14 @@
 package barsotti.alejandro.tf.utils;
 
-import android.graphics.Path;
-import android.graphics.PathMeasure;
 import android.graphics.PointF;
 import java.util.ArrayList;
 
 public class MathUtils {
-    private static final int DEFAULT_DISTANCE_BETWEEN_POINTS_IN_SEGMENT = 50;
-    // Tag utilizado a fines de debug.
-    private static final String DEBUG_TAG = "MathUtils";
 
     /**
      * Valor de tolerancia utilizado para la realización de cálculos precisos.
      **/
     public static final double TOLERANCE = 0.0001d;
-    public static final int MAX_NUMBER_OF_POINTS_PER_SEGMENT = 100;
 
     /**
      * Calcula la distancia entre dos puntos dados.
@@ -119,40 +113,6 @@ public class MathUtils {
 
         // Calcular distancia entre el punto fijo y la recta formada por los extremos del segmento.
         return distanceBetweenLineAndPoint(point, segmentPoint1, segmentPoint2);
-    }
-
-    /**
-     * Genera una lista de puntos pertenecientes a un segmento determinado por los puntos proporcionados como
-     * parámetros, con el fin de representar al mismo como una línea segmentada.
-     * @param point1 Punto inicial del segmento.
-     * @param point2 Punto final del segmento.
-     * @return Lista de puntos que representan al segmento.
-     */
-    public static float[] pointArrayFromLine(PointF point1, PointF point2) {
-        // Determinar la longitud de cada segmento de la línea segmentada definida por los puntos indicados.
-        Path linePath = new Path();
-        linePath.moveTo(point1.x, point1.y);
-        linePath.lineTo(point2.x, point2.y);
-        PathMeasure pm = new PathMeasure(linePath, false);
-        float distance = Math.max(pm.getLength() / MAX_NUMBER_OF_POINTS_PER_SEGMENT,
-            DEFAULT_DISTANCE_BETWEEN_POINTS_IN_SEGMENT);
-
-        // Generar los puntos necesarios.
-        int numberOfPointsNeeded = (int) (pm.getLength() / distance) + 1;
-        float currentDistance = 0;
-        float[] pointCoordinates = new float[2];
-        float[] pointArray = new float[numberOfPointsNeeded * 2];
-
-        for (int i = 0; i < numberOfPointsNeeded; i++) {
-            pm.getPosTan(currentDistance, pointCoordinates, null);
-
-            pointArray[2 * i] = pointCoordinates[0];
-            pointArray[2 * i + 1] = pointCoordinates[1];
-
-            currentDistance += distance;
-        }
-
-        return pointArray;
     }
 
     /**

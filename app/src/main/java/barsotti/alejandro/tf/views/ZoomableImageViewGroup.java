@@ -79,14 +79,6 @@ public class ZoomableImageViewGroup extends FrameLayout {
     // endregion
 
     /**
-     * Establece el estado de la View encargada de la representación gráfica.
-     * @param viewState Nuevo estado de la View.
-     */
-    public void setZoomableImageViewState(ZoomableImageView.ViewState viewState) {
-        mZoomableImageView.setState(viewState);
-    }
-
-    /**
      * Establece el estado actual de dibujo en progreso y permite inicializar el dibujo de una nueva figura.
      * @param drawingInProgress Nuevo estado de dibujo en progreso.
      * @param shapeClass Clase de figura a dibujar.

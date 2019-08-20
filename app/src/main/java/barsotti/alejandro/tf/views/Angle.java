@@ -175,7 +175,7 @@ public class Angle extends Shape implements IOnCartesianAxesPointChangeListener 
     }
 
     /**
-     * Calcula el ángulo de inicio necesario para la representación gráfica de un arco dentro de ángulo
+     * Calcula el ángulo de inicio necesario para la representación gráfica de un arco dentro del ángulo
      * formado por los tres puntos proporcionados.
      * @param points ArrayList de los tres puntos que forman el ángulo.
      * @return Magnitud del ángulo de inicio requerido para la representación gráfica del arco.
@@ -207,7 +207,7 @@ public class Angle extends Shape implements IOnCartesianAxesPointChangeListener 
         /*
         Calcular cada ángulo. En caso de encontrarse por encima del punto de inicio de referencia, el valor
         a considerar para ese ángulo será la resta entre 360º y el valor obtenido. Esto se debe a que
-        Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario).
+        Android dibuja los ángulos desde el punto de inicio de referencia y en sentido horario.
          */
         float firstStartAngle = calculateSweepAngleFromThreePoints(firstStartAnglePoints);
         firstStartAngle = (firstEnd.y < startPoint.y ? 360 - firstStartAngle : firstStartAngle);
