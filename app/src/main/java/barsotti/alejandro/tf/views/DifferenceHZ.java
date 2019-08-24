@@ -53,7 +53,7 @@ public class DifferenceHZ extends Shape implements IOnCircumferenceCenterChangeL
     private float millimetersPerPixel;
     private PointF pointInCircumference;
     private PointF mappedPointInCircumference;
-    private Paint textPaint = new Paint();
+    private Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     /**
      * Cultura utilizada para la representación gráfica de la medida de h. Permite que se muestre el
      * separador de decimales correcto para la región (coma).

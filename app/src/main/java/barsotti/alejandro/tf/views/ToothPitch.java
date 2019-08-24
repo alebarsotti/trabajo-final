@@ -54,7 +54,7 @@ public class ToothPitch extends Shape implements IToothPitch {
     private Locale locale = new Locale("es", "ES");
     private float toothPitchValue;
     private float millimetersPerPixel;
-    private Paint textPaint = new Paint();
+    private Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     //endregion
 
     //region Constructores
